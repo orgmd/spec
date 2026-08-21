@@ -51,6 +51,17 @@ review): BLOCKER 1–3, HIGH 4, 6 and 7, plus the drift item on the Core
   implementation evidence (SPEC §7)
 - The Core "afternoon" claim now separates adopting a bundle with
   conformant tooling from implementing a conformant resolver (SPEC §11)
+- Compiler conformance evaluated per canonical target profile: a
+  versioned, separately published rendering specification for a
+  machine-oriented target, named in the claim, against which byte-identical
+  output is required; human-oriented targets with no published profile are
+  evaluated against the §6.1 rules alone and must not claim byte-identity.
+  This specification defines no canonical target profiles yet (SPEC §11,
+  §6.2)
+- The §7.1 bundle metadata digest added to the `org.lock` targets content,
+  so the metadata object that changes resolution and disclosure is signed
+  exactly as entry digests are, rather than being covered only by
+  whole-directory file hashing (SPEC §7.2, §7.1)
 
 ## 0.3-draft — August 2026
 

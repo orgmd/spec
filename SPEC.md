@@ -26,7 +26,14 @@ state given a normative authored form — a reserved `lifecycle:` mapping on
 the bundle's identity entry, from which validation, resolution and the
 content identifier are all derived (§4.1, §7.1); the grace window given
 the key it is authored under — `grace_days:` on the root bundle's identity
-entry, a non-negative integer of at most 90 days (§4.8, §7.1).
+entry, a non-negative integer of at most 90 days (§4.8, §7.1); compiler
+conformance evaluated per canonical target profile — byte-identical output
+required only for machine-oriented targets with a published profile, which
+the claim names, and the §6.1 rules alone for human-oriented targets, for
+which byte-identity MUST NOT be claimed (§11, §6.2); the §7.1 bundle
+metadata digest added to the `org.lock` targets content, so the metadata
+object that changes resolution and disclosure is signed as entry digests
+are (§7.2).
 **Changed in 0.3:** entry identity and container grammar (§3.1, §4.5; RFC
 0001/0003); scope lattice and the disclosure/applicability split (§4.2,
 §5.4; RFC 0002/0008); policy decision function and structural narrowing
@@ -1125,7 +1132,9 @@ Documentation MUST NOT claim policy is "enforced" where the verdict is not
 interposed by a component the consuming agent cannot bypass (§6.4),
 regardless of whether a gate is deployed. Projections emitted into
 repositories (e.g. an AGENTS.md section) MUST be delimited as generated
-content that tooling refreshes and humans do not hand-edit.
+content that tooling refreshes and humans do not hand-edit. Machine-oriented
+targets MUST be rendered per the canonical target profile published for
+that target, where one exists (§11).
 
 ### 6.3 Enforced target — the gate
 
@@ -1392,8 +1401,10 @@ ORG.md. Implementations MUST implement the four TUF top-level roles:
   rotation: a new root is accepted only when signed by a threshold of
   both the previous and the new key sets.
 - **targets** — realised as `org.lock`: the entry digests and file
-  digests of §7.4, the bundle's version number, and the delegations of
-  §7.3.
+  digests of §7.4, the bundle metadata digest of §7.1, the bundle's
+  version number, and the delegations of §7.3. The bundle metadata object
+  changes resolution and disclosure, so its digest MUST be signed exactly
+  as entry digests are.
 - **snapshot** — the names and version numbers of every targets metadata
   file in the tree. Snapshot exists to bind a *set* of bundles together;
   without it an attacker can serve a current org bundle beside a stale
@@ -1670,8 +1681,20 @@ state together with the §4.1 entry lifecycle states, §5.1 designated path, §5
    mode (§5.4). At Core the mode is fixed to Mode A and the tuple is
    (tree, identity, clearance); a claim covering Mode B is an Extended
    claim and MUST state the declared mode.
-4. Compiler conformance MUST be evaluated by byte-identical projection
-   output for identical resolved input, together with the §6.1 rules.
+4. Compiler conformance MUST be evaluated per **canonical target
+   profile**: a versioned, published rendering specification for a
+   machine-oriented target — an AGENTS.md fragment, a prompt block —
+   identified by a profile name and version. For a target with a
+   published canonical profile, conformance MUST be evaluated by
+   byte-identical projection output for identical resolved input,
+   together with the §6.1 rules, and the claim MUST name the profile and
+   version it covers. For a human-oriented target with no published
+   profile — a handbook — conformance is the §6.1 rules alone: meaning
+   preservation, the context identifier, contested and stale marking, and
+   advisory or enforced labelling, evaluated over the projection's
+   content; byte-identity MUST NOT be claimed for such a target. This
+   specification defines no canonical target profiles; they are published
+   and versioned separately, as the conformance suite is.
 5. Gate conformance MUST be evaluated by determinism of `org.policy` over
    a fixed (context identifier, identity, action) tuple, and by the
    uncovered-action rule (`escalate`, never `allow`).
