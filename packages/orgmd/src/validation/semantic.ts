@@ -6,6 +6,7 @@ import type {
   ParsedEntryRevision,
 } from "../model/types.js";
 import { validateEntrySchema } from "./schema.js";
+import { isCalendarDate } from "./calendar-date.js";
 
 const DEFAULT_SCOPES = new Set(["public", "internal", "restricted"]);
 const ID_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*(\.[A-Za-z0-9][A-Za-z0-9_-]*)*$/;
@@ -643,17 +644,6 @@ function normalizeLifecycle(
         : [],
     ),
   );
-}
-
-function isCalendarDate(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  if (month < 1 || month > 12 || day < 1) return false;
-  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
-  return day <= daysInMonth;
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { doctorBundle, doctorExitCode } from "../../src/doctor/doctor.js";
 import type {
+  Bundle,
   EntryRevision,
+  ParsedEntryRevision,
   ResolvedContext,
   ValidatedBundle,
 } from "../../src/index.js";
 import * as publicApi from "../../src/index.js";
+import { validateBundle } from "../../src/validation/validate.js";
 
 function entry(
   id: string,
@@ -41,6 +44,41 @@ function codes(entries: readonly EntryRevision[], today = "2026-08-21") {
   return doctorBundle({ bundle: bundle(entries), today }).findings.map(
     ({ code }) => code,
   );
+}
+
+function parsed(
+  domain: EntryRevision["domain"],
+  values: Readonly<Record<string, unknown>>,
+): ParsedEntryRevision {
+  return {
+    domain,
+    frontMatter: values,
+    body: String(values.id),
+    sourcePath: `${domain}.md`,
+    line: 1,
+  };
+}
+
+function validatorBundle(revisit: string): Bundle {
+  const identity = {
+    id: "org.identity",
+    owner: "role.editor",
+    scope: "public",
+    status: "approved",
+    source: "native",
+    rev: 1,
+  };
+  return {
+    reference: "validator-fixture",
+    path: "validator-fixture",
+    isRoot: true,
+    identityMetadata: identity,
+    entries: [
+      parsed("identity", identity),
+      parsed("ownership", { ...identity, id: "own.last-resort" }),
+      parsed("glossary", { ...identity, id: "term.date", revisit }),
+    ],
+  };
 }
 
 describe("deterministic bundle doctor", () => {
@@ -222,5 +260,75 @@ describe("deterministic bundle doctor", () => {
     );
     expect(finding?.entryId).toBeUndefined();
     expect(finding?.message).not.toContain("id could not");
+  });
+
+  it("reports a visible upstream-stale resolved entry exactly once", () => {
+    const synced = entry("term.synced", {
+      source: "synced:notion",
+      upstream: {
+        system: "notion",
+        ref: "page-1",
+        fetched: "2026-08-21",
+        digest: "sha256:source",
+      },
+    });
+    const context: ResolvedContext = {
+      entries: [
+        {
+          revision: synced,
+          bundleIndex: 0,
+          contested: false,
+          staleReasons: ["upstream"],
+        },
+        { withheld: true, reason: "clearance" },
+      ],
+      bundles: [],
+      contextId: "ctx",
+      diagnostics: [],
+      resolutionErrors: [],
+    };
+    const report = doctorBundle({
+      bundle: bundle([entry("own.editor", { domain: "ownership" }), synced]),
+      context,
+      today: "2026-08-21",
+    });
+
+    const findings = report.findings.filter(
+      ({ code }) => code === "doctor.orphaned-upstream",
+    );
+    expect(findings).toEqual([
+      expect.objectContaining({
+        entryId: "term.synced",
+        blocking: true,
+      }),
+    ]);
+    expect(doctorExitCode(report)).toBe(1);
+    expect(report.findings.some(({ entryId }) => entryId === undefined)).toBe(
+      false,
+    );
+  });
+
+  it.each([
+    ["0000-01-01", true],
+    ["0000-02-29", true],
+    ["2000-02-29", true],
+    ["1900-02-29", false],
+    ["0000-02-30", false],
+  ])("matches validation calendar semantics for %s", (date, valid) => {
+    const validation = validateBundle(validatorBundle(date), {
+      isRoot: true,
+    });
+    const report = doctorBundle({
+      bundle: bundle([entry("term.date", { revisit: date })]),
+      today: "0000-01-01",
+    });
+
+    expect(validation.value !== undefined).toBe(valid);
+    expect(
+      report.findings.some(
+        ({ code, entryId }) =>
+          code === "doctor.invalid-date" && entryId === "term.date",
+      ),
+    ).toBe(!valid);
   });
 });

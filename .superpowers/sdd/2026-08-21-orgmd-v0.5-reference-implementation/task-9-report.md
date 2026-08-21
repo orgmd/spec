@@ -54,3 +54,35 @@ npm run check
 
 Dogfood validation followed by `doctorBundle({ today: "2026-08-21" })`
 returned blocking exit code `0`.
+
+## Fix Round 1
+
+### RED
+
+`npm test -- packages/orgmd/test/doctor/doctor.test.ts` failed with the new
+regressions: no `doctor.orphaned-upstream` finding was produced from visible
+`ResolvedContext` stale reasons; doctor rejected `0000-01-01`; and the
+validator rejected the valid leap date `0000-02-29`.
+
+### GREEN
+
+- Doctor now emits exactly one blocking `doctor.orphaned-upstream` finding per
+  visible resolved `(bundleIndex, id)` carrying the `upstream` stale reason.
+  Withheld markers are skipped entirely, so Mode A IDs and content stay
+  undisclosed.
+- Validation and doctor now share `validation/calendar-date.ts`, a proleptic
+  Gregorian arithmetic calendar check that handles year zero and leap years
+  without `Date.UTC` year coercion.
+
+### Verification
+
+```text
+npm test -- packages/orgmd/test/doctor/doctor.test.ts packages/orgmd/test/validation/semantic.test.ts
+# 2 files passed, 32 tests passed
+
+npm test -- packages/orgmd/test/doctor packages/orgmd/test/validation
+# 5 files passed, 92 tests passed
+
+npm run check
+# format, typecheck, full test suite (22 files / 245 tests), and build passed
+```

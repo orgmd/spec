@@ -2,6 +2,7 @@ import { compareUtf8Bytes, sortDiagnostics } from "../diagnostics/sort.js";
 import type { EntryRevision } from "../model/types.js";
 import { selectEffectiveRevisions } from "../resolver/revisions.js";
 import type { ResolutionError } from "../resolver/types.js";
+import { isCalendarDate } from "../validation/calendar-date.js";
 import type {
   DoctorFinding,
   DoctorInput,
@@ -76,6 +77,7 @@ export function doctorBundle(input: DoctorInput): DoctorReport {
   for (const error of input.context?.resolutionErrors ?? []) {
     findings.push(resolutionFinding(error));
   }
+  findings.push(...upstreamStalenessFindings(input));
 
   return Object.freeze({
     findings: Object.freeze(sortDiagnostics(findings) as DoctorFinding[]),
@@ -211,6 +213,29 @@ function resolutionFinding(error: ResolutionError): DoctorFinding {
   );
 }
 
+function upstreamStalenessFindings(
+  input: DoctorInput,
+): readonly DoctorFinding[] {
+  const findings: DoctorFinding[] = [];
+  const reported = new Set<string>();
+  for (const entry of input.context?.entries ?? []) {
+    if ("withheld" in entry || !entry.staleReasons.includes("upstream")) {
+      continue;
+    }
+    const key = `${String(entry.bundleIndex)}\0${entry.revision.id}`;
+    if (reported.has(key)) continue;
+    reported.add(key);
+    findings.push(
+      finding(
+        "doctor.orphaned-upstream",
+        "This entry's recorded upstream reference no longer resolves.",
+        entry.revision,
+      ),
+    );
+  }
+  return Object.freeze(findings);
+}
+
 function ratiosFor(entries: readonly EntryRevision[]): readonly DomainRatio[] {
   const counts = new Map<string, { native: number; synced: number }>();
   for (const entry of entries) {
@@ -280,17 +305,4 @@ function advisory(
       ? {}
       : { details: Object.freeze({ ...details }) }),
   });
-}
-
-function isCalendarDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  if (year === undefined || month === undefined || day === undefined)
-    return false;
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
 }
