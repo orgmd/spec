@@ -5,7 +5,7 @@ Thank you — a standard is only as good as the counterexamples it survives.
 ## The fastest ways to help right now
 
 1. **Bring a counterexample.** An org shape, industry, or agent setup where
-   the entry model or inheritance rules break. File it as an issue with a
+   the entry model or resolution rules break. File it as an issue with a
    concrete scenario.
 2. **Draft a bundle for your org** (redacted is fine) and tell us where the
    format fought you.

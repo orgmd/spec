@@ -88,7 +88,7 @@ with these need to amend the constitution first, explicitly.
 id: dec.0001
 owner: role.editor
 scope: public
-status: active
+status: approved
 source: native
 decided: 2026-08-15
 ---
@@ -103,7 +103,7 @@ without legal review).
 id: dec.0002
 owner: role.editor
 scope: public
-status: active
+status: approved
 source: native
 decided: 2026-08-15
 revisit: 2027-03-01
@@ -118,7 +118,7 @@ the revisit date, whichever comes first.
 id: dec.0003
 owner: role.editor
 scope: public
-status: active
+status: approved
 source: native
 decided: 2026-08-15
 ---

@@ -10,7 +10,7 @@ delivers the right version to every AI tool and every person automatically.
 > standardised (MCP, A2A). The layer above them — what your organisation
 > actually *means* — is not. This is that layer.
 
-**Status: Draft 0.1 — seeking feedback.** Nothing here is frozen. If you
+**Status: 0.2-draft — seeking feedback.** Nothing here is frozen. If you
 run agents in an organisation and this problem is yours, we want your
 issues, your counterexamples, and your bundle.
 
@@ -64,11 +64,14 @@ Three design commitments carry the whole thing:
 
 ## Quickstart
 
-```bash
-npx orgmd init          # scaffold a bundle, interview-style
-npx orgmd compile --all # emit every projection
-npx orgmd doctor        # find stale, orphaned, or drifted entries
-npx orgmd serve --mcp   # mount the enforcing gate
+The reference CLI ships at v0.5 (see [ROADMAP.md](./ROADMAP.md)); the
+commands below are its target interface, not a released package:
+
+```text
+orgmd init          # scaffold a bundle, interview-style
+orgmd compile --all # emit every projection
+orgmd doctor        # find stale, orphaned, or drifted entries
+orgmd serve --mcp   # mount the enforcing gate
 ```
 
 A two-file bundle is fully Core-conformant. Start with the ~20 terms your
@@ -78,7 +81,7 @@ org argues about and one policy your agents must not break.
 
 | Doc | What it is |
 |---|---|
-| [SPEC.md](./SPEC.md) | The normative specification (v0.1-draft) |
+| [SPEC.md](./SPEC.md) | The normative specification (0.2-draft) |
 | [ROADMAP.md](./ROADMAP.md) | Path to v1.0 and beyond, with kill-gates |
 | [GOVERNANCE.md](./GOVERNANCE.md) | How decisions get made (spoiler: with ORG.md) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute, per repo |
@@ -86,7 +89,7 @@ org argues about and one policy your agents must not break.
 | [NON-GOALS.md](./NON-GOALS.md) | What this will never be |
 | [AGENT-BRIEF.md](./AGENT-BRIEF.md) | The build sequence for the reference implementation |
 | [org/](./org/) | This project's own bundle — governance, dogfooded |
-| [site/](./site/) | Launch site: concept, reference architectures, Desk mockup |
+| [site/](./site/) | The launch one-pager and logo assets |
 | [rfcs/](./rfcs/) | Spec change proposals (template inside) |
 
 ## Prior art
@@ -124,4 +127,4 @@ conformance suite and as CI for your own bundle changes.
 
 ---
 
-Built in Aotearoa. Meaning, finally treated as infrastructure.
+Made in New Zealand. Meaning, finally treated as infrastructure.

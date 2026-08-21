@@ -2,14 +2,16 @@
 
 ## Reporting
 
-Report vulnerabilities privately to **security@orgmd.dev** (placeholder —
-set before launch). Please do not open public issues for security reports.
+Report vulnerabilities privately via [GitHub private vulnerability
+reporting](https://github.com/orgmd/spec/security/advisories/new) on this
+repository, or by email to **matt@boundfor.co.nz**. Please do not open
+public issues for security reports.
 Acknowledgement within 72 hours; coordinated disclosure preferred; credit
 given unless you'd rather not.
 
 In scope: the spec's security semantics (§4.2, §5–§8), the reference
 compiler, the gate, the bench harness. Especially valuable: scope-widening
-via inheritance tricks, projection leakage, gate non-determinism, and
+via resolution tricks, projection leakage, gate non-determinism, and
 `org.lock` verification bypasses.
 
 ## Threat model (summary)
@@ -22,7 +24,7 @@ ORG.md concentrates meaning, so the design assumes the bundle is a target:
    fall-back to last known-good.
 2. **Context obeys least privilege.** Every entry is scoped; every consumer
    receives a projection, never the bundle; scopes may narrow down the
-   inheritance tree and never widen. At Extended conformance, scopes
+   resolution path and never widen. At Extended conformance, scopes
    resolve to the organisation's own identity system.
 3. **Prompts advise; the gate enforces.** Advisory projections are labelled
    as such. Deterministic policy answers exist only at the gate, and an
