@@ -32,6 +32,11 @@ export {
   type ContextIdInput,
 } from "./identifiers/context-id.js";
 export { resolveContext } from "./resolver/resolve.js";
+export {
+  actionContains,
+  effectStrength,
+  isValidAction,
+} from "./resolver/actions.js";
 export { serializeEffectiveContext } from "./resolver/serialize.js";
 export { createScopeLattice, type ScopeLattice } from "./resolver/scopes.js";
 export type {

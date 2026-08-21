@@ -75,11 +75,11 @@ describe("ordinary definition resolution", () => {
   });
 
   it.each([
-    ["restricted", "public"],
-    ["hr-only", "finance-only"],
+    ["restricted", "public", false],
+    ["hr-only", "finance-only", true],
   ])(
     "rejects a closer %s -> %s widening with no ancestor fallback",
-    (ancestorScope, closerScope) => {
+    (ancestorScope, closerScope, idWithheld) => {
       const customScopes = {
         "hr-only": { narrower_than: ["internal"] },
         "finance-only": { narrower_than: ["internal"] },
@@ -104,7 +104,9 @@ describe("ordinary definition resolution", () => {
         {
           code: "widening",
           node: "repo",
-          id: "term.freight",
+          ...(idWithheld
+            ? { id_withheld: true as const }
+            : { id: "term.freight" }),
           detail:
             "Closer scope does not narrow the preceding definition scope.",
         },

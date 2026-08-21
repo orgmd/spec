@@ -6,11 +6,18 @@ import {
   computeContextId,
   type BundleVersion,
 } from "../identifiers/context-id.js";
+import { resolveAuthorityDefinitions } from "./authority.js";
 import { resolveOrdinaryDefinitions } from "./definitions.js";
+import {
+  blockedEntryIds,
+  entrySemanticErrors,
+  renderResolutionErrors,
+  validateResolutionPath,
+} from "./errors.js";
+import { resolvePolicies } from "./policies.js";
 import { selectEffectiveRevisions } from "./revisions.js";
 import { createScopeLattice } from "./scopes.js";
 import type {
-  ResolutionError,
   ResolvedEntry,
   ResolveRequest,
   ResolveResult,
@@ -23,6 +30,9 @@ const WITHHELD_MARKER: WithheldMarker = Object.freeze({
 });
 
 export function resolveContext(request: ResolveRequest): ResolveResult {
+  const pathDiagnostics = validateResolutionPath(request.path);
+  if (pathDiagnostics.length > 0) return { diagnostics: pathDiagnostics };
+
   const clearance = normalizedClearance(request);
   if (!clearance) {
     return failure({
@@ -61,30 +71,78 @@ export function resolveContext(request: ResolveRequest): ResolveResult {
   const selections = request.path.flatMap((bundle, bundleIndex) =>
     selectEffectiveRevisions(bundle, bundleIndex),
   );
-  const definitions = resolveOrdinaryDefinitions(
+  const semanticErrors = entrySemanticErrors(
     selections,
+    request.path,
+    latticeResult.value,
+  );
+  const initiallyBlocked = blockedEntryIds(semanticErrors);
+  const eligible = selections.filter(
+    (selection) => !initiallyBlocked.has(selection.id),
+  );
+  const authority = resolveAuthorityDefinitions(
+    eligible,
     request.path,
     latticeResult.value,
     request.today,
   );
+  const ownershipRoutes = new Set<string>();
+  for (const entry of authority.entries) {
+    if (entry.revision.domain !== "ownership") continue;
+    ownershipRoutes.add(entry.revision.id);
+    ownershipRoutes.add(entry.revision.owner);
+  }
+  const definitions = resolveOrdinaryDefinitions(
+    eligible,
+    request.path,
+    latticeResult.value,
+    request.today,
+  );
+  const policies = resolvePolicies(
+    eligible,
+    request.path,
+    latticeResult.value,
+    ownershipRoutes,
+    request.today,
+  );
+  const allErrors = [
+    ...semanticErrors,
+    ...authority.resolutionErrors,
+    ...definitions.resolutionErrors,
+    ...policies.resolutionErrors,
+  ];
+  const blocked = blockedEntryIds(allErrors);
   const visible: ResolvedEntry[] = [];
   let withheldCount = 0;
-  for (const entry of definitions.entries) {
+  const resolved = [
+    ...definitions.entries,
+    ...authority.entries,
+    ...policies.entries,
+  ].filter((entry) => !blocked.has(entry.revision.id));
+  for (const entry of resolved) {
     if (latticeResult.value.visible(entry.revision.scope, clearance)) {
       visible.push(entry);
     } else {
       withheldCount += 1;
     }
   }
-  visible.sort((left, right) =>
-    compareUtf8Bytes(left.revision.id, right.revision.id),
+  visible.sort(
+    (left, right) =>
+      compareUtf8Bytes(left.revision.id, right.revision.id) ||
+      left.bundleIndex - right.bundleIndex,
   );
   const entries = Object.freeze([
     ...visible,
     ...Array.from({ length: withheldCount }, () => WITHHELD_MARKER),
   ]);
-  const resolutionErrors = sortResolutionErrors(definitions.resolutionErrors);
-  const diagnostics = Object.freeze([]) as readonly Diagnostic[];
+  const resolutionErrors = renderResolutionErrors(
+    allErrors,
+    selections,
+    request.path,
+    latticeResult.value,
+    clearance,
+  );
+  const diagnostics = sortDiagnostics(authority.diagnostics);
   const value = Object.freeze({
     entries,
     bundles,
@@ -102,19 +160,6 @@ function normalizedClearance(
     return request.anonymous ? Object.freeze(["public"]) : undefined;
   }
   return Object.freeze([...new Set(request.clearance)].sort(compareUtf8Bytes));
-}
-
-function sortResolutionErrors(
-  errors: readonly ResolutionError[],
-): readonly ResolutionError[] {
-  return Object.freeze(
-    [...errors].sort(
-      (left, right) =>
-        compareUtf8Bytes(left.node, right.node) ||
-        compareUtf8Bytes(left.id ?? "", right.id ?? "") ||
-        compareUtf8Bytes(left.code, right.code),
-    ),
-  );
 }
 
 function failure(...diagnostics: readonly Diagnostic[]): ResolveResult {
