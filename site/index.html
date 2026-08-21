@@ -110,6 +110,77 @@
   .commit .name{font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--kowhai);padding-top:3px;}
   .commit p{font-size:15px;color:var(--text-soft);line-height:1.6;}
 
+  /* how it works: pipeline steps */
+  .steps{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:680px){.steps{grid-template-columns:1fr;}}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:10px;}
+  .step-head{display:flex;align-items:baseline;gap:10px;font-family:var(--disp);font-weight:800;font-size:16px;letter-spacing:-.01em;}
+  .step-head .no{font-family:var(--mono);font-weight:600;font-size:12px;color:var(--kowhai);}
+  .step .d{font-size:14.5px;color:var(--text-soft);line-height:1.6;}
+  .step .d b{color:var(--text);font-weight:600;}
+  .snip{margin-top:auto;background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre;}
+  .snip .k{color:var(--kowhai);}
+  .snip .c{color:var(--text-soft);}
+  .snip .ok{color:var(--pass);}
+  .snip .no-go{color:var(--deny);}
+
+  /* one change, everywhere: timeline */
+  .chg{margin-top:28px;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;}
+  .chg-row{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:baseline;padding:16px 18px;border-bottom:1px solid var(--line);}
+  .chg-row:last-child{border-bottom:none;}
+  @media(max-width:640px){.chg-row{grid-template-columns:44px 1fr;}.chg-row .tag{grid-column:2;}}
+  .chg-row .no{font-family:var(--mono);font-size:12px;color:var(--kowhai);}
+  .chg-row p{font-size:15px;line-height:1.6;color:var(--text-soft);max-width:52ch;}
+  .chg-row p b{color:var(--text);font-family:var(--disp);font-weight:800;font-size:15px;}
+  .chg-row .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--text-soft);white-space:nowrap;}
+  .states{margin-top:24px;display:grid;gap:2px;}
+  .state{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:12px 0;border-top:1px solid var(--line);}
+  @media(max-width:560px){.state{grid-template-columns:1fr;gap:2px;}}
+  .state .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding-top:3px;}
+  .chip.s-draft{color:var(--text-soft);}
+  .chip.s-approved{color:var(--pass);}
+  .chip.s-contested{color:var(--kowhai);}
+  .chip.s-superseded{color:var(--text-soft);}
+  .state p{font-size:14.5px;color:var(--text-soft);line-height:1.6;}
+
+  /* industry examples: tabs + panels */
+  .tabs{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px;}
+  .tab{font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;background:var(--surface);color:var(--text-soft);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer;}
+  .tab:hover{color:var(--text);border-color:var(--text-soft);}
+  .tab[aria-selected="true"]{background:var(--kowhai);color:#101720;border-color:var(--kowhai);font-weight:600;}
+  .panel{margin-top:20px;}
+  .panel[hidden]{display:none;}
+  .panel-label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--kowhai);margin-bottom:12px;}
+  .js .panel-label{display:none;}
+  .scenario{font-size:15.5px;line-height:1.6;max-width:60ch;margin-bottom:14px;color:var(--text-soft);}
+  .scenario b{color:var(--text);font-weight:600;}
+  .snip-cap{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);margin-bottom:8px;}
+  .panel-grid{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:14px;align-items:start;}
+  @media(max-width:760px){.panel-grid{grid-template-columns:1fr;}}
+  .lands{border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;}
+  .lands .txt .c{color:var(--text-soft);}
+  .lands .txt .ok{color:var(--pass);}
+  .lands .txt .esc{color:var(--kowhai);}
+  .lands .txt .deny-t{color:var(--deny);}
+
+  /* layers: three resolution rules */
+  .rules{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media(max-width:760px){.rules{grid-template-columns:1fr;}}
+  .rule-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px;}
+  .rule-kind{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);}
+  .rule-card h3{font-family:var(--disp);font-size:16px;font-weight:800;letter-spacing:-.01em;}
+  .rstack{display:grid;gap:6px;}
+  .rrow{background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;}
+  .rrow.win{box-shadow:inset 3px 0 0 var(--kowhai);}
+  .rrow .lvl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-soft);}
+  .rrow .val{font-family:var(--mono);font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+  .rrow .mark{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;margin-top:2px;}
+  .mark.m-win{color:var(--kowhai);}
+  .mark.m-ok{color:var(--pass);}
+  .mark.m-soft{color:var(--text-soft);}
+  .mark.m-bad{color:var(--deny);}
+  .rule-note{font-size:13.5px;color:var(--text-soft);line-height:1.55;margin-top:auto;}
+
   /* the ask */
   .rfc{margin-top:8px;border:1px solid var(--line);border-top:3px solid var(--kowhai);border-radius:8px;background:var(--surface);padding:26px 24px;}
   .rfc .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--kowhai);margin-bottom:14px;}
@@ -259,8 +330,415 @@ org/
     </div>
   </section>
 
+  <section id="how">
+    <div class="sec-head"><span class="no">§3</span><h2>How it works</h2></div>
+    <p class="lede">Nothing in the pipeline is new. Meaning is written as plain text, reviewed like code, compiled per audience, and delivered in whatever form each consumer already reads. The only novel part is agreeing on the format.</p>
+    <p class="lede">In plain terms: someone writes a rule down once, the right person signs it off, and software carries the right version of it to every bot, agent and colleague. The grey boxes below are the real thing — ordinary text files a person can read without any tooling.</p>
+    <div class="steps">
+      <div class="step">
+        <p class="step-head"><span class="no">01</span><span>Write it once</span></p>
+        <p class="d">An entry is a few lines of YAML and a sentence. Every one names its <b>owner</b>, its <b>audience</b>, and its <b>status</b> — so a machine can always answer <em>who decided this, who may see it, is it current?</em></p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>     term.consignment
+<span class="k">owner:</span>  role.product-owner
+<span class="k">scope:</span>  public
+<span class="k">status:</span> approved
+<span class="k">rev:</span>    4
+<span class="c">---</span>
+<b>consignment</b> — one customer booking.
+May span several shipments; never
+a synonym for one.</div>
+      </div>
+      <div class="step">
+        <p class="step-head"><span class="no">02</span><span>Review it like code</span></p>
+        <p class="d">Changes arrive as pull requests. Only the entry's named <b>owner</b> can ratify one — the merge is the approval, and the git history is the audit trail. No steering committee, no wiki edit wars.</p>
+        <div class="snip"><span class="c">pull request · glossary.md</span>
+term.consignment  <span class="k">rev 3 → 4</span>
+<span class="ok">✓ approved</span> · role.product-owner
+<span class="c">merged · sealed into org.lock</span></div>
+      </div>
+      <div class="step">
+        <p class="step-head"><span class="no">03</span><span>Compile by audience</span></p>
+        <p class="d">One command emits a projection per audience, filtered by <b>who may see what</b>. What an audience may not see isn't redacted or watermarked — it's absent, so it can't be paraphrased or leaked.</p>
+        <div class="snip"><span class="k">$ orgmd compile --all</span>
+→ AGENTS.md fragments   <span class="c">coding agents</span>
+→ system-prompt blocks  <span class="c">bots · assistants</span>
+→ MCP gate tables       <span class="c">autonomous agents</span>
+→ handbook pages        <span class="c">people, per role</span></div>
+      </div>
+      <div class="step">
+        <p class="step-head"><span class="no">04</span><span>Deliver — and enforce</span></p>
+        <p class="d">Tools that read prose get the text. Agents that <b>act</b> get a gate: before doing something, the agent asks <em>"may I?"</em> and receives <b>allow</b>, <b>escalate</b> or <b>deny</b> — the same answer every time, naming the rule it stood on and the person to ask.</p>
+        <div class="snip"><span class="k">org.policy</span>("payments.refund.issue")
+→ verdict:      <span class="c">escalate</span>
+  relied_upon:  [policy.P-07]
+  route:        own.finance
+
+<span class="c">"pause — this one goes to finance,
+ under rule P-07."</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="change">
+    <div class="sec-head"><span class="no">§4</span><h2>One change, everywhere</h2></div>
+    <p class="lede">In §1, a wiki page last edited in 2024 was still telling every reader — human and machine — that the company prioritises rail. Here is the same update, made where meaning lives:</p>
+    <div class="chg">
+      <div class="chg-row">
+        <span class="no">01</span>
+        <p><b>Edit.</b> Ops moves the long-haul default from rail to coastal shipping. One entry changes — <em>dec.014</em> — and the change opens as a pull request.</p>
+        <span class="tag">dec.014 · rev 6 → 7</span>
+      </div>
+      <div class="chg-row">
+        <span class="no">02</span>
+        <p><b>Ratify.</b> The entry's owner — ops, not whoever edited the wiki last — approves. Rev 7 becomes the effective revision; rev 6 becomes history, not a lie left lying around.</p>
+        <span class="tag">status: approved</span>
+      </div>
+      <div class="chg-row">
+        <span class="no">03</span>
+        <p><b>Seal.</b> The bundle's release seal is re-signed, so every consumer can verify it holds the current, untampered version — and prove which version produced any answer.</p>
+        <span class="tag">org.lock ✓</span>
+      </div>
+      <div class="chg-row">
+        <span class="no">04</span>
+        <p><b>Land.</b> Every projection recompiles: the coding agent's fragment, the customer bot's prompt, the gate, the handbook. Nobody chases surfaces; none is missed.</p>
+        <span class="tag">4 audiences · 0 chased</span>
+      </div>
+    </div>
+    <p class="lede lede-after">And when people disagree — the normal case in a real organisation — disagreement is a state the format can hold, not a failure:</p>
+    <div class="states">
+      <div class="state">
+        <span class="chip s-draft">draft</span>
+        <p>Proposed meaning. Never delivered to any consumer, so a half-formed idea can't ship.</p>
+      </div>
+      <div class="state">
+        <span class="chip s-approved">approved</span>
+        <p>Ratified by the owner. This is what every surface receives.</p>
+      </div>
+      <div class="state">
+        <span class="chip s-contested">contested</span>
+        <p>Under dispute. Marked visibly everywhere it appears; agents that would rely on it must stop and escalate to the owner instead of guessing.</p>
+      </div>
+      <div class="state">
+        <span class="chip s-superseded">superseded</span>
+        <p>Retired but kept. History stays auditable without being mistaken for truth.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="industries">
+    <div class="sec-head"><span class="no">§5</span><h2>Your industry, your tools</h2></div>
+    <p class="lede">The bundle is the same handful of files everywhere. What changes is which entry is expensive to get wrong — and which tools are listening. One entry per industry, and the three surfaces it lands on:</p>
+    <div class="tabs" role="tablist" aria-label="Industry examples">
+      <button class="tab" role="tab" id="tab-freight" aria-controls="panel-freight" aria-selected="true">Freight &amp; logistics</button>
+      <button class="tab" role="tab" id="tab-health" aria-controls="panel-health" aria-selected="false">Healthcare</button>
+      <button class="tab" role="tab" id="tab-fintech" aria-controls="panel-fintech" aria-selected="false">Fintech</button>
+      <button class="tab" role="tab" id="tab-aviation" aria-controls="panel-aviation" aria-selected="false">Airports &amp; aviation</button>
+      <button class="tab" role="tab" id="tab-saas" aria-controls="panel-saas" aria-selected="false">SaaS</button>
+    </div>
+
+    <div class="panel" id="panel-freight" role="tabpanel" aria-labelledby="tab-freight">
+      <p class="panel-label">Freight &amp; logistics</p>
+      <p class="scenario"><b>The rule:</b> never let a bot promise a delivery time. Written once by ops, it reaches every surface below — including the ones from §1 that used to drift.</p>
+      <div class="panel-grid">
+        <div>
+        <p class="snip-cap">the entry — a plain text file</p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>     policy.P-11
+<span class="k">owner:</span>  own.ops
+<span class="k">scope:</span>  public
+<span class="k">status:</span> approved
+<span class="k">action:</span> customer.eta.promise
+<span class="k">effect:</span> <span class="no-go">deny</span>
+<span class="k">rev:</span>    2
+<span class="c">---</span>
+Never promise a delivery time.
+Quote the published service window;
+anything firmer is ops' call.</div>
+        </div>
+        <div>
+        <p class="snip-cap">where it lands</p>
+        <div class="lands">
+          <div class="copy">
+            <span class="src">customer bot · intercom prompt</span>
+            <div>
+              <div class="txt">"never promise a delivery time; quote the published service window."</div>
+              <div class="note">→ the §1 failure, fixed at the source it drifted from.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">warehouse agent · mcp gate</span>
+            <div>
+              <div class="txt">org.policy("customer.eta.promise") → <span class="deny-t">deny</span></div>
+              <div class="note">→ not a suggestion: the tool call is refused before it runs, 2am included.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">ops team · handbook</span>
+            <div>
+              <div class="txt">the same rule, one page, with its owner and revision.</div>
+              <div class="note">→ people and agents read one truth, formatted for each.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-health" role="tabpanel" aria-labelledby="tab-health">
+      <p class="panel-label">Healthcare</p>
+      <p class="scenario"><b>The rule:</b> no patient record leaves the practice without the privacy officer sighting the request. The interesting part is who <em>doesn't</em> see the rule — and gets gated anyway.</p>
+      <div class="panel-grid">
+        <div>
+        <p class="snip-cap">the entry — a plain text file</p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>      policy.P-03
+<span class="k">owner:</span>   own.privacy-officer
+<span class="k">scope:</span>   internal
+<span class="k">status:</span>  approved
+<span class="k">action:</span>  patient.record.disclose
+<span class="k">effect:</span>  <span class="k">escalate</span>
+<span class="k">route:</span>   own.privacy-officer
+<span class="k">revisit:</span> 2027-03-01
+<span class="c">---</span>
+No patient record leaves the practice
+without the privacy officer sighting
+the request. HIPC 2020 applies.</div>
+        </div>
+        <div>
+        <p class="snip-cap">where it lands</p>
+        <div class="lands">
+          <div class="copy">
+            <span class="src">reception chatbot · public scope</span>
+            <div>
+              <div class="txt"><span class="c">compiled out — scope: internal</span></div>
+              <div class="note">→ the public bot never receives the wording, so it can't paraphrase or leak it. Its actions still hit the gate.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">triage agent · mcp gate</span>
+            <div>
+              <div class="txt">org.policy("patient.record.disclose") → <span class="esc">escalate</span> · route: own.privacy-officer</div>
+              <div class="note">→ a named human in the loop, resolved from ownership.md — not an email hardcoded into a prompt.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">practice staff · copilot block</span>
+            <div>
+              <div class="txt">the full rule, with its owner and a revisit date.</div>
+              <div class="note">→ past 2027-03-01 unconfirmed, the entry is flagged stale and the gate stops answering allow. Staleness is computed, never trusted.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-fintech" role="tabpanel" aria-labelledby="tab-fintech">
+      <p class="panel-label">Fintech</p>
+      <p class="scenario"><b>The rule:</b> agents may draft refunds, but above NZ$500 a human in finance issues them. One number, one home — and a paper trail for the regulator.</p>
+      <div class="panel-grid">
+        <div>
+        <p class="snip-cap">the entry — a plain text file</p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>     policy.P-07
+<span class="k">owner:</span>  own.finance
+<span class="k">scope:</span>  internal
+<span class="k">status:</span> approved
+<span class="k">action:</span> payments.refund.issue
+<span class="k">effect:</span> <span class="k">escalate</span>
+<span class="k">route:</span>  own.finance
+<span class="k">rev:</span>    5
+<span class="c">---</span>
+Agents may draft refunds at any
+amount; above NZ$500 a human in
+finance issues them.</div>
+        </div>
+        <div>
+        <p class="snip-cap">where it lands</p>
+        <div class="lands">
+          <div class="copy">
+            <span class="src">support agent · zendesk / fin</span>
+            <div>
+              <div class="txt">"draft the refund; above NZ$500, hand it to finance."</div>
+              <div class="note">→ the limit lives in one entry, not in nine prompts that each remember a different number.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">back-office agent · mcp gate</span>
+            <div>
+              <div class="txt">org.policy("payments.refund.issue") → <span class="esc">escalate</span> · relied_upon: [policy.P-07]</div>
+              <div class="note">→ the verdict names the rule it stood on, so "why did the agent stop?" has an answer.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">your auditor · siem</span>
+            <div>
+              <div class="txt">every verdict logged with the sealed bundle version that produced it.</div>
+              <div class="note">→ "why did the agent do that?" becomes replayable, months later, against the exact meaning in force that day.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-aviation" role="tabpanel" aria-labelledby="tab-aviation">
+      <p class="panel-label">Airports &amp; aviation</p>
+      <p class="scenario"><b>The rule:</b> nothing moves airside without an active clearance. Written once at the top of the airport's tree; Terminal 2 tightens it for its own apron. An operation this broad — airside, retail, security, ground handlers — is exactly why bundles nest.</p>
+      <div class="panel-grid">
+        <div>
+        <p class="snip-cap">the entry — a plain text file</p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>     policy.P-21
+<span class="k">owner:</span>  own.airside-ops
+<span class="k">scope:</span>  internal
+<span class="k">status:</span> approved
+<span class="k">action:</span> airside.vehicle.dispatch
+<span class="k">effect:</span> <span class="k">escalate</span>
+<span class="k">route:</span>  own.duty-manager
+<span class="k">rev:</span>    8
+<span class="c">---</span>
+No vehicle dispatches airside without
+an active clearance. Terminals may
+narrow this for their own apron;
+none may weaken it.</div>
+        </div>
+        <div>
+        <p class="snip-cap">where it lands</p>
+        <div class="lands">
+          <div class="copy">
+            <span class="src">gse dispatch agent · mcp gate</span>
+            <div>
+              <div class="txt">org.policy("airside.vehicle.dispatch") → <span class="esc">escalate</span> · route: own.duty-manager</div>
+              <div class="note">→ routed to whoever holds the duty-manager role right now — a roster lookup, not a name that left last year.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">terminal 2 · its own bundle</span>
+            <div>
+              <div class="txt">adds a local rule: <span class="deny-t">deny</span> during low-visibility procedures.</div>
+              <div class="note">→ a department can tighten the airport-wide rule for its own patch, never loosen it — one format, from a regional strip to a hub with forty departments.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">contractor briefing · handbook</span>
+            <div>
+              <div class="txt">ground handlers and their agents read the same rule, current revision, before day one.</div>
+              <div class="note">→ the workforce that churns hardest gets the meaning that drifts worst — solved at the source.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-saas" role="tabpanel" aria-labelledby="tab-saas">
+      <p class="panel-label">SaaS</p>
+      <p class="scenario"><b>The rule:</b> "done" means shipped behind a flag with telemetry and a rollback path. Not a policy — a shared definition, which is most of what teams actually argue about.</p>
+      <div class="panel-grid">
+        <div>
+        <p class="snip-cap">the entry — a plain text file</p>
+        <div class="snip"><span class="c">---</span>
+<span class="k">id:</span>     done.feature
+<span class="k">owner:</span>  role.eng-lead
+<span class="k">scope:</span>  internal
+<span class="k">status:</span> approved
+<span class="k">rev:</span>    3
+<span class="c">---</span>
+A feature is done when it ships
+behind a flag, with telemetry and
+a rollback path — not when the
+pull request merges.</div>
+        </div>
+        <div>
+        <p class="snip-cap">where it lands</p>
+        <div class="lands">
+          <div class="copy">
+            <span class="src">coding agent · claude code / cursor</span>
+            <div>
+              <div class="txt">the definition of done, in the context window, on every task.</div>
+              <div class="note">→ agents stop declaring victory at "the tests pass".</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">review bot · ci</span>
+            <div>
+              <div class="txt">cites done.feature when a PR claims done without a flag.</div>
+              <div class="note">→ review comments point at a shared source instead of a reviewer's taste.</div>
+            </div>
+          </div>
+          <div class="copy">
+            <span class="src">new engineer · handbook</span>
+            <div>
+              <div class="txt">the same words, on day one.</div>
+              <div class="note">→ onboarding stops being oral tradition.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="lede lede-after">A two-person outfit runs all of this as one bundle. A larger organisation — board, exec, business units, teams — gives each layer its own, and a consumer's tools resolve down one path of that tree. The part that makes layers safe: three kinds of meaning travel by three different rules.</p>
+    <div class="rules">
+      <div class="rule-card">
+        <p class="rule-kind">vocabulary · glossary.md</p>
+        <h3>Closest wins</h3>
+        <div class="rstack">
+          <div class="rrow">
+            <span class="lvl">org</span>
+            <span class="val">case — any customer support ticket</span>
+            <span class="mark m-soft">overridden below</span>
+          </div>
+          <div class="rrow win">
+            <span class="lvl">claims team</span>
+            <span class="val">case — a claim under active assessment</span>
+            <span class="mark m-win">wins, for this team</span>
+          </div>
+        </div>
+        <p class="rule-note">Local language is allowed to be local. The org's meaning still holds everywhere else.</p>
+      </div>
+      <div class="rule-card">
+        <p class="rule-kind">policies · policies.md</p>
+        <h3>Stack — tighten only</h3>
+        <div class="rstack">
+          <div class="rrow">
+            <span class="lvl">org</span>
+            <span class="val">data.export.* → escalate</span>
+            <span class="mark m-ok">still applies</span>
+          </div>
+          <div class="rrow win">
+            <span class="lvl">claims team</span>
+            <span class="val">data.export.customer → deny</span>
+            <span class="mark m-win">narrows — allowed</span>
+          </div>
+        </div>
+        <p class="rule-note">Rules stack down the tree, and a closer layer may only make them stricter. The resolver rejects anything weaker — structurally, not on trust.</p>
+      </div>
+      <div class="rule-card">
+        <p class="rule-kind">decisions &amp; owners · decisions/</p>
+        <h3>The anchor wins</h3>
+        <div class="rstack">
+          <div class="rrow win">
+            <span class="lvl">board</span>
+            <span class="val">dec.009 — customer data stays in NZ</span>
+            <span class="mark m-win">anchored — wins</span>
+          </div>
+          <div class="rrow">
+            <span class="lvl">a team bundle</span>
+            <span class="val">dec.009 — reworded local copy</span>
+            <span class="mark m-bad">discarded · flagged</span>
+          </div>
+        </div>
+        <p class="rule-note">Authority resolves from the top. Ownership can be delegated explicitly; decisions never — a board decision changes only where it was made.</p>
+      </div>
+    </div>
+    <p class="flow-note">Every layer can add meaning and tighten rules for its own subtree; none can take or weaken what sits above. Start as one bundle; split a layer out only when it needs to own its own meaning.</p>
+  </section>
+
   <section id="ask">
-    <div class="sec-head"><span class="no">§3</span><h2>The ask</h2></div>
+    <div class="sec-head"><span class="no">§6</span><h2>The ask</h2></div>
     <div class="rfc">
       <p class="eyebrow">Request for comments</p>
       <p class="lede">This is one person's draft of a layer that needs many hands. No foundation, no company: a spec, a repo, and an argument that this layer should be open before it gets closed.</p>
@@ -310,6 +788,33 @@ org/
     </div>
   </footer>
 </div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var list=document.querySelector('.tabs');
+  if(!list)return;
+  var tabs=[].slice.call(list.querySelectorAll('.tab'));
+  var panels=tabs.map(function(t){return document.getElementById(t.getAttribute('aria-controls'));});
+  function select(i,focus){
+    tabs.forEach(function(t,j){
+      var on=(i===j);
+      t.setAttribute('aria-selected',on?'true':'false');
+      t.tabIndex=on?0:-1;
+      panels[j].hidden=!on;
+    });
+    if(focus)tabs[i].focus();
+  }
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){select(i);});
+    t.addEventListener('keydown',function(e){
+      var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;
+      if(d){e.preventDefault();select((i+d+tabs.length)%tabs.length,true);}
+    });
+  });
+  select(0);
+})();
+</script>
 
 </body>
 </html>
