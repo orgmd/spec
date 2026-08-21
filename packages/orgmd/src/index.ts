@@ -15,6 +15,23 @@ export type {
   ValidatedBundle,
 } from "./model/types.js";
 export {
+  bundleMetadataCanonicalForm,
+  entryCanonicalForm,
+  IdentifierError,
+  normalizeBody,
+} from "./identifiers/canonical.js";
+export {
+  computeBundleDigestInput,
+  computeContentId,
+  metadataDigest,
+  sha256Hex,
+} from "./identifiers/content-id.js";
+export {
+  computeContextId,
+  type BundleVersion,
+  type ContextIdInput,
+} from "./identifiers/context-id.js";
+export {
   validateBundle,
   validateBundlePath,
   type ValidateBundleOptions,
