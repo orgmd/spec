@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>ORG.md Desk — govern meaning without touching a repo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#101720;--surface:#161E2A;--surface-2:#1B2432;--inset:#0B0F15;
+    --text:#E9EBE5;--text-soft:#A7B1BF;--line:#2B3546;
+    --kowhai:#F5BE1A;--kowhai-dim:rgba(245,190,26,.14);
+    --pass:#46D6AB;--pass-dim:rgba(70,214,171,.12);
+    --deny:#FF8A73;--deny-dim:rgba(255,138,115,.12);
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    --disp:'Libre Franklin',system-ui,sans-serif;
+    --body:'Source Serif 4',Georgia,serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;}
+  .app{max-width:760px;margin:0 auto;padding:0 16px 70px;}
+  ::selection{background:var(--kowhai);color:#101720;}
+  button:focus-visible{outline:2px solid var(--kowhai);outline-offset:2px;}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 12px;border-bottom:1px solid var(--line);}
+  .brand{font-family:var(--disp);font-weight:900;font-size:18px;letter-spacing:-.01em;}
+  .brand .desk{color:var(--kowhai);}
+  .brand .org{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--text-soft);display:block;margin-top:2px;letter-spacing:.05em;}
+  .user{text-align:right;font-family:var(--mono);font-size:11px;color:var(--text-soft);line-height:1.5;}
+  .user b{color:var(--text);font-weight:600;display:block;font-size:12px;}
+  .hostline{font-family:var(--mono);font-size:10.5px;color:var(--text-soft);padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;}
+  .hostline .ok{color:var(--pass);}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;overflow-x:auto;margin:14px 0 18px;background:var(--inset);border:1px solid var(--line);border-radius:99px;padding:4px;}
+  .tab{appearance:none;border:none;background:none;font-family:var(--mono);font-size:12px;padding:9px 14px;border-radius:99px;color:var(--text-soft);cursor:pointer;white-space:nowrap;flex:1;}
+  .tab[aria-selected="true"]{background:var(--kowhai);color:#101720;font-weight:600;}
+  .tab .n{font-size:10.5px;opacity:.85;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .greet{font-family:var(--disp);font-weight:800;font-size:clamp(20px,5vw,26px);letter-spacing:-.01em;margin:6px 0 4px;}
+  .greetsub{font-size:14px;color:var(--text-soft);margin-bottom:18px;}
+
+  /* cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}
+  .card .why{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--kowhai);margin-bottom:8px;}
+  .card h3{font-family:var(--disp);font-size:17px;font-weight:800;line-height:1.35;margin-bottom:10px;}
+  .card p{font-size:14.5px;color:var(--text-soft);line-height:1.6;}
+  .card p b{color:var(--text);font-weight:600;}
+  .diff{margin:12px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px;}
+  .diff .d{padding:10px 14px;}
+  .diff .old{background:var(--deny-dim);color:var(--text-soft);}
+  .diff .old .lbl{color:var(--deny);}
+  .diff .new{background:var(--pass-dim);border-top:1px solid var(--line);}
+  .diff .new .lbl{color:var(--pass);}
+  .diff .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px;}
+  .impact{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;}
+  .ichip{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;color:var(--text-soft);}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
+  .btn{appearance:none;border-radius:8px;padding:10px 16px;font-family:var(--disp);font-weight:700;font-size:14px;cursor:pointer;border:1px solid var(--line);background:var(--surface-2);color:var(--text);}
+  .btn.primary{background:var(--kowhai);border-color:var(--kowhai);color:#101720;}
+  .btn.quiet{background:none;color:var(--text-soft);}
+  .under{margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--text-soft);border-top:1px dashed var(--line);padding-top:9px;line-height:1.6;}
+  .card.done{border-color:var(--pass);}
+  .card.done .donebar{display:flex;align-items:center;gap:8px;color:var(--pass);font-family:var(--mono);font-size:12px;margin-top:12px;}
+  .donebar{display:none;}
+
+  /* meaning browser */
+  .search{width:100%;background:var(--inset);border:1px solid var(--line);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:13px;padding:12px 14px;margin-bottom:12px;}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+  .fchip{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:5px 12px;color:var(--text-soft);background:none;cursor:pointer;}
+  .fchip.on{border-color:var(--kowhai);color:var(--kowhai);background:var(--kowhai-dim);}
+  .entry{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+  .entry .kind{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-soft);}
+  .entry h4{font-family:var(--disp);font-size:16.5px;font-weight:800;margin:4px 0 6px;}
+  .entry p{font-size:14px;color:var(--text-soft);line-height:1.6;}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .schip{font-family:var(--mono);font-size:10.5px;border-radius:99px;padding:3px 10px;border:1px solid var(--line);color:var(--text-soft);}
+  .schip.ok{color:var(--pass);border-color:var(--pass);}
+  .schip.warn{color:var(--kowhai);border-color:var(--kowhai);}
+  .schip.hot{color:var(--deny);border-color:var(--deny);}
+
+  /* ledger */
+  .lrow{display:grid;grid-template-columns:86px 1fr;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);font-size:14px;}
+  .lrow .t{font-family:var(--mono);font-size:11px;color:var(--text-soft);padding-top:2px;}
+  .lrow div{color:var(--text-soft);line-height:1.55;}
+  .lrow b{color:var(--text);font-weight:600;}
+
+  /* health */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .stat .v{font-family:var(--disp);font-weight:900;font-size:30px;letter-spacing:-.02em;}
+  .stat .v.good{color:var(--pass);} .stat .v.warn{color:var(--kowhai);}
+  .stat .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-soft);margin-top:4px;line-height:1.5;}
+  .notice{background:var(--kowhai-dim);border:1px solid var(--kowhai);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">ORG.md <span class="desk">Desk</span>
+      <span class="org">KŌWHAI FREIGHT LTD</span>
+    </div>
+    <div class="user"><b>Tema · Head of Network</b>you own 12 entries</div>
+  </div>
+  <div class="hostline">
+    <span class="ok">● self-hosted on your infrastructure</span>
+    <span>connected to your company's meaning record</span>
+    <span>last sync: 7 minutes ago</span>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Desk sections">
+    <button class="tab" role="tab" aria-selected="true" data-v="inbox">For you <span class="n">· 3</span></button>
+    <button class="tab" role="tab" aria-selected="false" data-v="meaning">Our meaning</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="changes">Changes</button>
+    <button class="tab" role="tab" aria-selected="false" data-v="health">Health</button>
+  </div>
+
+  <!-- FOR YOU -->
+  <div class="view active" id="v-inbox">
+    <div class="greet">Morning, Tema. Three things need you.</div>
+    <div class="greetsub">Everything here was found automatically. Nothing changes until you approve it.</div>
+
+    <div class="card" id="card-vacancy">
+      <div class="why">Found by overnight sync with HR</div>
+      <h3>The Ops duty manager has left. Where should delivery questions go now?</h3>
+      <div class="diff">
+        <div class="d old"><span class="lbl">Currently says</span>Customer delivery questions escalate to: <b>Ops duty manager</b> (role now vacant)</div>
+        <div class="d new"><span class="lbl">Proposed</span>Customer delivery questions escalate to: <b>Duty Operations Lead</b></div>
+      </div>
+      <p>This matters because the website assistant refuses to quote delivery times and hands those customers to a person. Right now, that hand-off points at an empty chair.</p>
+      <div class="impact">
+        <span class="ichip">used by the website assistant</span><span class="ichip">read by 2 teams</span><span class="ichip">live ~1 hour after approval</span>
+      </div>
+      <div class="actions">
+        <button class="btn primary" onclick="approve('card-vacancy')">Approve change</button>
+        <button class="btn">Send back with a note</button>
+        <button class="btn quiet">Ask a question</button>
+      </div>
+      <div class="donebar">✓ Approved. Going through review now, live across every assistant by lunch.</div>
+      <div class="under">Underneath: approving creates reviewed change #214 in your company's meaning record. Nothing here skips review, and every step is on the record.</div>
+    </div>
+
+    <div class="card" id="card-revisit">
+      <div class="why">Yearly check due</div>
+      <h3>"Road-first routing for North Island freight" is due its review</h3>
+      <p>You confirmed this in May 2026 because rail margins were negative. Every assistant and planning tool still treats road as the default. <b>Is it still true?</b></p>
+      <div class="actions">
+        <button class="btn primary" onclick="approve('card-revisit')">Still true — reconfirm</button>
+        <button class="btn">It's changed — update it</button>
+      </div>
+      <div class="donebar">✓ Reconfirmed. Next check: August 2027.</div>
+      <div class="under">Underneath: reconfirming updates the review date on decision DEC-014. No content changes.</div>
+    </div>
+
+    <div class="card">
+      <div class="why">Being discussed · day 4</div>
+      <h3>Two teams disagree about what "active customer" means</h3>
+      <p><b>Sales:</b> ordered within the last 12 months. <b>Finance:</b> holds a current account. While it's disputed, every assistant treats this term carefully — they won't act on it alone; they ask a person.</p>
+      <div class="impact"><span class="ichip">affects churn reporting</span><span class="ichip">affects the sales assistant</span></div>
+      <div class="actions">
+        <button class="btn primary">Review both definitions</button>
+        <button class="btn quiet">Route to the design forum</button>
+      </div>
+      <div class="under">Underneath: this entry is marked "contested". Assistants automatically play it safe until an owner settles it.</div>
+    </div>
+  </div>
+
+  <!-- OUR MEANING -->
+  <div class="view" id="v-meaning">
+    <div class="greet">Our meaning</div>
+    <div class="greetsub">Everything the company has written down, in plain sight. 47 entries, most kept in sync automatically from the systems you already use.</div>
+    <input class="search" placeholder="Search words, rules, decisions…" aria-label="Search meaning">
+    <div class="filters">
+      <button class="fchip on">All · 47</button><button class="fchip">Words · 18</button><button class="fchip">Rules · 12</button><button class="fchip">Decisions · 9</button><button class="fchip">Who decides · 8</button>
+    </div>
+
+    <div class="entry">
+      <span class="kind">Word</span>
+      <h4>consignment</h4>
+      <p>One customer booking, end to end. May span multiple legs and carriers. A <em>shipment</em> is a single leg — don't mix them.</p>
+      <div class="meta">
+        <span class="schip ok">Approved</span><span class="schip">Everyone can see</span><span class="schip">You own this</span><span class="schip">Confirmed May 2026</span><span class="schip">Used by: website assistant · developer tools · handbook</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <span class="kind">Rule</span>
+      <h4>Never quote delivery times to customers</h4>
+      <p>No assistant or staff member gives a delivery window directly. Those questions go to the Duty Operations Lead. Enforced automatically for assistants.</p>
+      <div class="meta">
+        <span class="schip ok">Approved · enforced</span><span class="schip">Staff only</span><span class="schip">Owned by Operations</span><span class="schip">Synced from the policy register</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <span class="kind">Decision</span>
+      <h4>North Island freight goes road-first</h4>
+      <p>Rail only when road capacity runs short. Decided May 2026, reviewed yearly.</p>
+      <div class="meta">
+        <span class="schip warn">Review due</span><span class="schip">Leadership only</span><span class="schip">You own this</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <span class="kind">Word</span>
+      <h4>active customer</h4>
+      <p>Two definitions in play — Sales and Finance disagree. Assistants treat this term carefully until it's settled.</p>
+      <div class="meta">
+        <span class="schip hot">Being discussed</span><span class="schip">Staff only</span><span class="schip">Owner: Customer Director</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANGES -->
+  <div class="view" id="v-changes">
+    <div class="greet">Changes</div>
+    <div class="greetsub">Every change to the company's meaning, who made it, and where it went. This is the record your auditors will ask for — already written.</div>
+    <div class="lrow"><span class="t">Today 10:04</span><div><b>You approved</b> the new escalation route for delivery questions. Live across every assistant by 11:15. <b>Change #214.</b></div></div>
+    <div class="lrow"><span class="t">Today 02:00</span><div><b>Overnight sync</b> noticed the Ops duty manager role was vacated and drafted the fix that landed in your inbox.</div></div>
+    <div class="lrow"><span class="t">Yesterday</span><div><b>Priya (Claims)</b> tightened "referral window" from 10 working days to 7. Checks passed: affects 3 assistants, 1 team handbook.</div></div>
+    <div class="lrow"><span class="t">Tuesday</span><div><b>"active customer" marked as disputed</b> after Sales and Finance submitted different definitions. Assistants switched to careful mode automatically.</div></div>
+    <div class="lrow"><span class="t">Last week</span><div><b>Quarterly evidence pack</b> exported for Risk — every read, every version, every approval, zero manual reporting.</div></div>
+  </div>
+
+  <!-- HEALTH -->
+  <div class="view" id="v-health">
+    <div class="greet">Health</div>
+    <div class="greetsub">Four numbers that tell leadership whether the company's meaning is being kept — no dashboard safari required.</div>
+    <div class="stats">
+      <div class="stat"><div class="v warn">2</div><div class="l">entries due their review</div></div>
+      <div class="stat"><div class="v warn">1</div><div class="l">disputed · 4 days open</div></div>
+      <div class="stat"><div class="v good">89%</div><div class="l">synced automatically from source systems</div></div>
+      <div class="stat"><div class="v good">0</div><div class="l">unreviewed changes, ever</div></div>
+    </div>
+    <div class="notice"><b>Quarter-end is in 6 weeks.</b> The evidence pack (who read what, every approval, every version) builds itself — Risk can export it from here in one click.</div>
+  </div>
+
+</div>
+<script>
+  const tabs=[...document.querySelectorAll('.tab')];
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.setAttribute('aria-selected',x===t?'true':'false'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='v-'+t.dataset.v));
+  }));
+  function approve(id){
+    const c=document.getElementById(id);
+    c.classList.add('done');
+    c.querySelector('.actions').style.display='none';
+    c.querySelector('.donebar').style.display='flex';
+  }
+</script>
+</body>
+</html>

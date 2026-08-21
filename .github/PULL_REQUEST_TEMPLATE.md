@@ -1,0 +1,4 @@
+- [ ] DCO signed (`git commit -s`)
+- [ ] If this touches SPEC.md normative text: linked accepted RFC
+- [ ] If this touches `org/`: entry has owner, scope, status, source
+- [ ] One paragraph a security reviewer could audit:
