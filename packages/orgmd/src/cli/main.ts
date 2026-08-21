@@ -1,11 +1,12 @@
 import { lstat, readFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { isAbsolute, resolve } from "node:path";
 import { compileContext } from "../compiler/compile.js";
 import { doctorBundle, doctorExitCode } from "../doctor/doctor.js";
 import { safeExplicitPath, atomicWriteFile } from "../io/atomic.js";
 import { previewAdoption, writeAdoption } from "../importer/adopt.js";
 import { planInit, writeInitPlan } from "../init/init.js";
 import { resolveContext } from "../resolver/resolve.js";
+import { isCalendarDate } from "../validation/calendar-date.js";
 import { validateBundlePath } from "../validation/validate.js";
 import { ORGMD_VERSION } from "../version.js";
 import { parseCommand, type ParsedCommand } from "./args.js";
@@ -86,8 +87,8 @@ async function doctor(
   json: boolean,
   io: CliIo,
 ): Promise<CliExitCode> {
-  if (!today)
-    return invocation("doctor requires an explicit --today YYYY-MM-DD.", io);
+  const dateFailure = invalidToday("doctor", today, json, io);
+  if (dateFailure !== undefined) return dateFailure;
   const result = await validateBundlePath(resolve(io.cwd, path), {
     isRoot: true,
   });
@@ -95,7 +96,7 @@ async function doctor(
     report("doctor", false, result.diagnostics, json, io);
     return exitForDiagnostics(result.diagnostics);
   }
-  const reportValue = doctorBundle({ bundle: result.value, today });
+  const reportValue = doctorBundle({ bundle: result.value, today: today! });
   const code = doctorExitCode(reportValue);
   if (json)
     write(
@@ -114,8 +115,8 @@ async function compile(
   parsed: Extract<ParsedCommand, { kind: "command"; command: "compile" }>,
   io: CliIo,
 ): Promise<CliExitCode> {
-  if (!parsed.today)
-    return invocation("compile requires an explicit --today YYYY-MM-DD.", io);
+  const dateFailure = invalidToday("compile", parsed.today, parsed.json, io);
+  if (dateFailure !== undefined) return dateFailure;
   const found = await discoverCompilePath(
     resolve(io.cwd, parsed.path ?? io.cwd),
   );
@@ -128,7 +129,7 @@ async function compile(
   const resolution = resolveContext({
     path: found.value,
     clearance: parsed.clearance ?? ["public"],
-    today: parsed.today,
+    today: parsed.today!,
   });
   if (!resolution.value) {
     report("compile", false, resolution.diagnostics, parsed.json, io, {
@@ -245,7 +246,7 @@ async function initialize(
   if (effect === "escalate" && !input.route)
     return invocation("--route is required when --effect is escalate.", io);
   const result = await planInit({
-    target: resolve(io.cwd, parsed.path ?? io.cwd),
+    target: initTarget(parsed.path, io.cwd),
     organizationName: input.organization!,
     tone: input.tone!,
     disputedTerms: input.terms
@@ -266,7 +267,7 @@ async function initialize(
   });
   if (!result.value) {
     report("init", false, result.diagnostics, parsed.json, io);
-    return 1;
+    return exitForDiagnostics(result.diagnostics);
   }
   if (!parsed.write || parsed.preview) {
     if (parsed.json)
@@ -280,7 +281,7 @@ async function initialize(
   const written = await writeInitPlan(result.value);
   if (!written.value) {
     report("init", false, written.diagnostics, parsed.json, io);
-    return 1;
+    return exitForDiagnostics(written.diagnostics);
   }
   if (parsed.json)
     write(
@@ -352,6 +353,11 @@ function parseConfirmations(previewId: string, values: readonly string[]) {
   return { previewId, byCandidateId };
 }
 
+function initTarget(path: string | undefined, cwd: string): string {
+  if (path === undefined) return cwd;
+  return isAbsolute(path) ? path : `${resolve(cwd)}/${path}`;
+}
+
 function report(
   command: string,
   ok: boolean,
@@ -368,18 +374,50 @@ function invocation(message: string, io: CliIo): 2 {
   write(io.stderr, `error cli.usage: ${message}\n`);
   return 2;
 }
+function invalidToday(
+  command: "compile" | "doctor",
+  today: string | undefined,
+  json: boolean,
+  io: CliIo,
+): 2 | undefined {
+  if (today !== undefined && isCalendarDate(today)) return undefined;
+  report(
+    command,
+    false,
+    [
+      {
+        code: "cli.invalid-date",
+        severity: "error",
+        message: "A valid --today YYYY-MM-DD is required.",
+      },
+    ],
+    json,
+    io,
+  );
+  return 2;
+}
 function exitForDiagnostics(
   diagnostics: readonly import("../diagnostics/types.js").Diagnostic[],
 ): 1 | 2 {
-  return diagnostics.some(({ code }) =>
+  return diagnostics.some(isOperationalDiagnostic) ? 2 : 1;
+}
+function isOperationalDiagnostic({
+  code,
+}: import("../diagnostics/types.js").Diagnostic): boolean {
+  return (
+    code.startsWith("io.") ||
     [
       "bundle.invalid-reference",
       "bundle.read-error",
       "cli.invalid-path",
-    ].includes(code),
-  )
-    ? 2
-    : 1;
+      "init.invalid-parent",
+      "init.invalid-target",
+      "init.symlink-target",
+      "init.validation-failed",
+      "init.write-failed",
+      "init.rollback-failed",
+    ].includes(code)
+  );
 }
 function write(stream: NodeJS.WritableStream, text: string): void {
   stream.write(text);

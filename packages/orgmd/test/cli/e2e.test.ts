@@ -23,6 +23,18 @@ async function cli(...argv: string[]) {
   });
 }
 
+async function failedCli(...argv: string[]) {
+  try {
+    await cli(...argv);
+    throw new Error("Expected command to fail.");
+  } catch (error) {
+    return error as NodeJS.ErrnoException & {
+      readonly stdout: string;
+      readonly stderr: string;
+    };
+  }
+}
+
 beforeAll(async () => {
   await execFileAsync("npm", ["run", "build"], { cwd: packageRoot.pathname });
 });
@@ -35,6 +47,33 @@ afterAll(async () => {
 });
 
 describe("orgmd executable", () => {
+  it("rejects impossible --today values before doctor and compile filesystem work", async () => {
+    for (const argv of [
+      ["doctor", "/not/loaded", "--today", "2026-13-01"],
+      ["compile", "/not/loaded", "--target", "prompt", "--today", "2026-02-30"],
+    ]) {
+      const failure = await failedCli(...argv);
+      expect(failure.code).toBe(2);
+      expect(failure.stdout).toBe("");
+      expect(failure.stderr).toBe(
+        "error cli.invalid-date: A valid --today YYYY-MM-DD is required.\n",
+      );
+    }
+    const json = await failedCli(
+      "doctor",
+      "/not/loaded",
+      "--today",
+      "2026-02-30",
+      "--json",
+    );
+    expect(JSON.parse(json.stdout)).toMatchObject({
+      command: "doctor",
+      ok: false,
+      diagnostics: [{ code: "cli.invalid-date" }],
+    });
+    expect(json.stderr).toBe("");
+  });
+
   it("has a node shebang and initializes by preview unless --write is explicit", async () => {
     expect(
       (await readFile(bin, "utf8")).startsWith("#!/usr/bin/env node"),

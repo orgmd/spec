@@ -44,6 +44,33 @@ async function invalidBundle(): Promise<string> {
   return directory;
 }
 
+function initArgs(target: string, overrides: readonly string[] = []): string[] {
+  return [
+    "init",
+    target,
+    "--non-interactive",
+    "--organization",
+    "Example Org",
+    "--tone",
+    "plain",
+    "--policy",
+    "Do not publish.",
+    "--action",
+    "data.publish",
+    "--effect",
+    "deny",
+    "--editor",
+    "role.editor",
+    "--owner",
+    "role.security",
+    "--revisit",
+    "2027-01-01",
+    "--today",
+    "2026-08-21",
+    ...overrides,
+  ];
+}
+
 afterEach(async () => {
   await Promise.all(
     directories
@@ -101,5 +128,71 @@ describe("runCli", () => {
       await runCli(["validate", "/definitely/not/an/orgmd-bundle"], io),
     ).toBe(2);
     expect(io.stderrText()).toContain("bundle.invalid-reference");
+  });
+
+  it("rejects malformed today before doctor or compile loads a path", async () => {
+    for (const argv of [
+      ["doctor", "/not/loaded", "--today", "2026-13-01"],
+      ["compile", "/not/loaded", "--target", "prompt", "--today", "2026-02-29"],
+    ]) {
+      const io = memoryIo();
+      expect(await runCli(argv, io)).toBe(2);
+      expect(io.stdoutText()).toBe("");
+      expect(io.stderrText()).toBe(
+        "error cli.invalid-date: A valid --today YYYY-MM-DD is required.\n",
+      );
+    }
+  });
+
+  it("uses JSON for malformed today diagnostics", async () => {
+    const io = memoryIo();
+    expect(
+      await runCli(
+        ["doctor", "/not/loaded", "--today", "2026-02-30", "--json"],
+        io,
+      ),
+    ).toBe(2);
+    expect(JSON.parse(io.stdoutText())).toEqual({
+      command: "doctor",
+      ok: false,
+      diagnostics: [
+        {
+          code: "cli.invalid-date",
+          severity: "error",
+          message: "A valid --today YYYY-MM-DD is required.",
+        },
+      ],
+    });
+    expect(io.stderrText()).toBe("");
+  });
+
+  it("maps init operational diagnostics to exit 2", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "orgmd-cli-"));
+    directories.push(parent);
+    for (const target of [
+      join(parent, "missing", "bundle"),
+      `${parent}/nested/../bundle`,
+    ]) {
+      const io = memoryIo();
+      expect(await runCli(initArgs(target), io)).toBe(2);
+      expect(io.stdoutText()).toBe("");
+    }
+  });
+
+  it("keeps semantic init rejection at exit 1 and supports preview then write", async () => {
+    const parent = await mkdtemp(join(tmpdir(), "orgmd-cli-"));
+    directories.push(parent);
+    const target = join(parent, "bundle");
+    const semantic = memoryIo();
+    expect(
+      await runCli(initArgs(target, ["--action", "not valid"]), semantic),
+    ).toBe(1);
+    expect(semantic.stderrText()).toContain("invalid_action");
+    const preview = memoryIo();
+    expect(await runCli(initArgs(target), preview)).toBe(0);
+    expect(preview.stdoutText()).toContain("# org.md");
+    const written = memoryIo();
+    expect(await runCli(initArgs(target, ["--write"]), written)).toBe(0);
+    expect(written.stdoutText()).toContain("init: wrote");
   });
 });
