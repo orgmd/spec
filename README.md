@@ -62,6 +62,28 @@ Three design commitments carry the whole thing:
    KMS, audit flows to your SIEM. ORG.md owns a format, a compiler, and a
    bench. Nothing else.
 
+## Layers and scale
+
+A two-person company runs one bundle. A larger organisation — board,
+exec, business units, teams — gives each layer its own, and every
+consumer resolves down one designated path of the tree (SPEC §5). Three
+kinds of meaning travel by three different rules:
+
+| Kind | Across layers | So that |
+|---|---|---|
+| Vocabulary, definitions of done | closest to the consumer wins | teams may speak their own language, locally |
+| Policies | all apply; a closer layer may only narrow (SPEC §5, §4.6) | no subtree can weaken a rule from above |
+| Decisions, ownership | the anchoring bundle — closest to the root — wins (SPEC §5.2) | a team cannot rewrite a board decision; delegation is explicit, and never for decisions |
+
+This is also why the registers stay small at scale: mass is distributed —
+each layer holds only the meaning it owns — and the write-doctrine admits
+an entry only where a consumer acting on the wrong version is expensive
+(SPEC §9). The decision register holds *active* decisions only
+(superseded entries are kept but never emitted), and full rationale stays
+in your systems of record via `ref:` or `synced:` sources. Start as one
+bundle; split a layer out only when it needs to own its own meaning — the
+narrowing and anchoring rules make each split safe by construction.
+
 ## Quickstart
 
 The reference CLI ships at v0.5 (see [ROADMAP.md](./ROADMAP.md)); the

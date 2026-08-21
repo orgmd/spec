@@ -163,6 +163,24 @@
   .lands .txt .esc{color:var(--kowhai);}
   .lands .txt .deny-t{color:var(--deny);}
 
+  /* layers: three resolution rules */
+  .rules{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media(max-width:760px){.rules{grid-template-columns:1fr;}}
+  .rule-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:10px;}
+  .rule-kind{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);}
+  .rule-card h3{font-family:var(--disp);font-size:16px;font-weight:800;letter-spacing:-.01em;}
+  .rstack{display:grid;gap:6px;}
+  .rrow{background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;}
+  .rrow.win{box-shadow:inset 3px 0 0 var(--kowhai);}
+  .rrow .lvl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-soft);}
+  .rrow .val{font-family:var(--mono);font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
+  .rrow .mark{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;margin-top:2px;}
+  .mark.m-win{color:var(--kowhai);}
+  .mark.m-ok{color:var(--pass);}
+  .mark.m-soft{color:var(--text-soft);}
+  .mark.m-bad{color:var(--deny);}
+  .rule-note{font-size:13.5px;color:var(--text-soft);line-height:1.55;margin-top:auto;}
+
   /* the ask */
   .rfc{margin-top:8px;border:1px solid var(--line);border-top:3px solid var(--kowhai);border-radius:8px;background:var(--surface);padding:26px 24px;}
   .rfc .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--kowhai);margin-bottom:14px;}
@@ -411,7 +429,6 @@ term.consignment  <span class="k">rev 3 → 4</span>
   <section id="industries">
     <div class="sec-head"><span class="no">§5</span><h2>Your industry, your tools</h2></div>
     <p class="lede">The bundle is the same handful of files everywhere. What changes is which entry is expensive to get wrong — and which tools are listening. One entry per industry, and the three surfaces it lands on:</p>
-    <p class="lede">It also scales the way organisations do. A two-person outfit runs one bundle; a group with sprawling departments nests them like the org chart, and a closer team can make a rule <em>stricter</em> for its own patch — never weaker. Same format at both ends.</p>
     <div class="tabs" role="tablist" aria-label="Industry examples">
       <button class="tab" role="tab" id="tab-freight" aria-controls="panel-freight" aria-selected="true">Freight &amp; logistics</button>
       <button class="tab" role="tab" id="tab-health" aria-controls="panel-health" aria-selected="false">Healthcare</button>
@@ -662,6 +679,62 @@ pull request merges.</div>
         </div>
       </div>
     </div>
+
+    <p class="lede lede-after">A two-person outfit runs all of this as one bundle. A larger organisation — board, exec, business units, teams — gives each layer its own, and a consumer's tools resolve down one path of that tree. The part that makes layers safe: three kinds of meaning travel by three different rules.</p>
+    <div class="rules">
+      <div class="rule-card">
+        <p class="rule-kind">vocabulary · glossary.md</p>
+        <h3>Closest wins</h3>
+        <div class="rstack">
+          <div class="rrow">
+            <span class="lvl">org</span>
+            <span class="val">case — any customer support ticket</span>
+            <span class="mark m-soft">overridden below</span>
+          </div>
+          <div class="rrow win">
+            <span class="lvl">claims team</span>
+            <span class="val">case — a claim under active assessment</span>
+            <span class="mark m-win">wins, for this team</span>
+          </div>
+        </div>
+        <p class="rule-note">Local language is allowed to be local. The org's meaning still holds everywhere else.</p>
+      </div>
+      <div class="rule-card">
+        <p class="rule-kind">policies · policies.md</p>
+        <h3>Stack — tighten only</h3>
+        <div class="rstack">
+          <div class="rrow">
+            <span class="lvl">org</span>
+            <span class="val">data.export.* → escalate</span>
+            <span class="mark m-ok">still applies</span>
+          </div>
+          <div class="rrow win">
+            <span class="lvl">claims team</span>
+            <span class="val">data.export.customer → deny</span>
+            <span class="mark m-win">narrows — allowed</span>
+          </div>
+        </div>
+        <p class="rule-note">Rules stack down the tree, and a closer layer may only make them stricter. The resolver rejects anything weaker — structurally, not on trust.</p>
+      </div>
+      <div class="rule-card">
+        <p class="rule-kind">decisions &amp; owners · decisions/</p>
+        <h3>The anchor wins</h3>
+        <div class="rstack">
+          <div class="rrow win">
+            <span class="lvl">board</span>
+            <span class="val">dec.009 — customer data stays in NZ</span>
+            <span class="mark m-win">anchored — wins</span>
+          </div>
+          <div class="rrow">
+            <span class="lvl">a team bundle</span>
+            <span class="val">dec.009 — reworded local copy</span>
+            <span class="mark m-bad">discarded · flagged</span>
+          </div>
+        </div>
+        <p class="rule-note">Authority resolves from the top. Ownership can be delegated explicitly; decisions never — a board decision changes only where it was made.</p>
+      </div>
+    </div>
+    <p class="flow-note">Every layer can add meaning and tighten rules for its own subtree; none can take or weaken what sits above. Start as one bundle; split a layer out only when it needs to own its own meaning.</p>
   </section>
 
   <section id="ask">
