@@ -32,6 +32,7 @@ describe("identifier canonical forms", () => {
         ref: "policy/17",
         fetched: "2026-08-21",
         digest: "sha256:abc",
+        note: "unknown nested metadata",
       },
       action: "data.export",
       effect: "escalate",

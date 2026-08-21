@@ -93,6 +93,27 @@ describe("Core bundle content identifiers", () => {
     );
   });
 
+  it("ignores unknown nested upstream fields", () => {
+    const upstream = {
+      system: "registry",
+      ref: "terms/freight",
+      fetched: "2026-08-21",
+      digest: "sha256:abc",
+    };
+    const withoutExtension = parsed("glossary", "term.freight", {
+      source: "synced:registry",
+      upstream,
+    });
+    const withExtension = parsed("glossary", "term.freight", {
+      source: "synced:registry",
+      upstream: { ...upstream, note: "unknown nested metadata" },
+    });
+
+    expect(computeContentId(validated([withExtension]))).toBe(
+      computeContentId(validated([withoutExtension])),
+    );
+  });
+
   it("rejects duplicate (id, rev) records with a stable public diagnostic", () => {
     const bundle = validated([parsed("glossary", "term.freight")]);
     const duplicate = {

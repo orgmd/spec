@@ -32,6 +32,15 @@ export function normalizeBody(body: string): string {
 export function entryCanonicalForm(
   revision: EntryRevision,
 ): EntryCanonicalForm {
+  const upstream = revision.upstream
+    ? {
+        system: revision.upstream.system,
+        ref: revision.upstream.ref,
+        fetched: revision.upstream.fetched,
+        digest: revision.upstream.digest,
+      }
+    : undefined;
+
   return Object.freeze({
     id: revision.id,
     owner: revision.owner,
@@ -42,9 +51,7 @@ export function entryCanonicalForm(
     rev: revision.rev,
     ...(revision.revisit !== undefined ? { revisit: revision.revisit } : {}),
     ...(revision.ref !== undefined ? { ref: revision.ref } : {}),
-    ...(revision.upstream !== undefined
-      ? { upstream: { ...revision.upstream } }
-      : {}),
+    ...(upstream !== undefined ? { upstream } : {}),
     ...(revision.action !== undefined ? { action: revision.action } : {}),
     ...(revision.effect !== undefined ? { effect: revision.effect } : {}),
     ...(revision.route !== undefined ? { route: revision.route } : {}),
