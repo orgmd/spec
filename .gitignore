@@ -5,6 +5,7 @@ dist/
 coverage/
 *.log
 *.tsbuildinfo
+.worktrees/
 
 # local working material, not for publication
 site/deep-dive.html
