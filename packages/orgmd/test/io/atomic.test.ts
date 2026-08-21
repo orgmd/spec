@@ -2,6 +2,7 @@ import {
   lstat,
   mkdtemp,
   readFile,
+  rename,
   rm,
   symlink,
   writeFile,
@@ -70,5 +71,34 @@ describe("atomicWriteFile", () => {
     );
     expect(await readFile(outside, "utf8")).toBe("original");
     expect((await lstat(target)).isSymbolicLink()).toBe(true);
+  });
+
+  it("syncs the containing directory after its committed rename", async () => {
+    const directory = await fixtureDir();
+    const path = join(directory, "output.txt");
+    await writeFile(path, "original", "utf8");
+    const events: string[] = [];
+
+    const result = await atomicWriteFile(
+      path,
+      new TextEncoder().encode("replacement"),
+      {
+        overwrite: true,
+        io: {
+          rename: async (from, to) => {
+            events.push("rename");
+            await rename(from, to);
+          },
+          syncParent: async (parent) => {
+            events.push(
+              `sync:${await readFile(join(parent, "output.txt"), "utf8")}`,
+            );
+          },
+        },
+      },
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(events).toEqual(["rename", "sync:replacement"]);
   });
 });

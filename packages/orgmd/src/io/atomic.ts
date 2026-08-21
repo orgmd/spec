@@ -5,6 +5,13 @@ import type { Diagnostic, OperationResult } from "../diagnostics/types.js";
 export interface AtomicWriteOptions {
   readonly overwrite: boolean;
   readonly mode?: number;
+  /** Narrow durability seam for deterministic filesystem-order tests. */
+  readonly io?: AtomicIo;
+}
+
+export interface AtomicIo {
+  readonly rename: (from: string, to: string) => Promise<void>;
+  readonly syncParent: (path: string) => Promise<void>;
 }
 
 /** Writes a regular file through a same-directory temporary file and rename. */
@@ -31,6 +38,7 @@ export async function atomicWriteFile(
     dirname(path),
     `.${basename(path)}.orgmd-${process.pid}-${randomToken()}.tmp`,
   );
+  const io = options.io ?? defaultIo;
   let handle: Awaited<ReturnType<typeof open>> | undefined;
   try {
     handle = await open(temporary, "wx", options.mode ?? 0o600);
@@ -46,13 +54,28 @@ export async function atomicWriteFile(
     } catch (error) {
       if (!isMissing(error)) return failure(ioError(path));
     }
-    await rename(temporary, path);
+    await io.rename(temporary, path);
+    await io.syncParent(dirname(path));
     return { value: undefined, diagnostics: Object.freeze([]) };
   } catch {
     return failure(ioError(path));
   } finally {
     await handle?.close().catch(() => undefined);
     await unlink(temporary).catch(() => undefined);
+  }
+}
+
+const defaultIo: AtomicIo = Object.freeze({
+  rename,
+  syncParent: syncDirectory,
+});
+
+async function syncDirectory(path: string): Promise<void> {
+  const handle = await open(path, "r");
+  try {
+    await handle.sync();
+  } finally {
+    await handle.close();
   }
 }
 

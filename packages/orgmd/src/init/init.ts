@@ -1,6 +1,5 @@
 import {
   lstat,
-  mkdir,
   mkdtemp,
   open,
   readdir,
@@ -25,6 +24,14 @@ const generatedNames = Object.freeze(["org.md", "ownership.md", "policies.md"]);
 export interface InitWriteOptions {
   /** Dependency injection for deterministic storage-failure tests. */
   readonly writeFile?: typeof atomicWriteFile;
+  /** Narrow rename/durability seam for deterministic swap-failure tests. */
+  readonly io?: InitIo;
+}
+
+export interface InitIo {
+  readonly rename: (from: string, to: string) => Promise<void>;
+  readonly remove: (path: string) => Promise<void>;
+  readonly syncParent: (path: string) => Promise<void>;
 }
 
 export async function planInit(
@@ -71,6 +78,10 @@ export async function writeInitPlan(
   const parent = dirname(plan.target);
   let staged: string | undefined;
   let backup: string | undefined;
+  let movedExisting = false;
+  let installedStaged = false;
+  let preserveBackup = false;
+  const io = options.io ?? defaultInitIo;
   try {
     staged = await mkdtemp(join(parent, ".orgmd-init-"));
     await chmodDirectory(staged, 0o700);
@@ -92,36 +103,48 @@ export async function writeInitPlan(
 
     if (await exists(plan.target)) {
       backup = `${staged}.backup`;
-      await rename(plan.target, backup);
-      try {
-        await rename(staged, plan.target);
-        staged = undefined;
-      } catch (error) {
-        await rename(backup, plan.target).catch(() => undefined);
-        backup = undefined;
-        throw error;
-      }
-      await rm(backup, { recursive: true, force: true });
+      await io.rename(plan.target, backup);
+      movedExisting = true;
+      await io.syncParent(parent);
+    }
+
+    await io.rename(staged, plan.target);
+    staged = undefined;
+    installedStaged = true;
+    await io.syncParent(parent);
+
+    if (backup !== undefined) {
+      await io.remove(backup);
       backup = undefined;
-    } else {
-      await rename(staged, plan.target);
-      staged = undefined;
+      await io.syncParent(parent);
     }
     return { value: generatedNames, diagnostics: Object.freeze([]) };
   } catch {
-    return failure({
-      code: "init.write-failed",
-      severity: "error" as const,
-      message: "Initializer could not atomically replace the target bundle.",
-      path: plan.target,
-    });
+    if (movedExisting && !installedStaged && backup !== undefined) {
+      try {
+        await io.rename(backup, plan.target);
+        backup = undefined;
+        await io.syncParent(parent);
+      } catch {
+        preserveBackup = true;
+        return failure(rollbackFailed(plan.target));
+      }
+    } else if (backup !== undefined) {
+      preserveBackup = true;
+    }
+    return failure(writeFailed(plan.target));
   } finally {
-    if (backup !== undefined)
-      await rm(backup, { recursive: true, force: true }).catch(() => undefined);
-    if (staged !== undefined)
-      await rm(staged, { recursive: true, force: true }).catch(() => undefined);
+    if (backup !== undefined && !preserveBackup)
+      await io.remove(backup).catch(() => undefined);
+    if (staged !== undefined) await io.remove(staged).catch(() => undefined);
   }
 }
+
+const defaultInitIo: InitIo = Object.freeze({
+  rename,
+  remove: async (path: string) => rm(path, { recursive: true, force: true }),
+  syncParent: syncDirectory,
+});
 
 async function validateFiles(
   target: string,
@@ -319,6 +342,25 @@ function unsafePlanPath(path: string): Diagnostic {
     code: "init.invalid-plan",
     severity: "error",
     message: "Initializer plan target must be an absolute normalized path.",
+    path,
+  };
+}
+
+function writeFailed(path: string): Diagnostic {
+  return {
+    code: "init.write-failed",
+    severity: "error",
+    message: "Initializer could not atomically replace the target bundle.",
+    path,
+  };
+}
+
+function rollbackFailed(path: string): Diagnostic {
+  return {
+    code: "init.rollback-failed",
+    severity: "error",
+    message:
+      "Initializer could not durably restore the prior bundle; manual recovery may be required.",
     path,
   };
 }

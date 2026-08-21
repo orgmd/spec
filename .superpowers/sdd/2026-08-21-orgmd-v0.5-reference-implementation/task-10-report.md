@@ -65,3 +65,47 @@ npm test -- packages/orgmd/test/init packages/orgmd/test/io packages/orgmd/test/
 npm run check
 # format, typecheck, full test suite (24 files / 254 tests), and build passed
 ```
+
+## Fix Round 1
+
+### RED
+
+Added durability-ordering and overwrite-swap tests, then ran:
+
+```text
+npm test -- packages/orgmd/test/init packages/orgmd/test/io
+```
+
+The new tests failed as intended: the atomic writer's injected rename/sync
+events were empty, successful overwrite replacement emitted no parent-sync
+events, and injected second/third rename failures were ignored because no
+rename seam existed. Those failures demonstrated that a successful return did
+not establish parent-directory durability and that swap/rollback behavior was
+not directly testable.
+
+### GREEN
+
+- `atomicWriteFile()` now performs a directory fsync after its committed
+  temporary-file-to-target rename. Its narrow `AtomicIo` seam verifies the
+  actual renamed bytes are already visible when the parent-sync operation runs.
+- `writeInitPlan()` now fsyncs the target parent after old-target-to-backup,
+  staged-directory-to-target, backup removal, and rollback rename operations.
+  A successful result therefore follows each required directory durability
+  barrier.
+- The overwrite transaction tracks whether the old target moved and whether a
+  staged target installed. A failed swap restores and syncs the old directory;
+  a failed rollback returns stable `init.rollback-failed`, retains the backup,
+  and never reports partial success.
+- The tested safety boundary now includes ancestor and target-directory
+  symlinks, unexpected overwrite contents, explicit date gating, exact
+  byte-stable scaffold/preview literals, and escalation route rendering.
+
+### Verification
+
+```text
+npm test -- packages/orgmd/test/init packages/orgmd/test/io
+# 2 files passed, 18 tests passed
+
+npm run check
+# format, typecheck, full test suite (24 files / 263 tests), and build passed
+```
