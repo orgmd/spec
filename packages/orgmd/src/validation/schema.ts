@@ -1,13 +1,8 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
 import type { Diagnostic } from "../diagnostics/types.js";
 
-const entrySchema = JSON.parse(
-  readFileSync(
-    new URL("../../../../schema/entry.schema.json", import.meta.url),
-    "utf8",
-  ),
-) as object;
+const entrySchema = JSON.parse(readFileSync(schemaUrl(), "utf8")) as object;
 
 const ajv = new Ajv2020({
   allErrors: true,
@@ -15,6 +10,13 @@ const ajv = new Ajv2020({
   strictRequired: false,
 });
 const validate = ajv.compile(entrySchema);
+
+function schemaUrl(): URL {
+  const packaged = new URL("../schema/entry.schema.json", import.meta.url);
+  return existsSync(packaged)
+    ? packaged
+    : new URL("../../../../schema/entry.schema.json", import.meta.url);
+}
 
 export function validateEntrySchema(
   frontMatter: Readonly<Record<string, unknown>>,
