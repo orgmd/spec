@@ -1,0 +1,81 @@
+[
+  {
+    "name": "context id fixes Mode A spec version path and clearance",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "root"
+        },
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        }
+      ],
+      "clearance": ["public", "internal", "public"]
+    },
+    "expected": {
+      "context_id": "sha256:9a3e816cc4b26e84fcfed38a83fa36dfe28669c585cf00d83f5082c8fdf40813"
+    }
+  },
+  {
+    "name": "context id is invariant to clearance order and duplicates",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "root"
+        },
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        }
+      ],
+      "clearance": ["internal", "public", "public"]
+    },
+    "expected": {
+      "context_id": "sha256:9a3e816cc4b26e84fcfed38a83fa36dfe28669c585cf00d83f5082c8fdf40813"
+    }
+  },
+  {
+    "name": "context id preserves designated path order",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        },
+        { "bundle_id": "root", "content_id": "sha256:aaa", "node_path": "root" }
+      ],
+      "clearance": ["public", "internal"]
+    },
+    "expected": {
+      "context_id": "sha256:f34182c7ee0aee66ea536136baa7db4ad8af013b094c226d6ff5dab13c6b80f0"
+    }
+  },
+  {
+    "name": "context id includes the logical node path",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "other"
+        }
+      ],
+      "clearance": ["public"]
+    },
+    "expected": {
+      "context_id": "sha256:9c7bd4504b681685a57641c633c7834df96dada8b333bdf5288e84c1bb90699e"
+    }
+  }
+]

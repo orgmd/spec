@@ -1,0 +1,725 @@
+[
+  {
+    "name": "resolver elects current and pending revisions while omitting proposed and retired entries",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": {
+            "bundle": "org.root",
+            "lifecycle": {
+              "term.contested": {
+                "state": "contested",
+                "by": "role.editor",
+                "date": "2026-08-21",
+                "ref": "dispute-1"
+              },
+              "term.retired": {
+                "state": "retired",
+                "by": "role.editor",
+                "date": "2026-08-21"
+              }
+            }
+          },
+          "entries": [
+            {
+              "id": "term.current",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Current.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.pending",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Stable.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            },
+            {
+              "id": "term.pending",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2,
+              "domain": "glossary",
+              "body": "Proposed.",
+              "source_path": "glossary.md",
+              "line": 21,
+              "extra": {}
+            },
+            {
+              "id": "term.proposed",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Only draft.",
+              "source_path": "glossary.md",
+              "line": 31,
+              "extra": {}
+            },
+            {
+              "id": "term.retired",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Retired.",
+              "source_path": "glossary.md",
+              "line": 41,
+              "extra": {}
+            },
+            {
+              "id": "term.contested",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Contested.",
+              "source_path": "glossary.md",
+              "line": 51,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:e671c8001dd69beed8a687c70df72fd7416450a6a151944573ab3268a0406408\",\"path\":\"root\"}],\"entries\":[{\"body\":\"Contested.\",\"domain\":\"glossary\",\"id\":\"term.contested\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"body\":\"Current.\",\"domain\":\"glossary\",\"id\":\"term.current\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"body\":\"Stable.\",\"domain\":\"glossary\",\"id\":\"term.pending\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:ee435ce38d161dcfeda6118255987550f637efabe749f9396ee951c970c6e14b",
+      "visible_entry_ids": ["term.contested", "term.current", "term.pending"],
+      "visible_entries": [
+        {
+          "id": "term.contested",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": true,
+          "stale_reasons": []
+        },
+        {
+          "id": "term.current",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        },
+        {
+          "id": "term.pending",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "resolver chooses the closest definition under a custom narrower scope",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": {
+            "bundle": "org.root",
+            "scopes": { "finance-only": { "narrower_than": ["internal"] } },
+            "lifecycle": {}
+          },
+          "entries": [
+            {
+              "id": "term.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Root meaning.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.root-only",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Root only.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.shared",
+              "owner": "role.editor",
+              "scope": "finance-only",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Division meaning.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["finance-only"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:02f25198a5db8851b23e36c3e2d3ff59421a75de645e06cc54c8d525aaf2b135\",\"path\":\"root\"},{\"content_id\":\"sha256:6aab00ea2880d0e46e7ad7af492fef31c991aee20297220a607afa8252fec348\",\"path\":\"root/division\"}],\"entries\":[{\"body\":\"Root only.\",\"domain\":\"glossary\",\"id\":\"term.root-only\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"body\":\"Division meaning.\",\"domain\":\"glossary\",\"id\":\"term.shared\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"finance-only\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:bbeac9ea29ce012962bd2da0879f9986d0709afda007c2938dedaae4a1a8ff91",
+      "visible_entry_ids": ["term.root-only", "term.shared"],
+      "visible_entries": [
+        {
+          "id": "term.root-only",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        },
+        {
+          "id": "term.shared",
+          "rev": 1,
+          "bundle_index": 1,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "Mode A separates a fixed withheld marker from visible entries and errors",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.public",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Public.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "policy.secret",
+              "owner": "role.editor",
+              "scope": "restricted",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Secret rule.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.export",
+              "effect": "deny",
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f\",\"path\":\"root\"}],\"entries\":[{\"body\":\"Public.\",\"domain\":\"glossary\",\"id\":\"term.public\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"reason\":\"clearance\",\"withheld\":true}]}",
+      "context_id": "sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9",
+      "visible_entry_ids": ["term.public"],
+      "visible_entries": [
+        {
+          "id": "term.public",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [{ "withheld": true, "reason": "clearance" }],
+      "resolution_errors": [],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "authority resolution accepts a one-level delegated shadow",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "own.payments",
+              "owner": "role.root",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "ownership",
+              "body": "Root authority.",
+              "source_path": "ownership.md",
+              "line": 1,
+              "delegates": ["root/division"],
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "own.payments",
+              "owner": "role.division",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "ownership",
+              "body": "Division authority.",
+              "source_path": "ownership.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:41caa5c6a1e1a0b6b4458ad8d0ec835faf56cbe516de5241b2caae4876509e0f\",\"path\":\"root\"},{\"content_id\":\"sha256:c877e14397791d41c45c456d922c1420902e7e3e1991f22fb2c7548c713a1611\",\"path\":\"root/division\"}],\"entries\":[{\"body\":\"Division authority.\",\"domain\":\"ownership\",\"id\":\"own.payments\",\"owner\":\"role.division\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:e716c7e68d1ccc243464fd9fd1eedf85415578dc8b211c3f7683b4c1f4cadd8a",
+      "visible_entry_ids": ["own.payments"],
+      "visible_entries": [
+        {
+          "id": "own.payments",
+          "rev": 1,
+          "bundle_index": 1,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "authority resolution discards an unauthorised shadow without hiding the anchor",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "own.payments",
+              "owner": "role.root",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "ownership",
+              "body": "Root authority.",
+              "source_path": "ownership.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "own.payments",
+              "owner": "role.division",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "ownership",
+              "body": "Division authority.",
+              "source_path": "ownership.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:da6488bf62fd60c1ad0d8f11dbf07b967866220e63f79ab61cfb0a94fbbf4416\",\"path\":\"root\"},{\"content_id\":\"sha256:c877e14397791d41c45c456d922c1420902e7e3e1991f22fb2c7548c713a1611\",\"path\":\"root/division\"}],\"entries\":[{\"body\":\"Root authority.\",\"domain\":\"ownership\",\"id\":\"own.payments\",\"owner\":\"role.root\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:28b1898f52150da86f3e11484df8dfd123ae61c89b4b0f08614d3f23f82f8c9b",
+      "visible_entry_ids": ["own.payments"],
+      "visible_entries": [
+        {
+          "id": "own.payments",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [],
+      "diagnostics": [
+        {
+          "code": "resolution.unauthorised-shadow",
+          "severity": "error",
+          "path": "root/division",
+          "entry_id": "own.payments"
+        }
+      ]
+    }
+  },
+  {
+    "name": "narrowing errors have id blast radius deterministic order and clearance-safe ids",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "policy.good",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Root good.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.*",
+              "effect": "allow",
+              "extra": {}
+            },
+            {
+              "id": "policy.bad",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Root bad.",
+              "source_path": "policies.md",
+              "line": 11,
+              "revisit": "2027-01-01",
+              "action": "payments.refund",
+              "effect": "deny",
+              "extra": {}
+            },
+            {
+              "id": "term.unaffected",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Unaffected.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "policy.good",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Child good.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.refund",
+              "effect": "deny",
+              "extra": {}
+            },
+            {
+              "id": "policy.bad",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Child bad.",
+              "source_path": "policies.md",
+              "line": 11,
+              "revisit": "2027-01-01",
+              "action": "payments.*",
+              "effect": "allow",
+              "extra": {}
+            },
+            {
+              "id": "term.secret",
+              "owner": "role.editor",
+              "scope": "mystery",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Unknown scope.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:89d3b2f6c093e11a75533f9afd4e383c4af6a85ea2a4cff0140346d5c5f27f22\",\"path\":\"root\"},{\"content_id\":\"sha256:ba4b418747c918693be735e84531bf004b8490d4db4d42a80975984445b497ab\",\"path\":\"root/division\"}],\"entries\":[{\"action\":\"billing.*\",\"body\":\"Root good.\",\"domain\":\"policy\",\"effect\":\"allow\",\"id\":\"policy.good\",\"owner\":\"role.editor\",\"rev\":1,\"revisit\":\"2027-01-01\",\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"action\":\"billing.refund\",\"body\":\"Child good.\",\"domain\":\"policy\",\"effect\":\"deny\",\"id\":\"policy.good\",\"owner\":\"role.editor\",\"rev\":1,\"revisit\":\"2027-01-01\",\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"body\":\"Unaffected.\",\"domain\":\"glossary\",\"id\":\"term.unaffected\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:1563e5d31b09a4debc5397b8eccede19b2a52a89712f4e33a6b49f3d5121b4b5",
+      "visible_entry_ids": ["policy.good", "policy.good", "term.unaffected"],
+      "visible_entries": [
+        {
+          "id": "policy.good",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        },
+        {
+          "id": "policy.good",
+          "rev": 1,
+          "bundle_index": 1,
+          "contested": false,
+          "stale_reasons": []
+        },
+        {
+          "id": "term.unaffected",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [
+        {
+          "code": "unknown_scope",
+          "node": "root/division",
+          "id_withheld": true,
+          "detail": "An entry uses a scope not declared by the root bundle."
+        },
+        {
+          "code": "widening",
+          "node": "root/division",
+          "id": "policy.bad",
+          "detail": "A closer same-id constraint widens its parent; use a new id for a distinct rule."
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "kind mismatch removes the complete id and retains unrelated entries",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "rule.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Definition.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.unaffected",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Unaffected.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "rule.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Constraint.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.refund",
+              "effect": "deny",
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:263889b73c504c9bc1efc4be647678aad6cb0d7e0912cb8bdeb694dc803d5108\",\"path\":\"root\"},{\"content_id\":\"sha256:385ac7c6fef4cb60d756a01c13584a408123efd1c19ac937d1e64e3f6008a8f6\",\"path\":\"root/division\"}],\"entries\":[{\"body\":\"Unaffected.\",\"domain\":\"glossary\",\"id\":\"term.unaffected\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:afeffb89b571cdd83212e6dac865e9d32f1d33d612f1267c7ad616e2a123803b",
+      "visible_entry_ids": ["term.unaffected"],
+      "visible_entries": [
+        {
+          "id": "term.unaffected",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [
+        {
+          "code": "kind_mismatch",
+          "node": "root/division",
+          "id": "rule.shared",
+          "detail": "One id appears as both a definition and a constraint across the reported bundles.",
+          "conflicts": [
+            { "bundle": "org.root", "id": "rule.shared" },
+            { "bundle": "org.division", "id": "rule.shared" }
+          ]
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "request-scoped empty path failure returns no partial context",
+    "operation": "resolve",
+    "input": { "path": [], "clearance": ["public"], "today": "2026-08-21" },
+    "expected": {
+      "diagnostics": [
+        { "code": "resolution.ambiguous-path", "severity": "error" }
+      ]
+    }
+  }
+]

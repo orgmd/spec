@@ -16,6 +16,11 @@ export type {
 } from "./model/types.js";
 export { loadBundle, type LoadBundleInput } from "./bundle/load.js";
 export {
+  parseContentFile,
+  type ParseContentFileInput,
+  type ParserLimits,
+} from "./parser/content-file.js";
+export {
   bundleMetadataCanonicalForm,
   entryCanonicalForm,
   IdentifierError,

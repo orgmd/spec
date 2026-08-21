@@ -1,0 +1,105 @@
+[
+  {
+    "name": "parser accepts BOM and CRLF",
+    "operation": "parse",
+    "input": {
+      "path": "glossary.md",
+      "domain": "glossary",
+      "text": "\ufeff---\r\nid: term.freight\r\nowner: role.editor\r\nscope: public\r\nstatus: approved\r\nsource: native\r\nrev: 1\r\n---\r\nFreight.\r\n"
+    },
+    "expected": {
+      "entries": [
+        {
+          "front_matter": {
+            "id": "term.freight",
+            "owner": "role.editor",
+            "scope": "public",
+            "status": "approved",
+            "source": "native",
+            "rev": 1
+          },
+          "body": "Freight.",
+          "domain": "glossary",
+          "source_path": "glossary.md",
+          "line": 1
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "parser ignores delimiter-looking lines inside a CommonMark fence",
+    "operation": "parse",
+    "input": {
+      "path": "glossary.md",
+      "domain": "glossary",
+      "text": "---\nid: term.fenced\nowner: role.editor\nscope: public\nstatus: approved\nsource: native\nrev: 1\n---\nA body.\n\n```markdown\n\n---\n\n```\n"
+    },
+    "expected": {
+      "entries": [
+        {
+          "front_matter": {
+            "id": "term.fenced",
+            "owner": "role.editor",
+            "scope": "public",
+            "status": "approved",
+            "source": "native",
+            "rev": 1
+          },
+          "body": "A body.\n\n```markdown\n\n---\n\n```",
+          "domain": "glossary",
+          "source_path": "glossary.md",
+          "line": 1
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "parser does not split a setext delimiter without a preceding blank line",
+    "operation": "parse",
+    "input": {
+      "path": "glossary.md",
+      "domain": "glossary",
+      "text": "---\nid: term.heading\nowner: role.editor\nscope: public\nstatus: approved\nsource: native\nrev: 1\n---\nHeading\n---\nStill body.\n"
+    },
+    "expected": {
+      "entries": [
+        {
+          "front_matter": {
+            "id": "term.heading",
+            "owner": "role.editor",
+            "scope": "public",
+            "status": "approved",
+            "source": "native",
+            "rev": 1
+          },
+          "body": "Heading\n---\nStill body.",
+          "domain": "glossary",
+          "source_path": "glossary.md",
+          "line": 1
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "parser rejects duplicate YAML keys with a stable source line",
+    "operation": "parse",
+    "input": {
+      "path": "glossary.md",
+      "domain": "glossary",
+      "text": "---\nid: term.first\nid: term.second\nowner: role.editor\nscope: public\nstatus: approved\nsource: native\nrev: 1\n---\nBody.\n"
+    },
+    "expected": {
+      "diagnostics": [
+        {
+          "code": "validation.duplicate-yaml-key",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 3
+        }
+      ]
+    }
+  }
+]
