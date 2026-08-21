@@ -57,6 +57,112 @@ export function validateRevisionSets(bundle: Bundle): readonly Diagnostic[] {
   return diagnostics;
 }
 
+export function validateEntrySemanticValues(
+  domain: string,
+  values: Readonly<Record<string, unknown>>,
+): readonly Diagnostic[] {
+  const diagnostics: Diagnostic[] = [];
+  const id = typeof values.id === "string" ? values.id : undefined;
+
+  if (
+    (domain === "policy" || domain === "decision") &&
+    values.revisit === undefined
+  ) {
+    diagnostics.push({
+      code: "validation.missing-revisit",
+      severity: "error",
+      message: "Decision and policy revisions must declare revisit.",
+    });
+  }
+
+  if (domain === "policy") {
+    if (values.action === undefined || values.effect === undefined) {
+      diagnostics.push({
+        code: "invalid_entry",
+        severity: "error",
+        message: "Policy revisions must declare one action and one effect.",
+      });
+    }
+  } else if (
+    values.action !== undefined ||
+    values.effect !== undefined ||
+    values.route !== undefined
+  ) {
+    diagnostics.push({
+      code: "invalid_entry",
+      severity: "error",
+      message:
+        "Definition revisions must not declare action, effect, or route.",
+    });
+  }
+
+  if (values.delegates !== undefined && domain !== "ownership") {
+    diagnostics.push({
+      code: "validation.ignored-delegates",
+      severity: "warning",
+      message: "Delegation applies only to ownership entries and was ignored.",
+    });
+  }
+
+  if (domain !== "identity") {
+    for (const field of BUNDLE_METADATA_KEYS) {
+      if (values[field] === undefined) continue;
+      diagnostics.push({
+        code: "validation.ignored-bundle-metadata",
+        severity: "warning",
+        message: `Bundle metadata field ${JSON.stringify(field)} outside the identity entry was ignored.`,
+        details: { field },
+      });
+    }
+  }
+
+  if (typeof values.revisit === "string" && !isCalendarDate(values.revisit)) {
+    diagnostics.push({
+      code: "validation.invalid-date",
+      severity: "error",
+      message: `Revisit date ${JSON.stringify(values.revisit)} is not an ISO 8601 calendar date.`,
+    });
+  }
+
+  if (
+    typeof values.source === "string" &&
+    values.source.startsWith("synced:") &&
+    isRecord(values.upstream)
+  ) {
+    const system = values.source.slice("synced:".length);
+    if (values.upstream.system !== system) {
+      diagnostics.push({
+        code: "validation.invalid-upstream-system",
+        severity: "error",
+        message:
+          "Synced source and upstream system must identify the same system.",
+      });
+    }
+    if (
+      typeof values.upstream.fetched === "string" &&
+      !isCalendarDate(values.upstream.fetched)
+    ) {
+      diagnostics.push({
+        code: "validation.invalid-date",
+        severity: "error",
+        message: `Fetched date ${JSON.stringify(values.upstream.fetched)} is not an ISO 8601 calendar date.`,
+      });
+    }
+  }
+
+  if (
+    typeof values.owner === "string" &&
+    (!values.owner.startsWith("role.") || !ID_PATTERN.test(values.owner))
+  ) {
+    diagnostics.push({
+      code: "validation.invalid-owner",
+      severity: "error",
+      message: `Owner for ${JSON.stringify(id ?? "entry")} must name a role identifier.`,
+    });
+  }
+  return diagnostics;
+}
+
 export function validateDomainRules(
   bundle: Bundle,
   isRoot: boolean,
@@ -69,31 +175,18 @@ export function validateDomainRules(
 
   for (const entry of bundle.entries) {
     const values = entry.frontMatter;
-    const id = typeof values.id === "string" ? values.id : undefined;
-
-    if (
-      (entry.domain === "policy" || entry.domain === "decision") &&
-      values.revisit === undefined
-    ) {
-      diagnostics.push(
-        entryDiagnostic(
-          entry,
-          "validation.missing-revisit",
-          "Decision and policy revisions must declare revisit.",
-        ),
-      );
-    }
+    diagnostics.push(
+      ...validateEntrySemanticValues(entry.domain, values).map(
+        (diagnostic) => ({
+          ...diagnostic,
+          path: entry.sourcePath,
+          line: entry.line,
+          ...(typeof values.id === "string" ? { entryId: values.id } : {}),
+        }),
+      ),
+    );
 
     if (entry.domain === "policy") {
-      if (values.action === undefined || values.effect === undefined) {
-        diagnostics.push(
-          entryDiagnostic(
-            entry,
-            "invalid_entry",
-            "Policy revisions must declare one action and one effect.",
-          ),
-        );
-      }
       if (
         values.effect === "escalate" &&
         typeof values.route === "string" &&
@@ -108,96 +201,6 @@ export function validateDomainRules(
           ),
         );
       }
-    } else if (
-      values.action !== undefined ||
-      values.effect !== undefined ||
-      values.route !== undefined
-    ) {
-      diagnostics.push(
-        entryDiagnostic(
-          entry,
-          "invalid_entry",
-          "Definition revisions must not declare action, effect, or route.",
-        ),
-      );
-    }
-
-    if (values.delegates !== undefined && entry.domain !== "ownership") {
-      diagnostics.push({
-        ...entryDiagnostic(
-          entry,
-          "validation.ignored-delegates",
-          "Delegation applies only to ownership entries and was ignored.",
-        ),
-        severity: "warning",
-      });
-    }
-
-    if (entry.domain !== "identity") {
-      for (const field of BUNDLE_METADATA_KEYS) {
-        if (values[field] === undefined) continue;
-        diagnostics.push({
-          ...entryDiagnostic(
-            entry,
-            "validation.ignored-bundle-metadata",
-            `Bundle metadata field ${JSON.stringify(field)} outside the identity entry was ignored.`,
-          ),
-          severity: "warning",
-          details: { field },
-        });
-      }
-    }
-
-    if (typeof values.revisit === "string" && !isCalendarDate(values.revisit)) {
-      diagnostics.push(
-        entryDiagnostic(
-          entry,
-          "validation.invalid-date",
-          `Revisit date ${JSON.stringify(values.revisit)} is not an ISO 8601 calendar date.`,
-        ),
-      );
-    }
-
-    if (
-      typeof values.source === "string" &&
-      values.source.startsWith("synced:") &&
-      isRecord(values.upstream)
-    ) {
-      const system = values.source.slice("synced:".length);
-      if (values.upstream.system !== system) {
-        diagnostics.push(
-          entryDiagnostic(
-            entry,
-            "validation.invalid-upstream-system",
-            "Synced source and upstream system must identify the same system.",
-          ),
-        );
-      }
-      if (
-        typeof values.upstream.fetched === "string" &&
-        !isCalendarDate(values.upstream.fetched)
-      ) {
-        diagnostics.push(
-          entryDiagnostic(
-            entry,
-            "validation.invalid-date",
-            `Fetched date ${JSON.stringify(values.upstream.fetched)} is not an ISO 8601 calendar date.`,
-          ),
-        );
-      }
-    }
-
-    if (
-      typeof values.owner === "string" &&
-      (!values.owner.startsWith("role.") || !ID_PATTERN.test(values.owner))
-    ) {
-      diagnostics.push(
-        entryDiagnostic(
-          entry,
-          "validation.invalid-owner",
-          `Owner for ${JSON.stringify(id ?? "entry")} must name a role identifier.`,
-        ),
-      );
     }
   }
   return diagnostics;

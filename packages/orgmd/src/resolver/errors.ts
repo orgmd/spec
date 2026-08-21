@@ -3,7 +3,10 @@ import type { Diagnostic } from "../diagnostics/types.js";
 import { isLogicalNodePath } from "../bundle/node-path.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
 import { validateEntrySchema } from "../validation/schema.js";
-import { isLifecycleRecord } from "../validation/semantic.js";
+import {
+  isLifecycleRecord,
+  validateEntrySemanticValues,
+} from "../validation/semantic.js";
 import { logicalNodePath } from "./nodes.js";
 import type { RevisionSelection } from "./revisions.js";
 import type { ScopeLattice } from "./scopes.js";
@@ -216,8 +219,19 @@ function isValidEntryRevisionShape(value: unknown): value is EntryRevision {
 
   const frontMatter = normalizedFrontMatter(value as unknown as EntryRevision);
   const schemaDiagnostics = validateEntrySchema(frontMatter);
-  return schemaDiagnostics.every((diagnostic) =>
-    isResolverScopedSchemaDiagnostic(diagnostic, value),
+  const semanticDiagnostics = validateEntrySemanticValues(
+    value.domain,
+    frontMatter,
+  );
+  return (
+    schemaDiagnostics.every((diagnostic) =>
+      isResolverScopedSchemaDiagnostic(diagnostic, value),
+    ) &&
+    semanticDiagnostics.every(
+      (diagnostic) =>
+        diagnostic.severity !== "error" ||
+        isResolverScopedSemanticDiagnostic(diagnostic, value),
+    )
   );
 }
 
@@ -254,6 +268,13 @@ function isResolverScopedSchemaDiagnostic(
     diagnostic.details?.missingProperty === "route" &&
     entry.effect === "escalate"
   );
+}
+
+function isResolverScopedSemanticDiagnostic(
+  diagnostic: Diagnostic,
+  entry: Readonly<Record<string, unknown>>,
+): boolean {
+  return entry.domain === "policy" && diagnostic.code === "invalid_entry";
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { EntryRevision, ValidatedBundle } from "../../src/model/types.js";
-import { resolveContext } from "../../src/resolver/resolve.js";
+import {
+  resolveContext,
+  type EntryRevision,
+  type ValidatedBundle,
+} from "../../src/index.js";
 
 function entry(
   id: string,
@@ -240,6 +243,104 @@ describe("resolution request failures", () => {
       clearance: ["public"],
       today: "2026-08-21",
     });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("rejects an approved decision without its mandatory revisit date", () => {
+    const result = resolveContext({
+      path: [
+        bundle("root", [
+          entry("decision.missing-revisit", { domain: "decision" }),
+        ]),
+      ],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("rejects an approved policy without its mandatory revisit date", () => {
+    const result = resolveContext({
+      path: [
+        bundle("root", [
+          entry("policy.missing-revisit", {
+            domain: "policy",
+            action: "billing.refund",
+            effect: "deny",
+          }),
+        ]),
+      ],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("rejects an impossible revisit calendar date", () => {
+    const result = resolveContext({
+      path: [
+        bundle("root", [
+          entry("decision.invalid-revisit", {
+            domain: "decision",
+            revisit: "2026-99-99",
+          }),
+        ]),
+      ],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it.each([
+    ["impossible fetched date", "notion", "2026-99-99"],
+    ["source/upstream system mismatch", "airtable", "2026-08-21"],
+  ])("rejects synced upstream with %s", (_label, system, fetched) => {
+    const result = resolveContext({
+      path: [
+        bundle("root", [
+          entry("term.synced", {
+            source: "synced:notion",
+            upstream: {
+              system,
+              ref: "page-1",
+              fetched,
+              digest: "sha256:upstream",
+            },
+          }),
+        ]),
+      ],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
     expect(result.value).toBeUndefined();
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
