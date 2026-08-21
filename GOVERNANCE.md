@@ -121,13 +121,15 @@ the revisit date, whichever comes first.
 id: dec.0003
 owner: role.editor
 scope: public
-status: approved
+status: superseded
 source: native
 decided: 2026-08-15
 ---
 **DEC-0003 — The suite is the spec.** Conformance is defined by passing
 the published bench suite for the claimed level. Where prose and suite
-conflict, file an issue; an RFC resolves it.
+conflict, file an issue; an RFC resolves it. Superseded by DEC-0022
+(conformance attaches to deterministic implementations; agent behaviour
+is a benchmark score; where the suite is silent the prose governs).
 ```
 
 ```markdown

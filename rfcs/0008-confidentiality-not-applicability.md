@@ -1,6 +1,6 @@
 # RFC 0008 — Confidentiality is not applicability: clearance redacts, it does not remove
 
-- **Status:** draft
+- **Status:** accepted
 - **Author:** Matt (BoundFor Ltd)
 - **Opened:** 2026-08-21
 - **Comment period ends:** 2026-09-04
@@ -241,4 +241,7 @@ honest-limitations list rather than left implicit.
 
 ## Decision
 
-Filled by the editor.
+Accepted 2026-08-21 by the editor under BDFL authority (DEC-0002); the
+comment period was waived by the editor's explicit direction. Recorded as
+`org/decisions/DEC-0015.md` (dec.0015). Normative text landed in SPEC.md
+0.3-draft via PR #16.

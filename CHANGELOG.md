@@ -2,8 +2,9 @@
 
 ## 0.3-draft — August 2026
 
-Resolves issues #1–#15 (adversarial review of 0.2-draft); RFCs 0001–0015
-open for comment.
+Resolves issues #1–#15 (adversarial review of 0.2-draft). RFCs 0001–0015
+accepted by the editor 2026-08-21 (comment period waived under DEC-0002);
+decisions DEC-0008..DEC-0022 recorded; DEC-0003 superseded by DEC-0022.
 
 - Entry identity is bundle-scoped, with an id grammar; the multi-entry
   file container gets a published grammar (SPEC §3.1, §4.5; RFC 0001,
