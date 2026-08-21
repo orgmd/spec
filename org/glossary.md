@@ -27,11 +27,13 @@ owner: role.editor
 scope: public
 status: approved
 source: native
-rev: 1
+rev: 2
 ---
-**resolver** — computes effective context for a consumer: definitions
-resolve closest-wins; constraints stack and may only narrow. Part of the
-trusted base; a subject of conformance.
+**resolver** — computes effective context for a consumer over its
+designated resolution path: ordinary definitions resolve closest-wins,
+authority definitions anchor rootward, constraints stack and may only
+narrow structurally (SPEC §5). Part of the trusted base; a subject of
+conformance.
 
 ---
 id: term.projection

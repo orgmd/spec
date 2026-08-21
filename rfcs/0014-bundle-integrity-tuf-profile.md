@@ -1,6 +1,6 @@
 # RFC 0014 — Bundle integrity: TUF profile, path delegation, and a Core content identifier
 
-- **Status:** draft
+- **Status:** accepted
 - **Author:** Matt (BoundFor Ltd)
 - **Opened:** 2026-08-21
 - **Comment period ends:** 2026-09-04
@@ -393,5 +393,7 @@ the principle-10 question directly.
 
 ## Decision
 
-Filled by the editor. A `decisions/DEC-NNNN.md` entry is created on
-accept or reject.
+Accepted 2026-08-21 by the editor under BDFL authority (DEC-0002); the
+comment period was waived by the editor's explicit direction. Recorded as
+`org/decisions/DEC-0021.md` (dec.0021). Normative text landed in SPEC.md
+0.3-draft via PR #16.

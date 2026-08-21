@@ -1,6 +1,6 @@
 # RFC 0015 — Conformance is for resolvers; agent behaviour is a benchmark score
 
-- **Status:** draft
+- **Status:** accepted
 - **Author:** Matt (BoundFor Ltd)
 - **Opened:** 2026-08-21
 - **Comment period ends:** 2026-09-04
@@ -258,5 +258,7 @@ by the same mechanism as A–G.
 
 ## Decision
 
-Filled by the editor. A `decisions/DEC-NNNN.md` entry is created on
-accept or reject.
+Accepted 2026-08-21 by the editor under BDFL authority (DEC-0002); the
+comment period was waived by the editor's explicit direction. Recorded as
+`org/decisions/DEC-0022.md` (dec.0022), which supersedes DEC-0003.
+Normative text landed in SPEC.md 0.3-draft via PR #16.

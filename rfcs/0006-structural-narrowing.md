@@ -1,6 +1,6 @@
 # RFC 0006 — Structural narrowing for constraints; removal of `narrows:`
 
-- **Status:** draft
+- **Status:** accepted
 - **Author:** Matt (BoundFor Ltd)
 - **Opened:** 2026-08-21
 - **Comment period ends:** 2026-09-04
@@ -191,4 +191,7 @@ with two existing decisions.
 
 ## Decision
 
-Filled by the editor.
+Accepted 2026-08-21 by the editor under BDFL authority (DEC-0002); the
+comment period was waived by the editor's explicit direction. Recorded as
+`org/decisions/DEC-0013.md` (dec.0013). Normative text landed in SPEC.md
+0.3-draft via PR #16.
