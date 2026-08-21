@@ -130,4 +130,51 @@ describe("filesystem-loaded authority delegation", () => {
       }),
     );
   });
+
+  it("never falls back to a filesystem realpath when logical nodePath is omitted", async () => {
+    const firstDirectory = await fixtureDir("physical-first");
+    const secondDirectory = await fixtureDir("physical-second");
+    await writeBundle(firstDirectory, "org.same", "Board");
+    await writeBundle(secondDirectory, "org.same", "Board");
+
+    const first = await loadedValidated(firstDirectory, "root", true);
+    const second = await loadedValidated(secondDirectory, "root", true);
+    const firstResult = resolveContext({
+      path: [first],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    const secondResult = resolveContext({
+      path: [second],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(firstResult.value?.contextId).toBe(secondResult.value?.contextId);
+    expect(firstResult.value?.bundles.map(({ path }) => path)).toEqual([
+      "root",
+    ]);
+    expect(JSON.stringify(firstResult.value)).not.toContain(firstDirectory);
+    expect(JSON.stringify(secondResult.value)).not.toContain(secondDirectory);
+
+    const withoutLogicalPath = await validateBundlePath(firstDirectory, {
+      isRoot: true,
+    });
+    expect(withoutLogicalPath.diagnostics).toEqual([]);
+    if (!withoutLogicalPath.value) {
+      throw new Error("expected validated filesystem bundle");
+    }
+    const refused = resolveContext({
+      path: [withoutLogicalPath.value],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(refused.value).toBeUndefined();
+    expect(refused.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+    expect(JSON.stringify(refused)).not.toContain(firstDirectory);
+  });
 });

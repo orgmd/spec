@@ -33,6 +33,18 @@ const WITHHELD_MARKER: WithheldMarker = Object.freeze({
 });
 
 export function resolveContext(request: ResolveRequest): ResolveResult {
+  try {
+    return resolveContextTrusted(request);
+  } catch {
+    return failure({
+      code: "resolution.invalid-request",
+      severity: "error",
+      message: "Resolution request data is malformed.",
+    });
+  }
+}
+
+function resolveContextTrusted(request: ResolveRequest): ResolveResult {
   if (!isResolveRequestEnvelope(request)) {
     return failure({
       code: "resolution.invalid-request",

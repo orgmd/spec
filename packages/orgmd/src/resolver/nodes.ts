@@ -1,7 +1,11 @@
+import { isLogicalNodePath } from "../bundle/node-path.js";
 import type { ValidatedBundle } from "../model/types.js";
 
 export function logicalNodePath(bundle: ValidatedBundle): string {
-  return bundle.nodePath ?? bundle.path;
+  if (bundle.nodePath !== undefined) {
+    return isLogicalNodePath(bundle.nodePath) ? bundle.nodePath : "";
+  }
+  return isLogicalNodePath(bundle.path) ? bundle.path : "";
 }
 
 export function isAtOrBelow(node: string, ancestor: string): boolean {

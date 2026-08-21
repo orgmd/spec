@@ -2,6 +2,8 @@ import { compareUtf8Bytes, sortDiagnostics } from "../diagnostics/sort.js";
 import type { Diagnostic } from "../diagnostics/types.js";
 import { isLogicalNodePath } from "../bundle/node-path.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
+import { validateEntrySchema } from "../validation/schema.js";
+import { isLifecycleRecord } from "../validation/semantic.js";
 import { logicalNodePath } from "./nodes.js";
 import type { RevisionSelection } from "./revisions.js";
 import type { ScopeLattice } from "./scopes.js";
@@ -58,16 +60,12 @@ export function validateResolutionPath(
     const bundle = path[index];
     if (!bundle) continue;
     if (!isValidBundlePayload(bundle)) {
-      return sortDiagnostics([
-        {
-          code: "resolution.invalid-request",
-          severity: "error",
-          message: `Node ${String(index)} contains malformed validated bundle data.`,
-          details: { index },
-        },
-      ]);
+      return invalidBundleDiagnostic(index);
     }
     const nodePath = logicalNodePath(bundle);
+    if (nodePath.length === 0) {
+      return invalidBundleDiagnostic(index);
+    }
     const bundleId = bundle.metadata.bundle ?? bundle.reference;
     if (
       paths.has(nodePath) ||
@@ -104,20 +102,59 @@ export function validateResolutionPath(
 }
 
 function isValidBundlePayload(bundle: ValidatedBundle): boolean {
-  if (bundle.nodePath !== undefined && !isLogicalNodePath(bundle.nodePath)) {
+  if (
+    bundle.reference.length === 0 ||
+    logicalNodePath(bundle).length === 0 ||
+    (!bundle.isRoot &&
+      (bundle.metadata.scopes !== undefined ||
+        bundle.metadata.graceDays !== undefined))
+  ) {
     return false;
   }
   const metadata = bundle.metadata;
   if (
-    (metadata.bundle !== undefined && typeof metadata.bundle !== "string") ||
-    !isRecord(metadata.lifecycle) ||
+    (metadata.bundle !== undefined &&
+      (typeof metadata.bundle !== "string" || metadata.bundle.length === 0)) ||
+    !isValidLifecycle(metadata.lifecycle, bundle.entries) ||
     (metadata.scopes !== undefined && !isValidScopes(metadata.scopes)) ||
     (metadata.graceDays !== undefined &&
-      (!Number.isInteger(metadata.graceDays) || metadata.graceDays < 0))
+      (!Number.isInteger(metadata.graceDays) ||
+        metadata.graceDays < 0 ||
+        metadata.graceDays > 90))
   ) {
     return false;
   }
-  return bundle.entries.every(isValidEntryRevisionShape);
+  for (let index = 0; index < bundle.entries.length; index += 1) {
+    if (!(index in bundle.entries)) return false;
+    if (!isValidEntryRevisionShape(bundle.entries[index])) return false;
+  }
+  return true;
+}
+
+function invalidBundleDiagnostic(index: number): readonly Diagnostic[] {
+  return sortDiagnostics([
+    {
+      code: "resolution.invalid-request",
+      severity: "error",
+      message: `Node ${String(index)} contains malformed validated bundle data.`,
+      details: { index },
+    },
+  ]);
+}
+
+function isValidLifecycle(
+  value: unknown,
+  entries: readonly EntryRevision[],
+): boolean {
+  if (!isRecord(value)) return false;
+  const entryIds = new Set(
+    entries.flatMap((entry) =>
+      isRecord(entry) && typeof entry.id === "string" ? [entry.id] : [],
+    ),
+  );
+  return Object.entries(value).every(
+    ([id, record]) => entryIds.has(id) && isLifecycleRecord(record),
+  );
 }
 
 function isValidScopes(value: unknown): boolean {
@@ -127,7 +164,9 @@ function isValidScopes(value: unknown): boolean {
       (declaration) =>
         isRecord(declaration) &&
         Array.isArray(declaration.narrower_than) &&
-        declaration.narrower_than.every((label) => typeof label === "string"),
+        declaration.narrower_than.every(
+          (label) => typeof label === "string" && label.length > 0,
+        ),
     )
   );
 }
@@ -164,13 +203,56 @@ function isValidEntryRevisionShape(value: unknown): value is EntryRevision {
   ) {
     return false;
   }
-  return (
+  if (!(
     value.delegates === undefined ||
     (Array.isArray(value.delegates) &&
       value.delegates.every(
         (delegate) =>
           typeof delegate === "string" && isLogicalNodePath(delegate),
       ))
+  )) {
+    return false;
+  }
+
+  const frontMatter = normalizedFrontMatter(value as unknown as EntryRevision);
+  const schemaDiagnostics = validateEntrySchema(frontMatter);
+  return schemaDiagnostics.every((diagnostic) =>
+    isResolverScopedSchemaDiagnostic(diagnostic, value),
+  );
+}
+
+function normalizedFrontMatter(
+  entry: EntryRevision,
+): Readonly<Record<string, unknown>> {
+  return {
+    ...entry.extra,
+    id: entry.id,
+    owner: entry.owner,
+    scope: entry.scope,
+    status: entry.status,
+    source: entry.source,
+    rev: entry.rev,
+    ...(entry.revisit === undefined ? {} : { revisit: entry.revisit }),
+    ...(entry.ref === undefined ? {} : { ref: entry.ref }),
+    ...(entry.upstream === undefined ? {} : { upstream: entry.upstream }),
+    ...(entry.action === undefined ? {} : { action: entry.action }),
+    ...(entry.effect === undefined ? {} : { effect: entry.effect }),
+    ...(entry.route === undefined ? {} : { route: entry.route }),
+    ...(entry.delegates === undefined ? {} : { delegates: entry.delegates }),
+  };
+}
+
+function isResolverScopedSchemaDiagnostic(
+  diagnostic: Diagnostic,
+  entry: Readonly<Record<string, unknown>>,
+): boolean {
+  if (entry.domain !== "policy") return false;
+  if (diagnostic.code === "invalid_action") return true;
+  return (
+    diagnostic.code === "invalid_entry" &&
+    diagnostic.details?.keyword === "required" &&
+    diagnostic.details?.missingProperty === "route" &&
+    entry.effect === "escalate"
   );
 }
 

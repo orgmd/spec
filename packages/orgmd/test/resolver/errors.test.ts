@@ -58,6 +58,27 @@ describe("resolution request failures", () => {
     );
   });
 
+  it("never throws when malformed request data raises during inspection", () => {
+    const malformed = Object.defineProperty({}, "path", {
+      get(): never {
+        throw new Error("untrusted request getter");
+      },
+    });
+
+    expect(() =>
+      resolveContext(
+        malformed as unknown as Parameters<typeof resolveContext>[0],
+      ),
+    ).not.toThrow();
+    expect(
+      resolveContext(
+        malformed as unknown as Parameters<typeof resolveContext>[0],
+      ).diagnostics,
+    ).toEqual([
+      expect.objectContaining({ code: "resolution.invalid-request" }),
+    ]);
+  });
+
   it("refuses an empty path without producing a partial context", () => {
     const result = resolveContext({
       path: [],
@@ -170,6 +191,52 @@ describe("resolution request failures", () => {
     ).not.toThrow();
     const result = resolveContext({
       path: [malformed],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("rejects an incomplete nested lifecycle record instead of resolving it", () => {
+    const root = bundle("root", [entry("term.root")]);
+    const malformed = {
+      ...root,
+      metadata: {
+        ...root.metadata,
+        lifecycle: { "term.root": {} },
+      },
+    } as unknown as ValidatedBundle;
+
+    const result = resolveContext({
+      path: [malformed],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("rejects incomplete conditional upstream metadata instead of resolving it", () => {
+    const root = bundle("root", [
+      entry("term.root", {
+        source: "synced:notion",
+        upstream: {},
+      }),
+    ]);
+
+    const result = resolveContext({
+      path: [root],
       clearance: ["public"],
       today: "2026-08-21",
     });

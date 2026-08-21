@@ -552,7 +552,7 @@ function retiredIds(bundle: Bundle): ReadonlySet<string> {
   );
 }
 
-function isLifecycleRecord(value: unknown): value is LifecycleRecord {
+export function isLifecycleRecord(value: unknown): value is LifecycleRecord {
   if (!isRecord(value)) return false;
   if (value.state !== "contested" && value.state !== "retired") return false;
   if (
