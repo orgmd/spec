@@ -4,6 +4,7 @@ import { IdentifierError } from "../identifiers/canonical.js";
 import { computeContentId } from "../identifiers/content-id.js";
 import {
   computeContextId,
+  type BundleFailure,
   type BundleVersion,
 } from "../identifiers/context-id.js";
 import { resolveAuthorityDefinitions } from "./authority.js";
@@ -12,6 +13,7 @@ import {
   blockedEntryIds,
   entrySemanticErrors,
   isResolveRequestEnvelope,
+  normalizeBundleFailures,
   renderResolutionDiagnostics,
   renderResolutionErrors,
   validateResolutionPath,
@@ -21,6 +23,7 @@ import { resolvePolicies } from "./policies.js";
 import { selectEffectiveRevisions } from "./revisions.js";
 import { createScopeLattice } from "./scopes.js";
 import type {
+  ResolutionError,
   ResolvedEntry,
   ResolveRequest,
   ResolveResult,
@@ -54,6 +57,17 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
   }
   const pathDiagnostics = validateResolutionPath(request.path);
   if (pathDiagnostics.length > 0) return { diagnostics: pathDiagnostics };
+  const bundleFailures = normalizeBundleFailures(
+    request.bundleFailures,
+    request.path.length,
+  );
+  if (!bundleFailures) {
+    return failure({
+      code: "resolution.invalid-request",
+      severity: "error",
+      message: "Bundle failure overlay data is malformed.",
+    });
+  }
 
   const clearance = normalizedClearance(request);
   if (!clearance) {
@@ -80,7 +94,7 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
         }),
       ),
     );
-    contextId = computeContextId(bundles, clearance);
+    contextId = computeContextId(bundles, clearance, bundleFailures);
   } catch (error) {
     if (error instanceof IdentifierError) return failure(error.diagnostic);
     return failure({
@@ -93,13 +107,20 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
   const selections = request.path.flatMap((bundle, bundleIndex) =>
     selectEffectiveRevisions(bundle, bundleIndex),
   );
+  const bundleFailureState = collectBundleFailureState(
+    bundleFailures,
+    request.path,
+  );
+  const availableSelections = selections.filter(
+    (selection) => !bundleFailureState.blockedIds.has(selection.id),
+  );
   const semanticErrors = entrySemanticErrors(
-    selections,
+    availableSelections,
     request.path,
     latticeResult.value,
   );
   const initiallyBlocked = blockedEntryIds(semanticErrors);
-  const eligible = selections.filter(
+  const eligible = availableSelections.filter(
     (selection) => !initiallyBlocked.has(selection.id),
   );
   const authority = resolveAuthorityDefinitions(
@@ -128,6 +149,7 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
     request.today,
   );
   const allErrors = [
+    ...bundleFailureState.errors,
     ...semanticErrors,
     ...authority.resolutionErrors,
     ...definitions.resolutionErrors,
@@ -163,6 +185,7 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
     request.path,
     latticeResult.value,
     clearance,
+    bundleFailureState.visibleBundleIdentifiers,
   );
   const diagnostics = renderResolutionDiagnostics(
     authority.diagnostics,
@@ -178,6 +201,48 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
     diagnostics,
   });
   return { value, diagnostics };
+}
+
+function collectBundleFailureState(
+  failures: readonly BundleFailure[],
+  path: ResolveRequest["path"],
+): {
+  readonly blockedIds: ReadonlySet<string>;
+  readonly errors: readonly ResolutionError[];
+  readonly visibleBundleIdentifiers: ReadonlySet<string>;
+} {
+  const blockedIds = new Set<string>();
+  const errors: ResolutionError[] = [];
+  const visibleBundleIdentifiers = new Set<string>();
+  for (const failure of failures) {
+    const bundle = path[failure.bundleIndex];
+    if (!bundle) continue;
+    const node = logicalNodePath(bundle);
+    const ids = [...new Set(bundle.entries.map(({ id }) => id))].sort(
+      compareUtf8Bytes,
+    );
+    const errorIds =
+      ids.length > 0 ? ids : [bundle.metadata.bundle ?? bundle.reference];
+    if (ids.length === 0) {
+      visibleBundleIdentifiers.add(`${node}\0${errorIds[0]}`);
+    }
+    for (const id of ids) blockedIds.add(id);
+    for (const id of errorIds) {
+      errors.push(
+        Object.freeze({
+          code: failure.code,
+          node,
+          id,
+          detail: failure.detail,
+        }),
+      );
+    }
+  }
+  return Object.freeze({
+    blockedIds,
+    errors: Object.freeze(errors),
+    visibleBundleIdentifiers,
+  });
 }
 
 function normalizedClearance(

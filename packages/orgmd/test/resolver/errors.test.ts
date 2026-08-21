@@ -40,6 +40,41 @@ function bundle(
 
 describe("resolution request failures", () => {
   it.each([
+    [
+      "negative index",
+      [{ bundleIndex: -1, code: "unparseable_bundle", detail: "failed" }],
+    ],
+    [
+      "out-of-range index",
+      [{ bundleIndex: 1, code: "unparseable_bundle", detail: "failed" }],
+    ],
+    ["unknown code", [{ bundleIndex: 0, code: "unknown", detail: "failed" }]],
+    [
+      "blank detail",
+      [{ bundleIndex: 0, code: "integrity_failure", detail: " " }],
+    ],
+    [
+      "duplicate index",
+      [
+        { bundleIndex: 0, code: "integrity_failure", detail: "one" },
+        { bundleIndex: 0, code: "unparseable_bundle", detail: "two" },
+      ],
+    ],
+  ])("rejects a bundle failure overlay with %s", (_label, bundleFailures) => {
+    const result = resolveContext({
+      path: [bundle("root", [entry("term.root")])],
+      clearance: ["public"],
+      today: "2026-08-21",
+      bundleFailures,
+    } as Parameters<typeof resolveContext>[0]);
+
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "resolution.invalid-request" }),
+    ]);
+  });
+
+  it.each([
     null,
     {
       path: [bundle("root", [entry("term.root")])],
@@ -367,6 +402,111 @@ describe("resolution request failures", () => {
 });
 
 describe("resolution error disclosure and determinism", () => {
+  it("applies a bundle failure to every contributed id without suppressing unrelated nodes", () => {
+    const path = [
+      bundle("root", [entry("term.shared"), entry("term.root")]),
+      bundle("division", [
+        entry("term.shared"),
+        entry("term.child-only"),
+        entry("policy.failed", {
+          domain: "policy",
+          revisit: "2027-01-01",
+          action: "Bad.*",
+          effect: "deny",
+        }),
+      ]),
+      bundle("repo", [entry("term.shared"), entry("term.leaf")]),
+    ];
+    const baseline = resolveContext({
+      path,
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    const result = resolveContext({
+      path,
+      clearance: ["public"],
+      today: "2026-08-21",
+      bundleFailures: [
+        {
+          bundleIndex: 1,
+          code: "unparseable_bundle",
+          detail: "The designated bundle could not be parsed.",
+        },
+      ],
+    });
+
+    expect(
+      result.value?.entries.flatMap((resolved) =>
+        "withheld" in resolved ? [] : [resolved.revision.id],
+      ),
+    ).toEqual(["term.leaf", "term.root"]);
+    expect(result.value?.resolutionErrors).toEqual([
+      {
+        code: "unparseable_bundle",
+        node: "division",
+        id: "policy.failed",
+        detail: "The designated bundle could not be parsed.",
+      },
+      {
+        code: "unparseable_bundle",
+        node: "division",
+        id: "term.child-only",
+        detail: "The designated bundle could not be parsed.",
+      },
+      {
+        code: "unparseable_bundle",
+        node: "division",
+        id: "term.shared",
+        detail: "The designated bundle could not be parsed.",
+      },
+    ]);
+    expect(result.value?.contextId).not.toBe(baseline.value?.contextId);
+  });
+
+  it("names an empty failed bundle and withholds above-clearance contributed ids", () => {
+    const empty = resolveContext({
+      path: [bundle("root", [])],
+      clearance: ["public"],
+      today: "2026-08-21",
+      bundleFailures: [
+        {
+          bundleIndex: 0,
+          code: "integrity_failure",
+          detail: "Bundle integrity verification failed.",
+        },
+      ],
+    });
+    const restricted = resolveContext({
+      path: [bundle("root", [entry("term.secret", { scope: "restricted" })])],
+      clearance: ["public"],
+      today: "2026-08-21",
+      bundleFailures: [
+        {
+          bundleIndex: 0,
+          code: "integrity_failure",
+          detail: "Bundle integrity verification failed.",
+        },
+      ],
+    });
+
+    expect(empty.value?.resolutionErrors).toEqual([
+      {
+        code: "integrity_failure",
+        node: "root",
+        id: "org.root",
+        detail: "Bundle integrity verification failed.",
+      },
+    ]);
+    expect(restricted.value?.resolutionErrors).toEqual([
+      {
+        code: "integrity_failure",
+        node: "root",
+        id_withheld: true,
+        detail: "Bundle integrity verification failed.",
+      },
+    ]);
+  });
+
   it("withholds an above-clearance id and keeps a fixed disclosure-safe detail", () => {
     const result = resolveContext({
       path: [

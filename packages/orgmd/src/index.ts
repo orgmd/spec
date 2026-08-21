@@ -34,6 +34,8 @@ export {
 } from "./identifiers/content-id.js";
 export {
   computeContextId,
+  type BundleFailure,
+  type BundleFailureCode,
   type BundleVersion,
   type ContextIdInput,
 } from "./identifiers/context-id.js";

@@ -1,11 +1,15 @@
 import type { Diagnostic, OperationResult } from "../diagnostics/types.js";
-import type { BundleVersion } from "../identifiers/context-id.js";
+import type {
+  BundleFailure,
+  BundleVersion,
+} from "../identifiers/context-id.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
 
 export interface ResolveRequest {
   readonly path: readonly ValidatedBundle[];
   readonly clearance: readonly string[];
   readonly anonymous?: boolean;
+  readonly bundleFailures?: readonly BundleFailure[];
   readonly today: string;
 }
 

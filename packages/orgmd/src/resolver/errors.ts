@@ -1,5 +1,6 @@
 import { compareUtf8Bytes, sortDiagnostics } from "../diagnostics/sort.js";
 import type { Diagnostic } from "../diagnostics/types.js";
+import type { BundleFailure } from "../identifiers/context-id.js";
 import { isLogicalNodePath } from "../bundle/node-path.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
 import { validateEntrySchema } from "../validation/schema.js";
@@ -25,7 +26,51 @@ export function isResolveRequestEnvelope(
     Array.isArray(value.clearance) &&
     value.clearance.every((label) => typeof label === "string") &&
     typeof value.today === "string" &&
-    (value.anonymous === undefined || typeof value.anonymous === "boolean")
+    (value.anonymous === undefined || typeof value.anonymous === "boolean") &&
+    (value.bundleFailures === undefined || Array.isArray(value.bundleFailures))
+  );
+}
+
+export function normalizeBundleFailures(
+  value: unknown,
+  pathLength: number,
+): readonly BundleFailure[] | undefined {
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) return undefined;
+  const normalized: BundleFailure[] = [];
+  const indexes = new Set<number>();
+  for (let index = 0; index < value.length; index += 1) {
+    if (!(index in value)) return undefined;
+    const failure = value[index];
+    if (
+      !isRecord(failure) ||
+      !Number.isInteger(failure.bundleIndex) ||
+      (failure.bundleIndex as number) < 0 ||
+      (failure.bundleIndex as number) >= pathLength ||
+      (failure.code !== "unparseable_bundle" &&
+        failure.code !== "integrity_failure") ||
+      typeof failure.detail !== "string" ||
+      failure.detail.trim().length === 0 ||
+      indexes.has(failure.bundleIndex as number)
+    ) {
+      return undefined;
+    }
+    indexes.add(failure.bundleIndex as number);
+    normalized.push(
+      Object.freeze({
+        bundleIndex: failure.bundleIndex as number,
+        code: failure.code,
+        detail: failure.detail,
+      }),
+    );
+  }
+  return Object.freeze(
+    normalized.sort(
+      (left, right) =>
+        left.bundleIndex - right.bundleIndex ||
+        compareUtf8Bytes(left.code, right.code) ||
+        compareUtf8Bytes(left.detail, right.detail),
+    ),
   );
 }
 
@@ -370,6 +415,7 @@ export function renderResolutionErrors(
   path: readonly ValidatedBundle[],
   lattice: ScopeLattice,
   clearance: readonly string[],
+  visibleBundleIdentifiers: ReadonlySet<string> = new Set(),
 ): readonly ResolutionError[] {
   const rendered = errors.map((error): ResolutionError => {
     if (!error.id) return Object.freeze({ ...error });
@@ -379,8 +425,9 @@ export function renderResolutionErrors(
         selectionNodePath(selection, path) === error.node,
     );
     const visible =
-      contributor?.revision !== undefined &&
-      lattice.visible(contributor.revision.scope, clearance);
+      visibleBundleIdentifiers.has(`${error.node}\0${error.id}`) ||
+      (contributor?.revision !== undefined &&
+        lattice.visible(contributor.revision.scope, clearance));
     return visible
       ? Object.freeze({ ...error })
       : Object.freeze({

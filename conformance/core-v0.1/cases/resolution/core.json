@@ -713,6 +713,184 @@
     }
   },
   {
+    "name": "bundle failure has bundle-wide id blast radius and preserves unaffected nodes",
+    "operation": "resolve",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Root shared.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.root",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Root unaffected.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "division",
+          "path": "/fixtures/division",
+          "node_path": "root/division",
+          "is_root": false,
+          "metadata": { "bundle": "org.division", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Child shared.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.child",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Child only.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            },
+            {
+              "id": "term.secret",
+              "owner": "role.editor",
+              "scope": "restricted",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Secret.",
+              "source_path": "glossary.md",
+              "line": 21,
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "repo",
+          "path": "/fixtures/repo",
+          "node_path": "root/division/repo",
+          "is_root": false,
+          "metadata": { "bundle": "org.repo", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Leaf shared.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "term.leaf",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Leaf unaffected.",
+              "source_path": "glossary.md",
+              "line": 11,
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21",
+      "bundle_failures": [
+        {
+          "bundle_index": 1,
+          "code": "integrity_failure",
+          "detail": "Bundle integrity verification failed."
+        }
+      ]
+    },
+    "expected": {
+      "canonical_effective_context": "{\"bundles\":[{\"content_id\":\"sha256:9e8ffdce05774ba18c088fd1f82c01d3c00082b4b469cb4ebe744ebbc6cf2cbf\",\"path\":\"root\"},{\"content_id\":\"sha256:58d0021f6e5ff9afe303bfb3cc28469b28530b51888c104f371afd7f70e51ab0\",\"path\":\"root/division\"},{\"content_id\":\"sha256:faea0bc058e0db1ccb810fab65a692d44a9a95f351a73f838da99932269b708f\",\"path\":\"root/division/repo\"}],\"entries\":[{\"body\":\"Leaf unaffected.\",\"domain\":\"glossary\",\"id\":\"term.leaf\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"},{\"body\":\"Root unaffected.\",\"domain\":\"glossary\",\"id\":\"term.root\",\"owner\":\"role.editor\",\"rev\":1,\"scope\":\"public\",\"source\":\"native\",\"status\":\"approved\"}]}",
+      "context_id": "sha256:b08b7314860336b13484461c611ff778762b3c29658809fb4bb7b89dfb247fbd",
+      "visible_entry_ids": ["term.leaf", "term.root"],
+      "visible_entries": [
+        {
+          "id": "term.leaf",
+          "rev": 1,
+          "bundle_index": 2,
+          "contested": false,
+          "stale_reasons": []
+        },
+        {
+          "id": "term.root",
+          "rev": 1,
+          "bundle_index": 0,
+          "contested": false,
+          "stale_reasons": []
+        }
+      ],
+      "withheld": [],
+      "resolution_errors": [
+        {
+          "code": "integrity_failure",
+          "node": "root/division",
+          "id_withheld": true,
+          "detail": "Bundle integrity verification failed."
+        },
+        {
+          "code": "integrity_failure",
+          "node": "root/division",
+          "id": "term.child",
+          "detail": "Bundle integrity verification failed."
+        },
+        {
+          "code": "integrity_failure",
+          "node": "root/division",
+          "id": "term.shared",
+          "detail": "Bundle integrity verification failed."
+        }
+      ],
+      "diagnostics": []
+    }
+  },
+  {
     "name": "request-scoped empty path failure returns no partial context",
     "operation": "resolve",
     "input": { "path": [], "clearance": ["public"], "today": "2026-08-21" },

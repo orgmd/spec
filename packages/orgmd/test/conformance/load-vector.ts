@@ -1,7 +1,9 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { lstatSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
   Bundle,
+  BundleFailure,
   Diagnostic,
   EntryRevision,
   ParsedEntryRevision,
@@ -65,7 +67,20 @@ export function loadManifest(): ConformanceManifest {
 }
 
 export function loadVectors(): readonly ConformanceVector[] {
-  const files = walkJson(casesDirectory);
+  return loadVectorsFrom(casesDirectory);
+}
+
+export function loadVectorsFrom(
+  directory: string,
+): readonly ConformanceVector[] {
+  const root = lstatSync(directory);
+  if (root.isSymbolicLink()) {
+    throw new Error("conformance corpus must not contain symlinks");
+  }
+  if (!root.isDirectory()) {
+    throw new Error("conformance corpus root must be a directory");
+  }
+  const files = walkJson(directory);
   const vectors = files.flatMap((path) => {
     const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
     return Array.isArray(parsed) ? parsed : [parsed];
@@ -162,6 +177,7 @@ function executeContextId(input: Readonly<Record<string, unknown>>): unknown {
     context_id: computeContextId(
       bundles,
       arrayField(input, "clearance").map((value) => string(value, "clearance")),
+      vectorBundleFailures(input),
     ),
   };
 }
@@ -177,6 +193,9 @@ function executeResolve(input: Readonly<Record<string, unknown>>): unknown {
     ...(typeof input.anonymous === "boolean"
       ? { anonymous: input.anonymous }
       : {}),
+    ...(input.bundle_failures === undefined
+      ? {}
+      : { bundleFailures: vectorBundleFailures(input) }),
   });
   if (!result.value) {
     return { diagnostics: result.diagnostics.map(stableDiagnostic) };
@@ -207,6 +226,24 @@ function executeResolve(input: Readonly<Record<string, unknown>>): unknown {
     resolution_errors: result.value.resolutionErrors.map(stableResolutionError),
     diagnostics: result.value.diagnostics.map(stableDiagnostic),
   };
+}
+
+function vectorBundleFailures(
+  input: Readonly<Record<string, unknown>>,
+): readonly BundleFailure[] {
+  if (input.bundle_failures === undefined) return [];
+  return arrayField(input, "bundle_failures").map((value) => {
+    const failure = record(value, "bundle failure");
+    const code = stringField(failure, "code");
+    if (code !== "unparseable_bundle" && code !== "integrity_failure") {
+      throw new Error("bundle failure code is invalid");
+    }
+    return {
+      bundleIndex: numberField(failure, "bundle_index"),
+      code,
+      detail: stringField(failure, "detail"),
+    };
+  });
 }
 
 function parsedBundle(value: Readonly<Record<string, unknown>>): Bundle {
@@ -332,12 +369,17 @@ function isWithheld(
 function walkJson(directory: string): readonly string[] {
   return readdirSync(directory, { withFileTypes: true })
     .flatMap((entry) => {
-      const path = `${directory}/${entry.name}`;
-      return entry.isDirectory()
-        ? walkJson(path)
-        : entry.name.endsWith(".json")
-          ? [path]
-          : [];
+      const path = join(directory, entry.name);
+      const stats = lstatSync(path);
+      if (stats.isSymbolicLink()) {
+        throw new Error("conformance corpus must not contain symlinks");
+      }
+      if (stats.isDirectory()) return walkJson(path);
+      if (!entry.name.endsWith(".json")) return [];
+      if (!stats.isFile()) {
+        throw new Error("conformance JSON cases must be regular files");
+      }
+      return [path];
     })
     .sort((left, right) =>
       Buffer.compare(Buffer.from(left), Buffer.from(right)),

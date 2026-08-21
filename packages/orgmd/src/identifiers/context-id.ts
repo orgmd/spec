@@ -9,8 +9,21 @@ export interface ContextIdInput {
     readonly node_path: string;
   }[];
   readonly clearance: readonly string[];
+  readonly bundle_failures?: readonly {
+    readonly bundle_index: number;
+    readonly code: BundleFailureCode;
+    readonly detail: string;
+  }[];
   readonly disclosure_mode: "A";
   readonly spec_version: "0.3.1";
+}
+
+export type BundleFailureCode = "unparseable_bundle" | "integrity_failure";
+
+export interface BundleFailure {
+  readonly bundleIndex: number;
+  readonly code: BundleFailureCode;
+  readonly detail: string;
 }
 
 export interface BundleVersion {
@@ -22,7 +35,14 @@ export interface BundleVersion {
 export function computeContextId(
   bundles: readonly BundleVersion[],
   clearance: readonly string[],
+  bundleFailures: readonly BundleFailure[] = [],
 ): string {
+  const failures = [...bundleFailures].sort(
+    (left, right) =>
+      left.bundleIndex - right.bundleIndex ||
+      compareUtf8Bytes(left.code, right.code) ||
+      compareUtf8Bytes(left.detail, right.detail),
+  );
   const input: ContextIdInput = {
     bundles: bundles.map(({ bundleId, contentId, path }) => ({
       bundle_id: bundleId,
@@ -30,6 +50,15 @@ export function computeContextId(
       node_path: path,
     })),
     clearance: [...new Set(clearance)].sort(compareUtf8Bytes),
+    ...(failures.length === 0
+      ? {}
+      : {
+          bundle_failures: failures.map(({ bundleIndex, code, detail }) => ({
+            bundle_index: bundleIndex,
+            code,
+            detail,
+          })),
+        }),
     disclosure_mode: "A",
     spec_version: "0.3.1",
   };

@@ -54,4 +54,27 @@ describe("Core context identifiers", () => {
       computeContextId([root], ["public"]),
     );
   });
+
+  it("includes normalized bundle failure state", () => {
+    const failures = [
+      {
+        bundleIndex: 1,
+        code: "unparseable_bundle" as const,
+        detail: "The designated bundle could not be parsed.",
+      },
+      {
+        bundleIndex: 0,
+        code: "integrity_failure" as const,
+        detail: "Bundle integrity verification failed.",
+      },
+    ];
+    const reversed = [...failures].reverse();
+
+    expect(computeContextId([root, leaf], ["public"], failures)).toBe(
+      "sha256:fb7cba41f5d40abcee5a963b9e6966ddc915452065c21d1ca1a4d2805c0cd31f",
+    );
+    expect(computeContextId([root, leaf], ["public"], reversed)).toBe(
+      "sha256:fb7cba41f5d40abcee5a963b9e6966ddc915452065c21d1ca1a4d2805c0cd31f",
+    );
+  });
 });
