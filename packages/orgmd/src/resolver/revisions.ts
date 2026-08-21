@@ -24,7 +24,7 @@ export function selectEffectiveRevisions(
 
   const selected = [...byId.entries()]
     .sort(([left], [right]) => compareUtf8Bytes(left, right))
-    .map(([id, revisions]): RevisionSelection => {
+    .map(([id, revisions]): RevisionSelection | undefined => {
       const lifecycle = bundle.metadata.lifecycle[id]?.state;
       const approved = revisions
         .filter(({ status }) => status === "approved")
@@ -48,7 +48,9 @@ export function selectEffectiveRevisions(
         });
       }
       if (!approved) {
-        return Object.freeze({ id, state: "proposed", bundleIndex });
+        return revisions.some(({ status }) => status === "draft")
+          ? Object.freeze({ id, state: "proposed", bundleIndex })
+          : undefined;
       }
       const pending = revisions.some(
         ({ rev, status }) => status === "draft" && rev > approved.rev,
@@ -59,7 +61,10 @@ export function selectEffectiveRevisions(
         revision: approved,
         bundleIndex,
       });
-    });
+    })
+    .filter(
+      (selection): selection is RevisionSelection => selection !== undefined,
+    );
 
   return Object.freeze(selected);
 }

@@ -44,6 +44,18 @@ function bundle(
 }
 
 describe("effective revision selection", () => {
+  it("does not assign an active state to fully rejected history", () => {
+    const selected = selectEffectiveRevisions(
+      bundle([
+        revision("term.rejected", 1, "rejected"),
+        revision("term.rejected", 2, "rejected"),
+      ]),
+      0,
+    );
+
+    expect(selected).toEqual([]);
+  });
+
   it("computes ratification and lifecycle states without mutating revisions", () => {
     const entries = Object.freeze([
       revision("term.current", 1, "approved"),
