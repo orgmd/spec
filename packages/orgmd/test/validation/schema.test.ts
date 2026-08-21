@@ -156,4 +156,24 @@ describe("entry schema", () => {
       validateEntrySchema(baseEntry({ extension: { vendor: true } })),
     ).toEqual([]);
   });
+
+  it.each([
+    "/division",
+    "division/../other",
+    "division//team",
+    "division team",
+  ])("rejects unsafe logical delegation path %s", (delegate) => {
+    expect(
+      validateEntrySchema(baseEntry({ delegates: [delegate] })),
+    ).toContainEqual(expect.objectContaining({ code: "invalid_entry" }));
+  });
+
+  it.each(["division", "division/team", "division.nz/team_1"])(
+    "accepts safe logical delegation path %s",
+    (delegate) => {
+      expect(validateEntrySchema(baseEntry({ delegates: [delegate] }))).toEqual(
+        [],
+      );
+    },
+  );
 });

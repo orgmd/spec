@@ -11,6 +11,7 @@ import { resolveOrdinaryDefinitions } from "./definitions.js";
 import {
   blockedEntryIds,
   entrySemanticErrors,
+  isResolveRequestEnvelope,
   renderResolutionDiagnostics,
   renderResolutionErrors,
   validateResolutionPath,
@@ -32,6 +33,13 @@ const WITHHELD_MARKER: WithheldMarker = Object.freeze({
 });
 
 export function resolveContext(request: ResolveRequest): ResolveResult {
+  if (!isResolveRequestEnvelope(request)) {
+    return failure({
+      code: "resolution.invalid-request",
+      severity: "error",
+      message: "Resolution request data is malformed.",
+    });
+  }
   const pathDiagnostics = validateResolutionPath(request.path);
   if (pathDiagnostics.length > 0) return { diagnostics: pathDiagnostics };
 
@@ -146,8 +154,7 @@ export function resolveContext(request: ResolveRequest): ResolveResult {
   );
   const diagnostics = renderResolutionDiagnostics(
     authority.diagnostics,
-    selections,
-    request.path,
+    authority.entries,
     latticeResult.value,
     clearance,
   );

@@ -14,6 +14,7 @@ export type {
   RatificationStatus,
   ValidatedBundle,
 } from "./model/types.js";
+export { loadBundle, type LoadBundleInput } from "./bundle/load.js";
 export {
   bundleMetadataCanonicalForm,
   entryCanonicalForm,

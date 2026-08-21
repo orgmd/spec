@@ -36,6 +36,28 @@ function bundle(
 }
 
 describe("resolution request failures", () => {
+  it.each([
+    null,
+    {
+      path: [bundle("root", [entry("term.root")])],
+      clearance: null,
+      today: "2026-08-21",
+    },
+  ])("never throws for a malformed request envelope", (malformed) => {
+    expect(() =>
+      resolveContext(
+        malformed as unknown as Parameters<typeof resolveContext>[0],
+      ),
+    ).not.toThrow();
+    const result = resolveContext(
+      malformed as unknown as Parameters<typeof resolveContext>[0],
+    );
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "resolution.invalid-request" }),
+    );
+  });
+
   it("refuses an empty path without producing a partial context", () => {
     const result = resolveContext({
       path: [],
@@ -99,6 +121,62 @@ describe("resolution request failures", () => {
     expect(result.diagnostics).toEqual([
       expect.objectContaining({
         code: "unreachable_node",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("returns an invalid-request diagnostic for malformed nested scope metadata", () => {
+    const root = bundle("root", [entry("term.root")]);
+    const malformed = {
+      ...root,
+      metadata: { ...root.metadata, scopes: { secret: {} } },
+    } as unknown as ValidatedBundle;
+
+    expect(() =>
+      resolveContext({
+        path: [malformed],
+        clearance: ["public"],
+        today: "2026-08-21",
+      }),
+    ).not.toThrow();
+    const result = resolveContext({
+      path: [malformed],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
+  it("returns an invalid-request diagnostic for a malformed entry shape", () => {
+    const root = bundle("root", [entry("term.root")]);
+    const malformed = {
+      ...root,
+      entries: [{ id: "term.incomplete" }],
+    } as unknown as ValidatedBundle;
+
+    expect(() =>
+      resolveContext({
+        path: [malformed],
+        clearance: ["public"],
+        today: "2026-08-21",
+      }),
+    ).not.toThrow();
+    const result = resolveContext({
+      path: [malformed],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.invalid-request",
         details: { index: 0 },
       }),
     ]);

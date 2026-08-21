@@ -1,4 +1,5 @@
 import { loadBundle } from "../bundle/load.js";
+import { isLogicalNodePath } from "../bundle/node-path.js";
 import { sortDiagnostics } from "../diagnostics/sort.js";
 import type { OperationResult } from "../diagnostics/types.js";
 import type {
@@ -37,13 +38,25 @@ const KNOWN_ENTRY_KEYS = new Set([
 
 export interface ValidateBundleOptions {
   readonly isRoot: boolean;
+  readonly nodePath?: string;
 }
 
 export function validateBundle(
   bundle: Bundle,
   options: ValidateBundleOptions,
 ): OperationResult<ValidatedBundle> {
+  const nodePath = options.nodePath ?? bundle.nodePath;
   const diagnostics = sortDiagnostics([
+    ...(nodePath !== undefined && !isLogicalNodePath(nodePath)
+      ? [
+          {
+            code: "validation.invalid-node-path",
+            severity: "error" as const,
+            message:
+              "A logical node path must be a safe relative slash-separated path.",
+          },
+        ]
+      : []),
     ...validateRevisionSchemas(bundle),
     ...validateRevisionSets(bundle),
     ...validateBundleMetadata(bundle, options.isRoot),
@@ -54,7 +67,7 @@ export function validateBundle(
   }
 
   return {
-    value: brandValidated(bundle, options.isRoot),
+    value: brandValidated(bundle, options.isRoot, nodePath),
     diagnostics,
   };
 }
@@ -63,7 +76,11 @@ export async function validateBundlePath(
   reference: string,
   options: ValidateBundleOptions,
 ): Promise<OperationResult<ValidatedBundle>> {
-  const loaded = await loadBundle({ reference, isRoot: options.isRoot });
+  const loaded = await loadBundle({
+    reference,
+    isRoot: options.isRoot,
+    ...(options.nodePath === undefined ? {} : { nodePath: options.nodePath }),
+  });
   if (!loaded.value) return { diagnostics: loaded.diagnostics };
 
   const validated = validateBundle(loaded.value, options);
@@ -76,12 +93,16 @@ export async function validateBundlePath(
     : { diagnostics };
 }
 
-function brandValidated(bundle: Bundle, isRoot: boolean): ValidatedBundle {
+function brandValidated(
+  bundle: Bundle,
+  isRoot: boolean,
+  nodePath: string | undefined,
+): ValidatedBundle {
   const entries = Object.freeze(bundle.entries.map(normalizeEntry));
   return Object.freeze({
     reference: bundle.reference,
     path: bundle.path,
-    ...(bundle.nodePath === undefined ? {} : { nodePath: bundle.nodePath }),
+    ...(nodePath === undefined ? {} : { nodePath }),
     isRoot,
     metadata: normalizeBundleMetadata(bundle, isRoot),
     entries,

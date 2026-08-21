@@ -18,6 +18,17 @@ export interface ScopeLattice {
 export function createScopeLattice(
   declarations: BundleMetadata["scopes"],
 ): OperationResult<ScopeLattice> {
+  if (declarations !== undefined && !validDeclarations(declarations)) {
+    return {
+      diagnostics: sortDiagnostics([
+        {
+          code: "resolution.invalid-scopes",
+          severity: "error",
+          message: "Scope declarations are malformed.",
+        },
+      ]),
+    };
+  }
   const labels = new Set(DEFAULT_LABELS);
   for (const label of Object.keys(declarations ?? {})) labels.add(label);
 
@@ -81,6 +92,26 @@ export function createScopeLattice(
     },
   });
   return { value: lattice, diagnostics: Object.freeze([]) };
+}
+
+function validDeclarations(
+  value: unknown,
+): value is NonNullable<BundleMetadata["scopes"]> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every(
+      (declaration) =>
+        typeof declaration === "object" &&
+        declaration !== null &&
+        !Array.isArray(declaration) &&
+        Array.isArray(declaration.narrower_than) &&
+        declaration.narrower_than.every(
+          (label: unknown) => typeof label === "string",
+        ),
+    )
+  );
 }
 
 function containsCycle(

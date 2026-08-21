@@ -6,12 +6,12 @@ import {
 
 const root: BundleVersion = {
   bundleId: "root",
-  path: "/root",
+  path: "root",
   contentId: "sha256:aaa",
 };
 const leaf: BundleVersion = {
   bundleId: "leaf",
-  path: "/root/leaf",
+  path: "root/leaf",
   contentId: "sha256:bbb",
 };
 
@@ -20,7 +20,7 @@ describe("Core context identifiers", () => {
     expect(
       computeContextId([root, leaf], ["public", "internal", "public"]),
     ).toBe(
-      "sha256:d5e9ab44e9b04bea149d98378d38482351092905b07ad68692f742c4aae803a9",
+      "sha256:9a3e816cc4b26e84fcfed38a83fa36dfe28669c585cf00d83f5082c8fdf40813",
     );
   });
 
@@ -32,16 +32,26 @@ describe("Core context identifiers", () => {
 
   it("preserves resolution-path order", () => {
     expect(computeContextId([leaf, root], ["public", "internal"])).toBe(
-      "sha256:256ca9810723f6d69e3bcfc06ece609072838e812fc93b6bed45f85332f10305",
+      "sha256:f34182c7ee0aee66ea536136baa7db4ad8af013b094c226d6ff5dab13c6b80f0",
     );
     expect(computeContextId([leaf, root], ["public", "internal"])).not.toBe(
       computeContextId([root, leaf], ["public", "internal"]),
     );
   });
 
-  it("does not include local filesystem paths", () => {
-    expect(
-      computeContextId([{ ...root, path: "/different" }], ["public"]),
-    ).toBe(computeContextId([root], ["public"]));
+  it("treats logical node placement as resolution-affecting", () => {
+    expect(computeContextId([{ ...root, path: "other" }], ["public"])).not.toBe(
+      computeContextId([root], ["public"]),
+    );
+  });
+
+  it("does not include an incidental physical filesystem path", () => {
+    const withPhysicalPath = {
+      ...root,
+      physicalPath: "/private/tmp/root",
+    } as BundleVersion;
+    expect(computeContextId([withPhysicalPath], ["public"])).toBe(
+      computeContextId([root], ["public"]),
+    );
   });
 });

@@ -5,12 +5,17 @@ import type { Diagnostic, OperationResult } from "../diagnostics/types.js";
 import type { Bundle, ParsedEntryRevision } from "../model/types.js";
 import { parseContentFile } from "../parser/content-file.js";
 import { mapDomain } from "./domain.js";
+import { isLogicalNodePath } from "./node-path.js";
 
-export async function loadBundle(input: {
+export interface LoadBundleInput {
   readonly reference: string;
   readonly nodePath?: string;
   readonly isRoot: boolean;
-}): Promise<OperationResult<Bundle>> {
+}
+
+export async function loadBundle(
+  input: LoadBundleInput,
+): Promise<OperationResult<Bundle>> {
   if (input.nodePath !== undefined && !isLogicalNodePath(input.nodePath)) {
     return failure({
       code: "bundle.invalid-node-path",
@@ -92,17 +97,6 @@ export async function loadBundle(input: {
     }),
     diagnostics: sortDiagnostics(diagnostics),
   };
-}
-
-function isLogicalNodePath(value: string): boolean {
-  if (value.length === 0 || value.startsWith("/") || value.endsWith("/")) {
-    return false;
-  }
-  return value
-    .split("/")
-    .every(
-      (segment) => segment.length > 0 && segment !== "." && segment !== "..",
-    );
 }
 
 async function enumerate(root: string): Promise<{

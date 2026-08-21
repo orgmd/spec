@@ -251,7 +251,7 @@ describe("authority-bounded resolution", () => {
         ]),
         bundle("division", [
           authority("own.acquisition-secret", "Project Kestrel division", {
-            scope: "restricted",
+            scope: "public",
             owner: "role.division",
           }),
         ]),

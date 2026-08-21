@@ -6,6 +6,7 @@ export interface ContextIdInput {
   readonly bundles: readonly {
     readonly bundle_id: string;
     readonly content_id: string;
+    readonly node_path: string;
   }[];
   readonly clearance: readonly string[];
   readonly disclosure_mode: "A";
@@ -23,9 +24,10 @@ export function computeContextId(
   clearance: readonly string[],
 ): string {
   const input: ContextIdInput = {
-    bundles: bundles.map(({ bundleId, contentId }) => ({
+    bundles: bundles.map(({ bundleId, contentId, path }) => ({
       bundle_id: bundleId,
       content_id: contentId,
+      node_path: path,
     })),
     clearance: [...new Set(clearance)].sort(compareUtf8Bytes),
     disclosure_mode: "A",
