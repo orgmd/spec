@@ -26,6 +26,7 @@ interface EntryRecord {
   readonly openingLine: number;
   readonly yaml: string;
   readonly body: string;
+  readonly openedFromBodyDelimiter: boolean;
 }
 
 export function parseContentFile(
@@ -40,8 +41,7 @@ export function parseContentFile(
   try {
     text = new TextDecoder("utf-8", { fatal: true })
       .decode(input.bytes)
-      .replace(/^\uFEFF/, "")
-      .replace(/\r\n?/g, "\n");
+      .replace(/^\uFEFF/, "");
   } catch {
     return failure({
       code: "parser.invalid-utf8",
@@ -51,6 +51,16 @@ export function parseContentFile(
       line: 1,
     });
   }
+  if (/\r(?!\n)/.test(text)) {
+    return failure({
+      code: "parser.invalid-line-ending",
+      severity: "error",
+      message: "Content files may use only LF or CRLF line endings.",
+      path: input.path,
+      line: 1,
+    });
+  }
+  text = text.replace(/\r\n/g, "\n");
 
   const scan = scanEntryRecords(text, input.path, limits.maxEntriesPerFile);
   if (scan.diagnostics.length > 0) return failure(...scan.diagnostics);
@@ -79,7 +89,16 @@ export function parseContentFile(
       openingLine: record.openingLine,
       maxAliases: limits.maxYamlAliases,
     });
-    diagnostics.push(...yaml.diagnostics);
+    if (
+      record.openedFromBodyDelimiter &&
+      yaml.diagnostics.some(
+        ({ code }) => code === "parser.invalid-yaml-mapping",
+      )
+    ) {
+      diagnostics.push(bodyDelimiterDiagnostic(input.path, record.openingLine));
+    } else {
+      diagnostics.push(...yaml.diagnostics);
+    }
     if (yaml.mapping) {
       entries.push(
         Object.freeze({
@@ -122,14 +141,9 @@ function scanEntryRecords(
       return {
         records: [],
         diagnostics: [
-          {
-            code: "parser.missing-closing-delimiter",
-            severity: "error",
-            message:
-              "An entry opening delimiter must have a closing delimiter.",
-            path,
-            line: openingIndex + 1,
-          },
+          openingIndex === 0
+            ? missingClosingDelimiterDiagnostic(path, openingIndex + 1)
+            : bodyDelimiterDiagnostic(path, openingIndex + 1),
         ],
       };
     }
@@ -137,6 +151,7 @@ function scanEntryRecords(
     records.push({
       openingLine: openingIndex + 1,
       yaml: lines.slice(openingIndex + 1, closingIndex).join("\n"),
+      openedFromBodyDelimiter: openingIndex !== 0,
       body: trimBody(
         lines.slice(
           closingIndex + 1,
@@ -151,7 +166,7 @@ function scanEntryRecords(
 }
 
 function findClosingDelimiter(lines: readonly string[], start: number): number {
-  for (let index = start; index < lines.length; index += 1) {
+  for (let index = start; index < lines.length - 1; index += 1) {
     if (lines[index] === "---") return index;
   }
   return -1;
@@ -184,9 +199,10 @@ function findNextOpeningDelimiter(
 function openingFence(
   line: string,
 ): { readonly character: "`" | "~"; readonly length: number } | undefined {
-  const match = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+  const match = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
   if (!match?.[1]) return undefined;
   const run = match[1];
+  if (run[0] === "`" && match[2]?.includes("`")) return undefined;
   return { character: run[0] as "`" | "~", length: run.length };
 }
 
@@ -217,6 +233,30 @@ function resourceLimit(path: string, subject: string): Diagnostic {
     message: `Parser resource limit exceeded for ${subject}.`,
     path,
     line: 1,
+  };
+}
+
+function missingClosingDelimiterDiagnostic(
+  path: string,
+  line: number,
+): Diagnostic {
+  return {
+    code: "parser.missing-closing-delimiter",
+    severity: "error",
+    message: "An entry opening delimiter must have a closing delimiter.",
+    path,
+    line,
+  };
+}
+
+function bodyDelimiterDiagnostic(path: string, line: number): Diagnostic {
+  return {
+    code: "parser.unescaped-body-delimiter",
+    severity: "error",
+    message:
+      "A `---` line outside a fence and preceded by a blank line necessarily opens a record; it cannot be escaped.",
+    path,
+    line,
   };
 }
 

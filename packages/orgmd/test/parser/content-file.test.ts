@@ -57,6 +57,26 @@ describe("parseContentFile", () => {
     expect(result.value).toBeUndefined();
   });
 
+  it("rejects bare CR line endings", () => {
+    const result = parseText("---\rid: term.one\r---\rBody\r");
+
+    expect(result).toMatchObject({
+      diagnostics: [{ code: "parser.invalid-line-ending", severity: "error" }],
+    });
+    expect(result.value).toBeUndefined();
+  });
+
+  it("requires a line ending after a closing delimiter", () => {
+    const result = parseText("---\nid: term.one\n---");
+
+    expect(result).toMatchObject({
+      diagnostics: [
+        { code: "parser.missing-closing-delimiter", severity: "error" },
+      ],
+    });
+    expect(result.value).toBeUndefined();
+  });
+
   it("warns and returns no entries when the opening delimiter is absent", () => {
     const result = parseText("# A human Markdown document\n\nNot ORG content.");
 
@@ -99,6 +119,24 @@ describe("parseContentFile", () => {
     ]);
   });
 
+  it("names an apparent body delimiter when its resulting front matter is invalid", () => {
+    const result = parseText(
+      "---\nid: term.one\n---\nFirst body\n\n---\nid: [unterminated\n---\nSecond body\n",
+    );
+
+    expect(result).toMatchObject({
+      diagnostics: [
+        {
+          code: "parser.unescaped-body-delimiter",
+          severity: "error",
+          line: 6,
+          message: expect.stringContaining("preceded by a blank line"),
+        },
+      ],
+    });
+    expect(result.value).toBeUndefined();
+  });
+
   it("ignores delimiters inside backtick fences", () => {
     const result = parseText(fixture("fenced-delimiter.md"));
 
@@ -106,6 +144,18 @@ describe("parseContentFile", () => {
     expect(result.value).toMatchObject([
       { body: "```markdown\n---\n```" },
       { frontMatter: { id: "term.after-fence" }, body: "After fence" },
+    ]);
+  });
+
+  it("does not treat a backtick-containing info string as a fenced code block", () => {
+    const result = parseText(
+      "---\nid: term.one\n---\n```not`a-fence\n\n---\nid: term.two\n---\nSecond body\n",
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.value?.map(({ frontMatter }) => frontMatter.id)).toEqual([
+      "term.one",
+      "term.two",
     ]);
   });
 
