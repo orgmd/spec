@@ -135,6 +135,22 @@ describe("entry schema", () => {
     ).toContainEqual(expect.objectContaining({ code: "invalid_entry" }));
   });
 
+  it.each(["own.payments", "own.team.payments", "role.editor"])(
+    "accepts ownership route identifier %s",
+    (route) => {
+      expect(validateEntrySchema(baseEntry({ route }))).toEqual([]);
+    },
+  );
+
+  it.each(["call Bob", "dec.0001", "own.", "role.", "own:payments"])(
+    "rejects malformed ownership route %s",
+    (route) => {
+      expect(validateEntrySchema(baseEntry({ route }))).toContainEqual(
+        expect.objectContaining({ code: "invalid_entry" }),
+      );
+    },
+  );
+
   it("permits unknown front-matter keys", () => {
     expect(
       validateEntrySchema(baseEntry({ extension: { vendor: true } })),

@@ -461,6 +461,35 @@ describe("semantic bundle validation", () => {
     expect(result.value).toBeDefined();
   });
 
+  it("rejects malformed non-root routes before path resolution", () => {
+    const result = validateBundle(
+      bundle(
+        [
+          parsed(
+            "policy",
+            frontMatter("policy.malformed-route", {
+              revisit: "2027-01-01",
+              action: "payments.write",
+              effect: "escalate",
+              route: "call Bob",
+            }),
+            "policies.md",
+          ),
+        ],
+        { isRoot: false },
+      ),
+      { isRoot: false },
+    );
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "invalid_entry",
+        entryId: "policy.malformed-route",
+      }),
+    );
+    expect(result.value).toBeUndefined();
+  });
+
   it("rejects malformed bundle identifiers and owner role identifiers", () => {
     const identityEntry = identity({ bundle: 42 });
     const result = validateBundle(
@@ -528,6 +557,106 @@ describe("semantic bundle validation", () => {
     );
 
     expect(codes(result)).toContain("unresolvable_route");
+  });
+
+  it("resolves role routes only through the highest approved ownership revision", () => {
+    const result = validateBundle(
+      bundle([
+        parsed(
+          "ownership",
+          frontMatter("own.payments", { rev: 1, owner: "role.old" }),
+          "ownership.md",
+          20,
+        ),
+        parsed(
+          "ownership",
+          frontMatter("own.payments", { rev: 2, owner: "role.new" }),
+          "ownership.md",
+          30,
+        ),
+        parsed(
+          "policy",
+          frontMatter("policy.old-route", {
+            revisit: "2027-01-01",
+            action: "payments.write",
+            effect: "escalate",
+            route: "role.old",
+          }),
+          "policies.md",
+        ),
+        parsed(
+          "policy",
+          frontMatter("policy.new-route", {
+            revisit: "2027-01-01",
+            action: "payments.read",
+            effect: "escalate",
+            route: "role.new",
+          }),
+          "policies.md",
+          20,
+        ),
+      ]),
+      { isRoot: true },
+    );
+
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "unresolvable_route",
+        entryId: "policy.old-route",
+      }),
+    );
+    expect(result.diagnostics).not.toContainEqual(
+      expect.objectContaining({ entryId: "policy.new-route" }),
+    );
+  });
+
+  it("validates metadata on every identity revision", () => {
+    const approved = identity({ rev: 1 });
+    const draft = identity({
+      rev: 2,
+      status: "draft",
+      scopes: [],
+    });
+    const rejected = identity({
+      rev: 3,
+      status: "rejected",
+      grace_days: 91,
+      lifecycle: [],
+    });
+    const result = validateBundle(
+      bundle([draft, rejected], { identityEntry: approved }),
+      { isRoot: true },
+    );
+
+    expect(codes(result)).toEqual(
+      expect.arrayContaining([
+        "validation.invalid-scopes",
+        "validation.invalid-grace-days",
+        "validation.invalid-lifecycle",
+      ]),
+    );
+    expect(result.value).toBeUndefined();
+  });
+
+  it("does not activate bundle metadata without an approved identity revision", () => {
+    const draftIdentity = identity({
+      status: "draft",
+      bundle: "draft.identity",
+      lifecycle: {
+        "own.last-resort": {
+          state: "retired",
+          by: "role.editor",
+          date: "2026-08-21",
+        },
+      },
+    });
+    const result = validateBundle(
+      bundle([], { identityEntry: draftIdentity }),
+      { isRoot: true },
+    );
+
+    expect(codes(result)).toContain("validation.missing-identity");
+    expect(result.value).toBeUndefined();
   });
 
   it("checks upstream system identity and real calendar dates", () => {

@@ -209,38 +209,61 @@ export function validateBundleMetadata(
 ): readonly Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   const identity = identityEntry(bundle);
-  const values = identity?.frontMatter ?? bundle.identityMetadata;
-  if (
-    values.bundle !== undefined &&
-    (typeof values.bundle !== "string" || values.bundle.length === 0)
-  ) {
+  const revisions = bundle.entries.filter(
+    (entry) => entry.domain === "identity",
+  );
+
+  for (const revision of revisions) {
+    const values = revision.frontMatter;
+    if (
+      values.bundle !== undefined &&
+      (typeof values.bundle !== "string" || values.bundle.length === 0)
+    ) {
+      diagnostics.push(
+        metadataDiagnostic(
+          revision,
+          "invalid_entry",
+          "bundle must be a non-empty string when present.",
+        ),
+      );
+    }
+
+    if (!isRoot) {
+      for (const field of ROOT_ONLY_METADATA_KEYS) {
+        if (values[field] === undefined) continue;
+        diagnostics.push({
+          code: "validation.ignored-root-metadata",
+          severity: "warning",
+          message: `Root-only metadata field ${JSON.stringify(field)} was ignored in a non-root bundle.`,
+          path: revision.sourcePath,
+          line: revision.line,
+          details: { field },
+        });
+      }
+    } else {
+      diagnostics.push(...validateGraceDays(values, revision));
+      diagnostics.push(...validateScopes(values, revision, []));
+    }
+    diagnostics.push(...validateLifecycle(values, revision, bundle.entries));
+  }
+
+  if (!identity) {
     diagnostics.push(
       metadataDiagnostic(
-        identity,
-        "invalid_entry",
-        "bundle must be a non-empty string when present.",
+        revisions[0],
+        "validation.missing-identity",
+        "A bundle must have an approved identity revision.",
       ),
     );
   }
 
   if (!isRoot) {
-    for (const field of ROOT_ONLY_METADATA_KEYS) {
-      if (values[field] === undefined) continue;
-      diagnostics.push({
-        code: "validation.ignored-root-metadata",
-        severity: "warning",
-        message: `Root-only metadata field ${JSON.stringify(field)} was ignored in a non-root bundle.`,
-        ...(identity ? { path: identity.sourcePath, line: identity.line } : {}),
-        details: { field },
-      });
-    }
-    diagnostics.push(...validateLifecycle(values, identity, bundle.entries));
     return diagnostics;
   }
 
-  diagnostics.push(...validateGraceDays(values, identity));
-  diagnostics.push(...validateScopes(values, identity, bundle.entries));
-  diagnostics.push(...validateLifecycle(values, identity, bundle.entries));
+  if (identity) {
+    diagnostics.push(...validateActiveEntryScopes(identity, bundle.entries));
+  }
 
   const retired = retiredIds(bundle);
   const hasLastResort = bundle.entries.some(
@@ -266,7 +289,7 @@ export function normalizeBundleMetadata(
   bundle: Bundle,
   isRoot: boolean,
 ): BundleMetadata {
-  const values = identityEntry(bundle)?.frontMatter ?? bundle.identityMetadata;
+  const values = identityEntry(bundle)?.frontMatter ?? {};
   const lifecycle = normalizeLifecycle(values.lifecycle);
   return Object.freeze({
     ...(typeof values.bundle === "string" ? { bundle: values.bundle } : {}),
@@ -383,6 +406,16 @@ function validateEntryScopes(
   return diagnostics;
 }
 
+function validateActiveEntryScopes(
+  identity: ParsedEntryRevision,
+  entries: readonly ParsedEntryRevision[],
+): readonly Diagnostic[] {
+  const scopes = identity.frontMatter.scopes;
+  if (scopes === undefined) return validateEntryScopes(entries, new Set());
+  if (!isRecord(scopes)) return [];
+  return validateEntryScopes(entries, new Set(Object.keys(scopes)));
+}
+
 function validateLifecycle(
   values: Readonly<Record<string, unknown>>,
   identity: ParsedEntryRevision | undefined,
@@ -458,7 +491,7 @@ function identityEntry(bundle: Bundle): ParsedEntryRevision | undefined {
       entry.domain === "identity" &&
       (identityId === undefined || entry.frontMatter.id === identityId),
   );
-  return highestApproved(revisions) ?? revisions[0];
+  return highestApproved(revisions);
 }
 
 function highestApproved(
@@ -487,30 +520,30 @@ function resolvableOwnershipRoutes(
   retired: ReadonlySet<string>,
 ): ReadonlySet<string> {
   const routes = new Set<string>();
+  const revisionsById = new Map<string, ParsedEntryRevision[]>();
   for (const entry of entries) {
     if (
       entry.domain !== "ownership" ||
-      entry.frontMatter.status !== "approved"
-    ) {
+      typeof entry.frontMatter.id !== "string"
+    )
       continue;
-    }
-    if (
-      typeof entry.frontMatter.id === "string" &&
-      !retired.has(entry.frontMatter.id)
-    ) {
-      routes.add(entry.frontMatter.id);
-    } else if (typeof entry.frontMatter.id === "string") {
-      continue;
-    }
-    if (typeof entry.frontMatter.owner === "string") {
-      routes.add(entry.frontMatter.owner);
+    const revisions = revisionsById.get(entry.frontMatter.id) ?? [];
+    revisions.push(entry);
+    revisionsById.set(entry.frontMatter.id, revisions);
+  }
+  for (const [id, revisions] of revisionsById) {
+    const effective = highestApproved(revisions);
+    if (!effective || retired.has(id)) continue;
+    routes.add(id);
+    if (typeof effective.frontMatter.owner === "string") {
+      routes.add(effective.frontMatter.owner);
     }
   }
   return routes;
 }
 
 function retiredIds(bundle: Bundle): ReadonlySet<string> {
-  const values = identityEntry(bundle)?.frontMatter ?? bundle.identityMetadata;
+  const values = identityEntry(bundle)?.frontMatter ?? {};
   if (!isRecord(values.lifecycle)) return new Set();
   return new Set(
     Object.entries(values.lifecycle).flatMap(([id, record]) =>

@@ -52,7 +52,10 @@
       "type": "string",
       "enum": ["allow", "escalate", "deny"]
     },
-    "route": { "type": "string", "minLength": 1 }
+    "route": {
+      "type": "string",
+      "pattern": "^(own|role)\\.[A-Za-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    }
   },
   "allOf": [
     {
