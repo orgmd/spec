@@ -93,3 +93,4 @@ export type {
   AdoptPreviewResult,
 } from "./importer/types.js";
 export { ORGMD_VERSION } from "./version.js";
+export { runCli, type CliExitCode, type CliIo } from "./cli/main.js";
