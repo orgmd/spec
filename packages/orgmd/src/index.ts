@@ -31,6 +31,18 @@ export {
   type BundleVersion,
   type ContextIdInput,
 } from "./identifiers/context-id.js";
+export { resolveContext } from "./resolver/resolve.js";
+export { serializeEffectiveContext } from "./resolver/serialize.js";
+export { createScopeLattice, type ScopeLattice } from "./resolver/scopes.js";
+export type {
+  ResolutionError,
+  ResolvedContext,
+  ResolvedEntry,
+  ResolveRequest,
+  ResolveResult,
+  StaleReason,
+  WithheldMarker,
+} from "./resolver/types.js";
 export {
   validateBundle,
   validateBundlePath,
