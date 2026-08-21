@@ -9,7 +9,19 @@
 `status` is now ratification only (`draft` | `approved` | `rejected`), while
 contestation and retirement are entry-level acts (§4.1, §4.7), removing the
 resurrection hazard by which contesting or retiring a revision silently
-elected an older one.
+elected an older one; bundle-level metadata folded into the content
+identifier — bundle id, scope lattice, grace window and entry lifecycle
+state now change it, and the general rule that every value capable of
+changing resolution, disclosure, identity or authority must (§7.1, §5.5);
+disclosure Mode A made the only conforming Core behaviour, Mode B an
+Extended capability whose declared mode is a resolver input (§5.4, §5,
+§11); Core role binding clarified — organisational semantics at Core,
+identity-backed ratification an Extended guarantee (§9); raw-bundle storage
+invariant added — bundle access at least as restrictive as its most
+restricted entry (§4.2, SECURITY.md); classification boundary stated —
+ORG.md evaluates no business data (§4.6); §7.2–§7.6 marked Experimental
+pending a second implementation (§7); the Core "afternoon" claim narrowed
+to adoption rather than resolver implementation (§11).
 **Changed in 0.3:** entry identity and container grammar (§3.1, §4.5; RFC
 0001/0003); scope lattice and the disclosure/applicability split (§4.2,
 §5.4; RFC 0002/0008); policy decision function and structural narrowing
@@ -363,6 +375,17 @@ for anonymous consumers.
   below the consumer's clearance. Projections MUST NOT read as a complete
   set of constraints when they are not.
 
+**Storage invariant.** Scope-based disclosure operates at resolution and
+projection. It does not alter what raw bundle storage exposes: anyone who
+can read the bundle's files reads every entry in it, whatever its `scope`.
+Access to a raw bundle MUST therefore be at least as restrictive as the
+most restricted entry stored in it. An organisation needing finer
+separation of raw storage SHOULD split entries into separately stored
+bundles, one per compartment, and rely on the resolution path to bring
+them back together. Granting read access to a mixed-scope bundle on the
+basis that the resolver will filter it is a misconfiguration, not a
+conformance level.
+
 ### 4.3 Source semantics — canonical by exception
 
 - `synced:<system>` — the system of record is elsewhere; an adapter
@@ -460,6 +483,18 @@ digit          = %x30-39          ; 0-9
 
 The single-trailing-wildcard restriction is intentional: specificity is
 then a segment count and containment a prefix test, both auditable by eye.
+
+**The classification boundary.** ORG.md policy actions are
+**already-classified organisational actions**. ORG.md does not classify raw
+business events, and its decision function evaluates no business data: no
+amounts, dates, counterparties, quantities or record contents are inputs to
+a verdict. Where a rule turns on such a value, it MUST be expressed in one
+of two ways: as distinct pre-classified actions, the classification having
+been made upstream by the system that holds the data (e.g.
+`payments.refund.issue.high-value` beside `payments.refund.issue`); or as
+an authored `escalate` whose prose body states the condition for the human
+on the `route` to apply. Both are legal and neither adds a condition
+language to this specification.
 
 **Matching.** Given an input action `A`, an entry with action value `P`
 matches `A` when `P` is a token equal to `A`, or `P` is a pattern with
@@ -749,9 +784,11 @@ disclosure only, never membership of the decision set (§5.4).
 **The resolver is part of the trusted base.** Every security property of
 this standard depends on resolver correctness, so resolvers are
 first-class subjects of conformance (§11): two conforming resolvers given
-the same tree, identity, and clearance MUST produce the same effective
-context, the same relied-upon set, and the same `resolution_errors` list
-in the same order, compared over the canonical serialisation of §7.1.
+the same tree, identity, clearance, and declared disclosure mode (§5.4)
+MUST produce the same effective context, the same relied-upon set, and the
+same `resolution_errors` list in the same order, compared over the
+canonical serialisation of §7.1. At Core the mode is fixed to Mode A, so
+the tuple reduces to (tree, identity, clearance).
 
 ### 5.1 The resolution path
 
@@ -956,8 +993,7 @@ that reads as a complete set of constraints when it is not.
 
 **Definitions — withhold whole, or mark the shadow.** Where a definition
 entry that wins resolution is above the consuming identity's clearance,
-the resolver MUST take exactly one of two behaviours, and the deployment
-MUST declare which:
+the resolver MUST take exactly one of two behaviours:
 
 - **Mode A — withhold the id.** `org.define` returns a structured miss
   with `reason: withheld`. No ancestor definition is emitted for that
@@ -968,13 +1004,19 @@ MUST declare which:
   NOT take autonomous action that depends on it and MUST escalate to the
   entry's in-clearance escalation target.
 
+**At Core conformance Mode A is the only conforming behaviour.** Mode B is
+an Extended capability: a deployment MAY select it only at Extended, and
+only by an explicit deployment-wide declaration. Where Mode B is active
+the declared mode is a resolver input: it MUST be included in the context
+identifier (§5.5) and MUST be stated in any conformance claim (§11).
+Absent such a declaration the mode is Mode A.
+
 Emitting an ancestor definition **without** the marker is prohibited: that
 is silent shadowing. A resolver that cannot determine whether a closer
 version was withheld MUST use Mode A. The mode MUST be a deployment-wide
 setting, not per-identity and not per-entry: a mode that varies gives an
-observer an oracle for which entries are shadowed. Mode A is the
-RECOMMENDED default. The same rule applies to `org.decision` and
-`org.who_owns`, which are definition-domain reads.
+observer an oracle for which entries are shadowed. The same rule applies
+to `org.decision` and `org.who_owns`, which are definition-domain reads.
 
 **Errors.** Where an `id` is in error (§5.3), the error is reported to
 every consumer; where the `id` itself is above clearance, the error is
@@ -988,11 +1030,18 @@ of a resolution error.
 - The identifier MUST be computed over a canonical serialisation — RFC
   8785 JCS, digested with SHA-256, as in §7.1 — of, at minimum: the
   ordered resolution path as a list of (bundle identifier, bundle
-  version) pairs; the clearance labels applied (§4.2); and the
-  specification version the resolver implemented.
+  version) pairs; the clearance labels applied (§4.2); the declared
+  disclosure mode (§5.4); and the specification version the resolver
+  implemented.
 - A **bundle version** is the §7.1 content identifier at Core, and the
   `org.lock` version number together with the content identifier at
   Extended. Resolvers MUST NOT substitute a timestamp.
+- Bundle-level values reach the identifier through the bundle version: the
+  §7.1 content identifier covers the bundle metadata object, so the scope
+  lattice, the grace window, the bundle identifier and entry lifecycle
+  state all change it. This is what makes the "changes whenever any input
+  to resolution changes" claim above hold; a resolver whose content
+  identifier omits any of them does not satisfy this section.
 - The identifier MUST be stable: the same inputs MUST produce the same
   identifier in every conforming resolver.
 - Projections (§6.1) and gate responses (§6.3) MUST carry the context
@@ -1153,7 +1202,12 @@ advisory.
 
 ## 7. Integrity
 
-§7.1 is normative at **Core**. §7.2–§7.6 are normative at **Extended**.
+§7.1 is normative at **Core**. §7.2–§7.6 are normative at **Extended** and
+are additionally marked **Experimental**: they are binding on any Extended
+conformance claim, but no second independent implementation has yet
+validated them, so they MAY change by RFC on a shorter cycle than the rest
+of §3–§6. Implementations SHOULD state the specification version their
+Extended claim was tested against.
 
 ### 7.1 Bundle content identifier (Core)
 
@@ -1185,20 +1239,73 @@ identifies parsed meaning, not file bytes. §7.4 governs unknown *files* in
 a signed bundle and reaches the opposite conclusion for that case,
 deliberately.
 
-**Serialisation.** The object MUST be serialised with the JSON
-Canonicalisation Scheme (RFC 8785). Implementations MUST NOT define a
-local canonicalisation.
+**Bundle metadata canonical form.** Entry canonical forms do not carry
+root- and bundle-level values, yet several of those values change what
+resolution produces. The governing rule: **every normative value capable
+of changing resolution, disclosure, identity or authority MUST affect the
+content identifier.** A bundle therefore also has a **bundle metadata
+object**: a JSON object with exactly these members, and no others, each
+included only where the bundle carries the value it records.
+
+- `bundle` — the bundle identifier declared on the identity entry (§4.5),
+  as a string. Omitted where no `bundle` key is present; the resolution-
+  time fallback of §4.5 is not a substitute and MUST NOT be hashed here.
+- `scopes` — the declared scope lattice (§4.2), as an object whose members
+  are the declared labels, each mapping to the array of labels named in
+  its `narrower_than`, de-duplicated and sorted ascending by byte order of
+  their UTF-8 encoding. The declared edges are recorded, never the closure,
+  and never the three default labels. Omitted where the bundle declares no
+  `scopes:` mapping (which includes every non-root bundle, §4.2).
+- `grace_days` — the grace window declared in the root `org.md` (§4.8), as
+  a JSON number of whole days. Omitted where no window is declared.
+- `lifecycle` — the entry lifecycle state of §4.1, as an array of objects
+  with exactly the members `id` (string) and `state` (the string
+  `contested` or `retired`), one per entry whose state is not the default
+  — that is, one per entry carrying an active contest or a recorded
+  retirement. Entries in any other state contribute nothing. Where §4.7's
+  precedence gives an entry both, `retired` is recorded. The array MUST be
+  sorted ascending by byte order of the UTF-8 encoding of `id`. Omitted
+  where the array would be empty.
+
+Lifecycle state is hashed here, not in the entry canonical form, because
+it attaches to the entry rather than to a revision (§4.1) and MUST leave
+every revision byte-identical. It belongs in the identifier because
+lifecycle acts change resolution: a retired entry stops resolving (§5 step
+1), and a contest changes what a consumer relying on the entry may do
+(§5 step 5).
+
+**Serialisation.** Each canonical form object — entry or bundle metadata —
+MUST be serialised with the JSON Canonicalisation Scheme (RFC 8785).
+Implementations MUST NOT define a local canonicalisation.
 
 **Entry digest.** `entry_digest = SHA-256(JCS bytes)`, rendered as
 lowercase hexadecimal.
 
+**Metadata digest.** `metadata_digest = SHA-256(JCS bytes of the bundle
+metadata object)`, rendered as lowercase hexadecimal. The object is always
+constructed and always digested; where no member is present it is the
+empty object, whose JCS serialisation is the two bytes `{}`.
+
 **Bundle content identifier.** Sort all entries by `id`, ascending, by
 byte order of the UTF-8 encoding of the `id`. Duplicate `id` values within
 a single bundle MUST be a load failure, not a hash input. Build the digest
-input by concatenating, for each entry in that order, the UTF-8 bytes of
-`id`, then `0x0A`, then the lowercase hex `entry_digest`, then `0x0A`. The
-content identifier is `sha256:` followed by the lowercase hex SHA-256 of
-that input.
+input by concatenating, in this order:
+
+1. the UTF-8 bytes of the literal string `!bundle-metadata`, then `0x0A`,
+   then the lowercase hex `metadata_digest`, then `0x0A`;
+2. then, for each entry in the sort order above, the UTF-8 bytes of `id`,
+   then `0x0A`, then the lowercase hex `entry_digest`, then `0x0A`.
+
+The metadata line always comes first and is always present. It cannot
+collide with an entry line: `!` is outside the `id` grammar of §4.5, so no
+entry can produce a first field equal to `!bundle-metadata`. The content
+identifier is `sha256:` followed by the lowercase hex SHA-256 of that
+input.
+
+The conformance suite (§11) MUST include a vector in which only bundle
+metadata changes — for example one edge added to the `scopes:` lattice,
+with every entry byte-identical — and MUST assert that the content
+identifier changes.
 
 Implementations MUST emit the content identifier wherever §5 and §6.1
 require a bundle version, and MUST render it in full, not abbreviated.
@@ -1207,8 +1314,9 @@ content identifier at Core, and the `org.lock` version number *together
 with* the content identifier at Extended.
 
 **Effective-context canonical form.** Two conforming resolvers given the
-same tree, identity and clearance MUST produce byte-identical serialised
-effective context. The serialisation is a JCS-serialised JSON object with
+same tree, identity, clearance and declared disclosure mode (§5.4) MUST
+produce byte-identical serialised effective context. The serialisation is
+a JCS-serialised JSON object with
 members `entries` (the array of entry canonical forms, in the same sort
 order as above, after resolution) and `bundles` (an array of objects with
 `path` and `content_id`, ordered root to node). This form is the
@@ -1415,6 +1523,18 @@ holder; an entry whose owner is an empty role, or a named individual who
 no longer exists in the identity system, is **orphaned**, and orphaned
 entries are stale (§4.8).
 
+**What Core binds, and what it does not.** At Core an implementation
+validates organisational semantics only: that `owner` names a role, and
+that the role resolves in the `ownership` domain of the resolved bundle. It
+does not, and at Core cannot, verify that the human performing a
+ratification currently holds that role, because nothing at Core binds a
+human identity to a role identifier. **Identity-backed ratification** — the
+verified guarantee that the ratifier holds the entry's `owner` role — is an
+**Extended** guarantee, delivered by resolving roles to the organisation's
+identity system per §4.2. A Core implementation MUST NOT claim it. This
+adds no data to bundles: role membership lives in the IdP, never in a
+parallel list of people alongside the meaning it governs.
+
 - Every bundle MUST be able to name an owner of last resort. The **root**
   bundle MUST declare one, as an ownership entry with `id:
   own.last-resort`. Non-root bundles MAY declare one for their subtree.
@@ -1467,8 +1587,8 @@ meaning at their next resolution.
 | Level | Requirements |
 |---|---|
 | **Core** | §3–§6.2: bundle layout, §3.1 grammar, entry model, §4.5 identity, §4.6 field and grammar validation, §4.7 revision selection by ratification
-state together with the §4.1 entry lifecycle states, §5.1 designated path, §5.2 authority-bounded resolution, §5.3 failure semantics, §5.4 emission under clearance, §7.1 content identifier, `revisit` validation and stale marking in advisory projections, and a root `own.last-resort`. Core implementations MUST NOT claim deterministic policy answers. Achievable by a small org in an afternoon. |
-| **Extended** | Core + §6.3 gate with deterministic verdicts per §4.6, escalate-on-stale, §6.4 enforcement labelling, and §7.2–§7.6 integrity — `org.lock` over approved revisions only — with scopes and roles resolved to the organisation's identity system. |
+state together with the §4.1 entry lifecycle states, §5.1 designated path, §5.2 authority-bounded resolution, §5.3 failure semantics, §5.4 emission under clearance with disclosure Mode A, §7.1 content identifier, `revisit` validation and stale marking in advisory projections, and a root `own.last-resort`. Core implementations MUST NOT claim deterministic policy answers, and MUST NOT claim identity-backed ratification (§9). **Adopting** a Core bundle — authoring the entries and resolving them with conformant tooling — is achievable by a small org in an afternoon. **Implementing** a Core-conformant resolver is not an afternoon's work, and this level makes no such claim. |
+| **Extended** | Core + §6.3 gate with deterministic verdicts per §4.6, escalate-on-stale, §6.4 enforcement labelling, and §7.2–§7.6 integrity (Experimental, §7) — `org.lock` over approved revisions only — with scopes and roles resolved to the organisation's identity system, which is what makes identity-backed ratification (§9) available. Disclosure Mode B (§5.4) MAY be selected only here, and only by explicit declaration. |
 | **Full** | Extended + §8 audit + §10 drift tooling, including unratified-delta and orphan-drift surfacing, fallback-ratification records, and contested-workflow support with the §4.1 authority restriction and lifecycle-act records. |
 
 **Conformance and benchmark scores are different claims.**
@@ -1490,7 +1610,10 @@ state together with the §4.1 entry lifecycle states, §5.1 designated path, §5
    be part of the conformance suite.
 3. Resolver conformance MUST be evaluated by comparison against the
    canonical effective-context serialisation (§7.1): byte-identical
-   output for the same tree, identity and clearance.
+   output for the same tree, identity, clearance and declared disclosure
+   mode (§5.4). At Core the mode is fixed to Mode A and the tuple is
+   (tree, identity, clearance); a claim covering Mode B is an Extended
+   claim and MUST state the declared mode.
 4. Compiler conformance MUST be evaluated by byte-identical projection
    output for identical resolved input, together with the §6.1 rules.
 5. Gate conformance MUST be evaluated by determinism of `org.policy` over
