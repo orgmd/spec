@@ -414,6 +414,113 @@ describe("writeAdoption", () => {
     ).toBe(true);
   });
 
+  it("preserves the backup recovery tree when the first post-backup fsync fails", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const before = await Promise.all(
+      ["org.md", "ownership.md", "policies.md"].map((path) =>
+        readFile(join(target, path), "utf8"),
+      ),
+    );
+    let syncs = 0;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename,
+          remove: async (path) => rm(path, { recursive: true, force: true }),
+          syncParent: async () => {
+            syncs += 1;
+            if (syncs === 1) throw new Error("backup sync failed");
+          },
+        },
+      },
+    );
+
+    expect(result.value).toBeUndefined();
+    const diagnostic = result.diagnostics[0]!;
+    expect(diagnostic.code).toBe("adopt.rollback-failed");
+    expect(diagnostic.severity).toBe("error");
+    const recovery = diagnostic.details?.recovery;
+    expect(typeof recovery).toBe("string");
+    expect(diagnostic.details).toEqual({ recovery });
+    await expect(
+      Promise.all(
+        ["org.md", "ownership.md", "policies.md"].map((path) =>
+          readFile(join(recovery as string, path), "utf8"),
+        ),
+      ),
+    ).resolves.toEqual(before);
+  });
+
+  it("retains a synchronized recovery snapshot when rollback restoration fsync fails", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const before = await Promise.all(
+      ["org.md", "ownership.md", "policies.md"].map((path) =>
+        readFile(join(target, path), "utf8"),
+      ),
+    );
+    let renames = 0;
+    let syncs = 0;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename: async (from, to) => {
+            renames += 1;
+            if (renames === 2) throw new Error("swap failed");
+            await rename(from, to);
+          },
+          remove: async (path) => rm(path, { recursive: true, force: true }),
+          syncParent: async () => {
+            syncs += 1;
+            if (syncs === 3) throw new Error("restore sync failed");
+          },
+        },
+      },
+    );
+
+    expect(result.value).toBeUndefined();
+    const diagnostic = result.diagnostics[0]!;
+    expect(diagnostic.code).toBe("adopt.rollback-failed");
+    expect(diagnostic.severity).toBe("error");
+    const recovery = diagnostic.details?.recovery;
+    expect(typeof recovery).toBe("string");
+    expect(diagnostic.details).toEqual({ recovery });
+    await expect(
+      Promise.all(
+        ["org.md", "ownership.md", "policies.md"].map((path) =>
+          readFile(join(recovery as string, path), "utf8"),
+        ),
+      ),
+    ).resolves.toEqual(before);
+  });
+
   it("syncs durability boundaries for a successful single-directory swap", async () => {
     const target = await validTarget();
     const preview = previewAdoption({

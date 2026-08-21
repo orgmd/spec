@@ -62,6 +62,46 @@ npm run typecheck
 # passed
 ```
 
+## Fix Round 3
+
+### RED
+
+Added two rollback-durability regressions and ran:
+
+```text
+npm test -- packages/orgmd/test/importer
+```
+
+Both failed as intended. A failed first parent fsync after `target -> backup`
+returned ordinary `adopt.write-failed`, and a failed fsync after
+`backup -> target` did not expose a recoverable original-tree path.
+
+### GREEN
+
+- The original backup is now marked durable only after its parent fsync. If
+  that fsync fails, adoption never consumes the backup and returns
+  `adopt.rollback-failed` with `details.recovery` naming that retained tree.
+- Before a durable backup is consumed for either rollback path, the importer
+  creates and parent-fsyncs a separately named recovery snapshot. If restoring
+  the original target then fails its parent fsync, the snapshot remains and is
+  named in the same stable diagnostic details.
+- Recovery snapshots are removed only after a durable original restoration;
+  successful swap rollback and post-commit cleanup-warning behavior remain
+  covered by the existing importer tests.
+
+### Verification
+
+```text
+npm test -- packages/orgmd/test/importer
+# 2 files passed, 22 tests passed
+
+npm test -- packages/orgmd/test/importer packages/orgmd/test/init packages/orgmd/test/io packages/orgmd/test/validation
+# 7 files passed, 116 tests passed
+
+npm run typecheck
+# passed
+```
+
 ## Fix Round 2
 
 ### RED

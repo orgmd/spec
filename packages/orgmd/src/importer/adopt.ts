@@ -309,9 +309,12 @@ async function writeTransaction(
   const parent = dirname(target);
   let staged: string | undefined;
   let backup: string | undefined;
+  let recovery: string | undefined;
   let movedExisting = false;
+  let backupDurable = false;
   let installedStaged = false;
   let preserveBackup = false;
+  let preserveRecovery = false;
   try {
     staged = await mkdtemp(join(parent, ".orgmd-adopt-"));
     await cp(target, staged, { recursive: true, force: false });
@@ -325,6 +328,7 @@ async function writeTransaction(
     await io.rename(target, backup);
     movedExisting = true;
     await io.syncParent(parent);
+    backupDurable = true;
     await io.rename(staged, target);
     staged = undefined;
     installedStaged = true;
@@ -339,16 +343,34 @@ async function writeTransaction(
       };
     return { value: outputs.value, diagnostics: Object.freeze([]) };
   } catch {
+    if (movedExisting && !backupDurable && backup !== undefined) {
+      preserveBackup = true;
+      return failure(rollbackFailed(target, backup));
+    }
     if (movedExisting && !installedStaged && backup !== undefined) {
+      recovery = await createRecoverySnapshot(backup, parent, io);
+      if (recovery === undefined) {
+        preserveBackup = true;
+        return failure(rollbackFailed(target, backup));
+      }
       try {
         await io.rename(backup, target);
         backup = undefined;
         await io.syncParent(parent);
+        await io.remove(recovery);
+        recovery = undefined;
+        await io.syncParent(parent);
       } catch {
-        preserveBackup = true;
-        return failure(rollbackFailed(target));
+        if (backup !== undefined) preserveBackup = true;
+        preserveRecovery = recovery !== undefined;
+        return failure(rollbackFailed(target, recovery));
       }
     } else if (movedExisting && installedStaged && backup !== undefined) {
+      recovery = await createRecoverySnapshot(backup, parent, io);
+      if (recovery === undefined) {
+        preserveBackup = true;
+        return failure(rollbackFailed(target, backup));
+      }
       try {
         const displaced = `${backup}.new`;
         await io.rename(target, displaced);
@@ -358,15 +380,21 @@ async function writeTransaction(
         await io.syncParent(parent);
         await io.remove(displaced);
         await io.syncParent(parent);
+        await io.remove(recovery);
+        recovery = undefined;
+        await io.syncParent(parent);
       } catch {
-        preserveBackup = true;
-        return failure(rollbackFailed(target));
+        if (backup !== undefined) preserveBackup = true;
+        preserveRecovery = recovery !== undefined;
+        return failure(rollbackFailed(target, recovery));
       }
     }
     return failure(writeFailure(target));
   } finally {
     if (backup !== undefined && !preserveBackup)
       await io.remove(backup).catch(() => undefined);
+    if (recovery !== undefined && !preserveRecovery)
+      await io.remove(recovery).catch(() => undefined);
     if (staged !== undefined) await io.remove(staged).catch(() => undefined);
   }
 }
@@ -400,6 +428,23 @@ async function cleanupCommittedBackup(
     };
   }
   return { backup: undefined, preserveBackup: false };
+}
+
+async function createRecoverySnapshot(
+  backup: string,
+  parent: string,
+  io: AdoptIo,
+): Promise<string | undefined> {
+  const recovery = `${backup}.recovery`;
+  try {
+    await cp(backup, recovery, { recursive: true, force: false });
+    await syncDirectory(recovery);
+    await io.syncParent(parent);
+    return recovery;
+  } catch {
+    await rm(recovery, { recursive: true, force: true }).catch(() => undefined);
+    return undefined;
+  }
 }
 
 async function applyDrafts(
@@ -610,13 +655,14 @@ function writeFailure(path: string): Diagnostic {
   };
 }
 
-function rollbackFailed(path: string): Diagnostic {
+function rollbackFailed(path: string, recovery?: string): Diagnostic {
   return {
     code: "adopt.rollback-failed",
     severity: "error",
     message:
       "Adoption could not durably restore the prior bundle; manual recovery may be required.",
     path,
+    ...(recovery === undefined ? {} : { details: { recovery } }),
   };
 }
 
