@@ -74,4 +74,7 @@ export {
   validateBundlePath,
   type ValidateBundleOptions,
 } from "./validation/validate.js";
+export { atomicWriteFile, type AtomicWriteOptions } from "./io/atomic.js";
+export { planInit, writeInitPlan, type InitWriteOptions } from "./init/init.js";
+export type { InitInput, InitPlan, InitPlanFile } from "./init/types.js";
 export { ORGMD_VERSION } from "./version.js";
