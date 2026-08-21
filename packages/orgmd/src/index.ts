@@ -46,6 +46,12 @@ export {
   isValidAction,
 } from "./resolver/actions.js";
 export { serializeEffectiveContext } from "./resolver/serialize.js";
+export { compileContext } from "./compiler/compile.js";
+export type {
+  CompiledProjection,
+  CompileResult,
+  CompileTarget,
+} from "./compiler/types.js";
 export { createScopeLattice, type ScopeLattice } from "./resolver/scopes.js";
 export type {
   ResolutionError,

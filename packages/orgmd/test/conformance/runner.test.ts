@@ -1,4 +1,5 @@
 import {
+  readFileSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
@@ -21,11 +22,40 @@ it("loads the declared Core suite and exercises every declared operation", () =>
     suite: "orgmd-core",
     version: "0.1.0",
     spec_version: "0.3.1",
-    operations: ["parse", "validate", "content-id", "context-id", "resolve"],
+    operations: [
+      "parse",
+      "validate",
+      "content-id",
+      "context-id",
+      "resolve",
+      "compile-agents-md",
+      "compile-prompt",
+    ],
   });
   expect(new Set(loadVectors().map(({ operation }) => operation))).toEqual(
     new Set(manifest.operations),
   );
+});
+
+it.each([
+  ["compile-agents-md", "compiler/agents-md-v1.txt"],
+  ["compile-prompt", "compiler/prompt-v1.txt"],
+])("compares %s output as UTF-8 bytes", async (operation, expectedPath) => {
+  const vector = loadVectors().find((value) => value.operation === operation);
+  if (!vector) throw new Error(`compiler vector is missing: ${operation}`);
+
+  const result = await executeVector(vector);
+  const content = (result as { readonly content?: unknown }).content;
+  if (typeof content !== "string")
+    throw new Error("compiler result lacks content");
+  const expected = readFileSync(
+    new URL(
+      `../../../../conformance/core-v0.1/cases/${expectedPath}`,
+      import.meta.url,
+    ),
+  );
+
+  expect(Buffer.from(content, "utf8").equals(expected)).toBe(true);
 });
 
 it("rejects an external JSON symlink instead of reading outside the corpus", () => {

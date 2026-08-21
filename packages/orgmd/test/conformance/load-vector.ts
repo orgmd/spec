@@ -13,6 +13,7 @@ import type {
 } from "../../src/index.js";
 import {
   bundleMetadataCanonicalForm,
+  compileContext,
   computeContentId,
   computeContextId,
   metadataDigest,
@@ -22,7 +23,14 @@ import {
   validateBundle,
 } from "../../src/index.js";
 
-type Operation = "parse" | "validate" | "content-id" | "context-id" | "resolve";
+type Operation =
+  | "parse"
+  | "validate"
+  | "content-id"
+  | "context-id"
+  | "resolve"
+  | "compile-agents-md"
+  | "compile-prompt";
 
 interface ConformanceManifest {
   readonly suite: "orgmd-core";
@@ -56,9 +64,15 @@ export function loadManifest(): ConformanceManifest {
     !manifest.operations.every(
       (operation) =>
         typeof operation === "string" &&
-        ["parse", "validate", "content-id", "context-id", "resolve"].includes(
-          operation,
-        ),
+        [
+          "parse",
+          "validate",
+          "content-id",
+          "context-id",
+          "resolve",
+          "compile-agents-md",
+          "compile-prompt",
+        ].includes(operation),
     )
   ) {
     throw new Error("invalid conformance manifest");
@@ -109,6 +123,10 @@ export async function executeVector(
       return executeContextId(vector.input);
     case "resolve":
       return executeResolve(vector.input);
+    case "compile-agents-md":
+      return executeCompile(vector.input, "agents-md");
+    case "compile-prompt":
+      return executeCompile(vector.input, "prompt");
   }
 }
 
@@ -226,6 +244,34 @@ function executeResolve(input: Readonly<Record<string, unknown>>): unknown {
     resolution_errors: result.value.resolutionErrors.map(stableResolutionError),
     diagnostics: result.value.diagnostics.map(stableDiagnostic),
   };
+}
+
+function executeCompile(
+  input: Readonly<Record<string, unknown>>,
+  target: "agents-md" | "prompt",
+): unknown {
+  const result = resolveContext({
+    path: arrayField(input, "path").map(normalizedBundle),
+    clearance: arrayField(input, "clearance").map((value) =>
+      string(value, "clearance"),
+    ),
+    today: stringField(input, "today"),
+    ...(typeof input.anonymous === "boolean"
+      ? { anonymous: input.anonymous }
+      : {}),
+    ...(input.bundle_failures === undefined
+      ? {}
+      : { bundleFailures: vectorBundleFailures(input) }),
+  });
+  if (!result.value) {
+    return { diagnostics: result.diagnostics.map(stableDiagnostic) };
+  }
+  const compiled = compileContext(result.value, target);
+  return (
+    compiled.value ?? {
+      diagnostics: compiled.diagnostics.map(stableDiagnostic),
+    }
+  );
 }
 
 function vectorBundleFailures(
@@ -390,9 +436,15 @@ function assertVector(value: unknown): asserts value is ConformanceVector {
   const vector = record(value, "vector");
   if (
     typeof vector.name !== "string" ||
-    !["parse", "validate", "content-id", "context-id", "resolve"].includes(
-      String(vector.operation),
-    ) ||
+    ![
+      "parse",
+      "validate",
+      "content-id",
+      "context-id",
+      "resolve",
+      "compile-agents-md",
+      "compile-prompt",
+    ].includes(String(vector.operation)) ||
     !isRecord(vector.input) ||
     !("expected" in vector)
   ) {

@@ -1,0 +1,19 @@
+[ORG.md advisory context]
+profile: orgmd-prompt-v1
+context: sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9
+bundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f
+
+### Glossary
+
+#### `term.public`
+owner: `role.editor`
+scope: `public`
+source: `native`
+revision: `1`
+
+Public.
+
+### Withheld
+
+Withheld entries: 1 (clearance).
+[end ORG.md advisory context]

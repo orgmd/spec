@@ -1,0 +1,108 @@
+[
+  {
+    "name": "agents md compiler renders the fixed v1 advisory bytes",
+    "operation": "compile-agents-md",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.public",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Public.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "policy.secret",
+              "owner": "role.editor",
+              "scope": "restricted",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Secret rule.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.export",
+              "effect": "deny",
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "target": "agents-md",
+      "profile": "orgmd-agents-md-v1",
+      "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9 -->\n<!-- bundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f -->\n## Organisational context (advisory)\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n<!-- orgmd:end -->\n"
+    }
+  },
+  {
+    "name": "prompt compiler renders the fixed v1 advisory bytes",
+    "operation": "compile-prompt",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "term.public",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "glossary",
+              "body": "Public.",
+              "source_path": "glossary.md",
+              "line": 1,
+              "extra": {}
+            },
+            {
+              "id": "policy.secret",
+              "owner": "role.editor",
+              "scope": "restricted",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Secret rule.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.export",
+              "effect": "deny",
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "target": "prompt",
+      "profile": "orgmd-prompt-v1",
+      "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9\nbundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n[end ORG.md advisory context]\n"
+    }
+  }
+]
