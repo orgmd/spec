@@ -217,7 +217,7 @@
   <div class="hero">
     <h1>ORG<span class="md">.md</span></h1>
     <p class="thesis">One source of <span class="hl-strong">org meaning</span> — written once, <span class="hl">filtered, and delivered</span> to every AI tool and every person.</p>
-    <p class="standfirst">In plain terms: your company's words, rules, decisions and owners, written down once. ORG.md keeps them current, controls who sees what, and delivers the right version to every AI tool and every person automatically.</p>
+    <p class="standfirst">In plain terms: your company's words, rules, decisions and owners, written down once. ORG.md is the shared format they are written in; the tooling built on it keeps that meaning current, works out who may see what, and delivers the right version to every AI tool and every person.</p>
     <p class="status-line">Early draft · one maintainer · seeking collaborators — this page is the ask.</p>
     <div class="flow">
       <div class="src-card">
@@ -470,7 +470,7 @@ anything firmer is ops' call.</div>
             <span class="src">warehouse agent · mcp gate</span>
             <div>
               <div class="txt">org.policy("customer.eta.promise") → <span class="deny-t">deny</span></div>
-              <div class="note">→ not a suggestion: the tool call is refused before it runs, 2am included.</div>
+              <div class="note">→ not a suggestion: where the agent's tool calls go through the gate, the call is refused before it runs, 2am included.</div>
             </div>
           </div>
           <div class="copy">
@@ -536,7 +536,7 @@ the request. HIPC 2020 applies.</div>
 
     <div class="panel" id="panel-fintech" role="tabpanel" aria-labelledby="tab-fintech">
       <p class="panel-label">Fintech</p>
-      <p class="scenario"><b>The rule:</b> agents may draft refunds, but above NZ$500 a human in finance issues them. One number, one home — and a paper trail for the regulator.</p>
+      <p class="scenario"><b>The rule:</b> agents may draft refunds, but above NZ$500 a human in finance issues them. One number, one home — and a paper trail for the regulator. To be exact about the split: the gate answers <b>escalate</b> to every <b>payments.refund.issue</b>, and the NZ$500 threshold lives in the rule's prose, applied by the finance person on the route — ORG.md carries meaning to the people and agents who act on it; it does not read amounts or classify raw business events.</p>
       <div class="panel-grid">
         <div>
         <p class="snip-cap">the entry — a plain text file</p>

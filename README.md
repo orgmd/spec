@@ -3,12 +3,14 @@
 **An open standard for the organisational meaning layer.**
 
 Write down what your organisation means — its words, rules, decisions and
-owners — once. ORG.md keeps it current, controls who sees what, and
-delivers the right version to every AI tool and every person automatically.
+owners — once. ORG.md defines the portable contract; conformant tooling
+keeps that meaning current, resolves it by scope, and projects the
+applicable context to every AI tool and every person.
 
 > Repo-level context is standardised (AGENTS.md). Agent protocols are
 > standardised (MCP, A2A). The layer above them — what your organisation
-> actually *means* — is not. This is that layer.
+> actually *means*, organisation-wide — has no widely adopted portable
+> standard. This is that layer.
 
 **Status: 0.3-draft — seeking feedback.** Nothing here is frozen. If you
 run agents in an organisation and this problem is yours, we want your
@@ -123,16 +125,19 @@ donated to neutral governance at traction. The components it profiles
 rather than reinvents: **TUF/Sigstore** for signed manifests and
 revocation, **JSON Schema** for entry validation, **ADR/MADR** for
 decision records, **OPA/Cedar** as gate compile targets, **OpenTelemetry**
-for audit events, and optionally **SKOS** for glossary interop. The test
-suite *is* the standard, per JSON Schema; the format stays boring-small,
-per robots.txt.
+for audit events, and optionally **SKOS** for glossary interop. Normative
+prose defines the contract, deterministic conformance tests demonstrate
+that implementations agree on it, and agent behaviour is benchmarked
+separately (SPEC §11); the format stays boring-small, per robots.txt.
 
 The ancestor it learns from is the **Semantic Web**. RDF and OWL attacked
-this exact problem with more formal power and failed in organisations:
-authoring required logicians, meaning had to be globally consistent, and
-the machine consumers didn't exist yet. ORG.md inverts each condition —
-LLMs read prose, so domain owners write meaning directly; truth is local
-and `contested` is a legal state; and the agents arrived first this time.
+this exact problem with far more formal power, and ORG.md deliberately
+trades that expressiveness away for authoring cost: formal ontology asks
+domain experts to author like logicians, wants meaning globally
+consistent, and was built for machine consumers that hadn't arrived yet.
+ORG.md takes the other side of each trade — LLMs read prose, so domain
+owners write meaning directly; truth is local and `contested` is a legal
+state; and the agents arrived first this time.
 The never-write list and the no-ontology rule (NON-GOALS #9) are the
 guardrails against sliding back down that hill.
 
