@@ -33,23 +33,37 @@ the dependency list short enough to read aloud.
 - Parse Markdown files with YAML front-matter; multiple entries per file
   separated by `---` blocks (see `org/glossary.md`).
 - Publish `schema/entry.schema.json` matching SPEC §4: required
-  `id, owner, scope, status, source`; optional `revisit, ref, not`;
+  `id, owner, scope, status, source, rev`; optional `ref, delegates`;
+  `revisit` required on constraint and decision entries, optional
+  elsewhere; `upstream` required when `source` is `synced:<system>`;
   `status ∈ {draft, approved, contested, superseded}`;
   `source` matches `native` or `synced:<system>`.
+- Constraint entries (`policies.md`) additionally require `action` and
+  `effect`, plus `route` when `effect: escalate` (SPEC §4.6). `action`
+  matches `segment *( "." segment ) [ "." "*" ]` with
+  `segment = [a-z][a-z0-9_-]*`; the `*` may only be the whole final
+  segment and may not be the only segment. `effect ∈ {allow, escalate,
+  deny}`. Definition entries MUST NOT carry these three fields.
 - `orgmd validate <path>` — validates every entry, human-readable errors.
 - **Test fixture:** `org/` must validate clean.
 
 ### 2. Resolver (the trusted base — tests before features)
 - Input: an ordered node path of bundle directories (root → leaf), a
-  clearance level, and a scope ordering (`public < internal < restricted`).
+  clearance set, and the scope lattice of SPEC §4.2
+  (`restricted ⊑ internal ⊑ public`, plus any `scopes:` declared in the
+  root bundle).
 - Output: effective context per SPEC §5 —
-  definitions with the same `id`: closest wins;
+  ordinary definitions with the same `id`: closest wins;
+  authority definitions (`ownership`, `decisions`): the anchoring bundle
+  wins (SPEC §5.2);
   constraints: all apply, and a closer same-`id` constraint must narrow
-  (for now, "narrow" = the closer entry declares `narrows: <parent id>`
-  or is identical; anything else is a resolution error — document this
-  simplification and open an issue for the RFC on narrowing semantics);
-  scope filtering before emission; withheld markers; contested
-  propagation; superseded and draft never emitted (drafts only with
+  **structurally** — its action set contained in the parent's and its
+  effect no weaker under `deny > escalate > allow`, checked pairwise in
+  path order. No author-supplied assertion of narrowing is honoured;
+  anything else is a resolution error scoped to that `id` (SPEC §5.3);
+  clearance applied to emission **after** resolution, never before (SPEC
+  §5.4); withheld markers; contested propagated by reliance only;
+  superseded and draft never emitted (drafts only with
   `--include-drafts`).
 - Emit the bundle versions resolved from (git short SHA of each dir if
   available; else content hash).

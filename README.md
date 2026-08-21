@@ -10,7 +10,7 @@ delivers the right version to every AI tool and every person automatically.
 > standardised (MCP, A2A). The layer above them — what your organisation
 > actually *means* — is not. This is that layer.
 
-**Status: 0.2-draft — seeking feedback.** Nothing here is frozen. If you
+**Status: 0.3-draft — seeking feedback.** Nothing here is frozen. If you
 run agents in an organisation and this problem is yours, we want your
 issues, your counterexamples, and your bundle.
 
@@ -49,7 +49,7 @@ org/
 
 - **AGENTS.md / CLAUDE.md fragments** → coding agents *(advisory)*
 - **System prompt blocks** → direct model users *(advisory)*
-- **MCP gate** → autonomous agents: `org.policy(action) → allow | escalate | deny` *(enforced, deterministic)*
+- **MCP gate** → autonomous agents: `org.policy(action) → allow | escalate | deny` *(deterministic; **enforced** only where interposed — SPEC §6.4)*
 - **Handbook** → humans
 
 Three design commitments carry the whole thing:
@@ -71,17 +71,18 @@ commands below are its target interface, not a released package:
 orgmd init          # scaffold a bundle, interview-style
 orgmd compile --all # emit every projection
 orgmd doctor        # find stale, orphaned, or drifted entries
-orgmd serve --mcp   # mount the enforcing gate
+orgmd serve --mcp   # mount the gate (advisory unless interposed)
 ```
 
-A two-file bundle is fully Core-conformant. Start with the ~20 terms your
-org argues about and one policy your agents must not break.
+A three-file bundle — identity, an owner of last resort, and one meaning
+file — is fully Core-conformant. Start with the ~20 terms your org argues
+about and one policy your agents must not break.
 
 ## Repository map
 
 | Doc | What it is |
 |---|---|
-| [SPEC.md](./SPEC.md) | The normative specification (0.2-draft) |
+| [SPEC.md](./SPEC.md) | The normative specification (0.3-draft) |
 | [ROADMAP.md](./ROADMAP.md) | Path to v1.0 and beyond, with kill-gates |
 | [GOVERNANCE.md](./GOVERNANCE.md) | How decisions get made (spoiler: with ORG.md) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute, per repo |
@@ -122,8 +123,10 @@ CLI, gate, bench): **Apache-2.0**. Contributions via DCO sign-off.
 
 The Org Context Bench measures whether an agent, given a scoped bundle,
 uses the vocabulary correctly, respects the policies, and routes
-escalations to the right owner — published per agent. It doubles as the
-conformance suite and as CI for your own bundle changes.
+escalations to the right owner — published per agent, as a score with its
+conditions attached. It is not a conformance claim: **conformance** is a
+separate, deterministic suite for resolvers, compilers and gates, which
+also serves as CI for your own bundle changes (SPEC §11).
 
 ---
 
