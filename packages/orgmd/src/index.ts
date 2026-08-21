@@ -46,6 +46,13 @@ export {
   isValidAction,
 } from "./resolver/actions.js";
 export { serializeEffectiveContext } from "./resolver/serialize.js";
+export { doctorBundle, doctorExitCode } from "./doctor/doctor.js";
+export type {
+  DoctorFinding,
+  DoctorInput,
+  DoctorReport,
+  DomainRatio,
+} from "./doctor/types.js";
 export { compileContext } from "./compiler/compile.js";
 export type {
   CompiledProjection,
