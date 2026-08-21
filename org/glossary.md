@@ -4,6 +4,7 @@ owner: role.editor
 scope: public
 status: approved
 source: native
+rev: 1
 ---
 **bundle** — a directory tree conforming to SPEC §3, attached to one node in
 an organisational hierarchy.
@@ -14,6 +15,7 @@ owner: role.editor
 scope: public
 status: approved
 source: native
+rev: 1
 ---
 **entry** — one unit of meaning with the SPEC §4 fields. A *definition*
 (term, identity, ownership, decision, definition of done) or a *constraint*
@@ -25,6 +27,7 @@ owner: role.editor
 scope: public
 status: approved
 source: native
+rev: 1
 ---
 **resolver** — computes effective context for a consumer: definitions
 resolve closest-wins; constraints stack and may only narrow. Part of the
@@ -36,6 +39,7 @@ owner: role.editor
 scope: public
 status: approved
 source: native
+rev: 1
 not: ["the source", "canonical"]
 ---
 **projection** — a generated rendering of effective context for a target.
@@ -47,6 +51,7 @@ owner: role.editor
 scope: public
 status: approved
 source: native
+rev: 1
 ---
 **gate** — the enforcing projection: `org.policy(action) → allow | escalate |
 deny`; unknown → escalate.

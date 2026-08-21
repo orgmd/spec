@@ -72,8 +72,11 @@ with these need to amend the constitution first, explicitly.
    how; ORG.md defines what is true and what constrains.
 8. Unknown authority escalates; it never assumes.
 9. Agents may propose meaning; accountable humans ratify it.
-10. Conformance is behavioural, not syntactic — for consumers and for
-    resolvers.
+10. Conformance is behavioural, not syntactic. For resolvers, compilers
+    and gates it is a pass/fail claim against the published conformance
+    suite. Consumer behaviour under resolved context is measured and
+    reported as a benchmark score, never claimed as conformance.
+    <!-- amended per RFC 0015 (draft) -->
 11. The standard stays vendor-neutral: nothing in the canonical layer is
     specific to any model provider or platform.
 12. Anything that does not require shared organisational meaning stays

@@ -18,6 +18,7 @@ public rather than asserting a finished standard.
 | E | The canonical format stays platform-neutral | Major platforms require fundamentally different semantic representations |
 | F | Meaning-fidelity can be measured reliably | Behavioural tests prove too model-dependent or subjective to compare |
 | G | One core format serves a ten-person shop and a bank | Regulated enterprises need different *semantics*, not just stronger governance |
+| H | Adapters are viable: most meaning in a maintained bundle can be kept current by adapters from existing systems of record, rather than hand-authored | At v0.7, dogfood and adopter bundles are still more than 80% `source: native`, or no adapter survives an upstream schema change without hand-editing |
 
 ## v0.4 — publish the experiment *(weeks 1–3)*
 
@@ -42,7 +43,12 @@ weeks, not months.
 - [ ] `orgmd adopt` — importer drafting a bundle from existing
       CLAUDE.md / AGENTS.md / wiki exports (nobody starts from blank)
 - [ ] `orgmd doctor` — computed staleness: revisit dates, orphaned
-      owners, upstream drift
+      owners, upstream drift; and the **synced-to-native ratio for every
+      bundle** it inspects, as a count and a percentage, broken down by
+      domain (SPEC §4.3 makes this a health signal; from v0.5 it is a
+      tracked number, and it is the measurement that decides Hypothesis H)
+- [ ] **First conformance-suite release** (deterministic resolver
+      vectors) — ships with the reference resolver, not waiting for v0.7
 - [ ] Entry front-matter published as a **JSON Schema** — free
       validation in every editor and CI system from day one
 - [ ] Dogfood: two real public bundles (BoundFor, FieldReport)
@@ -67,15 +73,22 @@ standard — a different (smaller) project.
 
 ## v0.7 — the bench goes public *(the attention milestone)*
 
-- [ ] MVE tasks generalised into the 120-task Kōwhai Freight suite
-- [ ] Resolver-conformance tests (two implementations, identical
-      effective context)
-- [ ] Real leaderboard: three agents minimum, scores published
+- [ ] MVE tasks generalised into the 120-task Kōwhai Freight suite —
+      **the bench**: agent scores, not pass/fail (SPEC §11)
+- [ ] **Conformance suite** grown to cover resolvers, compilers and gates
+      (two implementations, byte-identical effective context)
+- [ ] Real leaderboard — a **bench** artefact: three agents minimum,
+      scores published with the full disclosure set
+- [ ] Publish the synced-to-native ratio for every dogfood and adopter
+      bundle; evaluate Hypothesis H against its kill signal
 - [ ] Results post + directory submissions + lab DevRel outreach
 
 **Gate: does it travel?** Citations, reposts, or one lab conversation.
 The bench is the distribution engine; if it doesn't move, breadth won't
-save it.
+save it. **And: if Hypothesis H fails**, ORG.md is a small authoring
+format rather than an interchange layer — either withdraw SPEC §4.3's
+mostly-synced claim or fund the adapter story properly. Either way this
+roadmap must say which.
 
 ## v0.8–0.9 — harden what users actually hit
 

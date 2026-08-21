@@ -11,34 +11,66 @@ given unless you'd rather not.
 
 In scope: the spec's security semantics (§4.2, §5–§8), the reference
 compiler, the gate, the bench harness. Especially valuable: scope-widening
-via resolution tricks, projection leakage, gate non-determinism, and
-`org.lock` verification bypasses.
+via resolution tricks, narrowing bypass, hidden-deny via clearance
+filtering, resolution-failure handling, enforcement mislabelling,
+projection leakage, gate non-determinism, and `org.lock` verification
+bypasses.
 
 ## Threat model (summary)
 
 ORG.md concentrates meaning, so the design assumes the bundle is a target:
 
 1. **The bundle is an attack surface.** Injected context steers every
-   downstream agent. Mitigations: reviewed writes only, signed manifests
-   (`org.lock`), verification before load, revocation with TTL'd trust and
-   fall-back to last known-good.
+   downstream agent. Mitigations: reviewed writes only — including adapter
+   writes, which land as unratified draft revisions and never resolve or
+   get signed until a human owner ratifies them (SPEC §4.7) — signed
+   manifests over approved revisions only, verification before load,
+   revocation with TTL'd trust, forward-only recovery, and degradation to
+   escalate-everything past a bounded freeze horizon (SPEC §7.5).
 2. **Context obeys least privilege.** Every entry is scoped; every consumer
    receives a projection, never the bundle; scopes may narrow down the
-   resolution path and never widen. At Extended conformance, scopes
-   resolve to the organisation's own identity system.
-3. **Prompts advise; the gate enforces.** Advisory projections are labelled
-   as such. Deterministic policy answers exist only at the gate, and an
-   unknown action returns `escalate`, never `allow`.
+   resolution path and never widen. Scope governs **disclosure, not
+   applicability**: clearance redacts what a consumer is shown and never
+   removes an entry from the decision set, so a rule cannot be evaded by
+   asking with a lower clearance (SPEC §5.4). Every bundle on a resolution
+   path must be delegated by its parent (SPEC §7.3); an undelegated bundle
+   contributes nothing. At Extended conformance, scopes resolve to the
+   organisation's own identity system.
+3. **Prompts advise; interposed verdicts enforce.** Advisory projections
+   are labelled as such. A target may be labelled `enforced` only where
+   the verdict is applied by a component the agent cannot bypass (SPEC
+   §6.4); a deployed but uninvoked gate is advisory. Deterministic policy
+   answers exist only at the gate: an unknown action returns `escalate`,
+   never `allow`, and an entry in resolution error denies.
 4. **Borrow, never build.** No key infrastructure, identity store, or log
    store of our own — keys in the org's KMS, identity in the org's IdP,
    audit to the org's SIEM. Every security primitive this project invented
    would be one you'd have to trust; so it invents none.
+5. **Authority cannot be captured from below.** Ownership and decision
+   entries resolve from the bundle that anchors them, not from the bundle
+   closest to the consumer, so merge rights on a leaf repository do not
+   confer the ability to redirect escalations or restate a board decision
+   (SPEC §5.2). Shadowing attempts are discarded and reported, never
+   silently honoured.
 
 ## Known limitations (honest list)
 
-- Advisory projections cannot bind a model. If your deployment has no
-  gate, you have documentation, not enforcement — the spec requires
-  saying so.
+- Advisory projections cannot bind a model. A gate that the agent is
+  merely asked to call is advisory too: without an enforcement point in
+  the execution path that the agent cannot bypass, you have documentation,
+  not enforcement — and the spec requires saying so (SPEC §6.4).
+- Withheld markers and their counts are a low-bandwidth side channel: a
+  consumer can learn that sensitive meaning bears on its action, and
+  roughly how much. This is a deliberate trade — hiding the marker
+  reintroduces hidden deny.
+- Upstream systems of record are trusted only as far as their reviewers.
+  An adapter proposes text from a wiki anyone may edit; the ratifying
+  human is the control, and a rubber-stamped ratification signs whatever
+  was injected.
+- The freeze horizon trades availability for safety: a consumer that
+  cannot verify fresh metadata degrades to escalate-everything rather than
+  serving stale answers, so an attacker who can block metadata delivery
+  can force escalation load rather than a silent rollback.
 - Scope labels protect against over-sharing by construction, not against a
   compromised consumer with legitimate clearance.
 - The leakage properties of scoped prompts under adversarial pressure are
