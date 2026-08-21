@@ -62,6 +62,50 @@ npm run typecheck
 # passed
 ```
 
+## Fix Round 2
+
+### RED
+
+Added post-commit cleanup, public-signature, and hostile-runtime-input tests,
+then ran:
+
+```text
+npm test -- packages/orgmd/test/importer
+```
+
+The initial run failed as intended: a backup-remove or final parent-sync
+failure returned no successful value, and `writeAdoption()` threw when given
+`null` confirmations.
+
+### GREEN
+
+- The target becomes committed only after its staged-directory rename and
+  parent fsync. Backup removal and its final fsync are now post-commit cleanup:
+  failures return the written paths with an `adopt.cleanup-failed` warning.
+  A failed removal leaves the recoverable backup in place and names it in the
+  warning details; a failed post-remove sync retains the committed target and
+  reports the warning without asserting rollback.
+- `AdoptIo` and `AdoptWriteOptions` are exported from the package root, with a
+  compile-checked public API regression.
+- Public preview and confirmation boundaries now safely reject `null`, arrays,
+  missing or malformed digests, non-record candidate maps, non-string field
+  values, and throwing getters. These return one stable invalid-input
+  diagnostic before any target mutation while trusted well-shaped inputs retain
+  the preview-origin/digest and field-level confirmation checks.
+
+### Verification
+
+```text
+npm test -- packages/orgmd/test/importer
+# 2 files passed, 20 tests passed
+
+npm test -- packages/orgmd/test/importer packages/orgmd/test/init packages/orgmd/test/io packages/orgmd/test/validation
+# 7 files passed, 114 tests passed
+
+npm run typecheck
+# passed
+```
+
 ## Fix Round 1
 
 ### RED

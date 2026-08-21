@@ -77,7 +77,12 @@ export {
 export { atomicWriteFile, type AtomicWriteOptions } from "./io/atomic.js";
 export { planInit, writeInitPlan, type InitWriteOptions } from "./init/init.js";
 export type { InitInput, InitPlan, InitPlanFile } from "./init/types.js";
-export { previewAdoption, writeAdoption } from "./importer/adopt.js";
+export {
+  previewAdoption,
+  writeAdoption,
+  type AdoptIo,
+  type AdoptWriteOptions,
+} from "./importer/adopt.js";
 export type {
   AdoptCandidate,
   AdoptConfirmationField,

@@ -15,6 +15,7 @@ import { planInit, writeInitPlan } from "../../src/init/init.js";
 import { previewAdoption, writeAdoption } from "../../src/importer/adopt.js";
 import type { InitInput } from "../../src/init/types.js";
 import * as publicApi from "../../src/index.js";
+import type { AdoptIo, AdoptWriteOptions } from "../../src/index.js";
 
 const directories: string[] = [];
 
@@ -457,6 +458,154 @@ describe("writeAdoption", () => {
     ]);
   });
 
+  it("reports backup-removal failure as a post-commit warning and preserves recovery", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename,
+          remove: async () => {
+            throw new Error("backup removal failed");
+          },
+          syncParent: async () => undefined,
+        },
+      },
+    );
+
+    expect(result.value).toEqual(["glossary.md"]);
+    expect(
+      result.diagnostics.map(({ code, severity }) => [code, severity]),
+    ).toEqual([["adopt.cleanup-failed", "warning"]]);
+    expect(await readFile(join(target, "glossary.md"), "utf8")).toContain(
+      "- Definition.\n",
+    );
+    expect(
+      (await readdir(dirname(target))).some((name) => name.endsWith(".backup")),
+    ).toBe(true);
+  });
+
+  it("reports post-remove parent-sync failure as a warning after committing the target", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    let syncs = 0;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename,
+          remove: async (path) => rm(path, { recursive: true, force: true }),
+          syncParent: async () => {
+            syncs += 1;
+            if (syncs === 3) throw new Error("cleanup sync failed");
+          },
+        },
+      },
+    );
+
+    expect(result.value).toEqual(["glossary.md"]);
+    expect(
+      result.diagnostics.map(({ code, severity }) => [code, severity]),
+    ).toEqual([["adopt.cleanup-failed", "warning"]]);
+    expect(await readFile(join(target, "glossary.md"), "utf8")).toContain(
+      "- Definition.\n",
+    );
+    expect(
+      (await readdir(dirname(target))).some((name) => name.endsWith(".backup")),
+    ).toBe(false);
+  });
+
+  it("rejects malformed public previews and confirmations without writing", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const before = await readFile(join(target, "policies.md"), "utf8");
+    const id = preview.candidates[0]!.candidateId;
+    const valid = confirmations(preview, {
+      [id]: { domain: "glossary", owner: "role.editor", scope: "public" },
+    });
+    const hostileConfirmation = Object.defineProperty({}, "previewId", {
+      get() {
+        throw new Error("hostile getter");
+      },
+    });
+    const malformedConfirmations: unknown[] = [
+      null,
+      [],
+      {},
+      { previewId: 4, byCandidateId: {} },
+      { previewId: "not-a-digest", byCandidateId: {} },
+      { previewId: preview.previewId },
+      { previewId: preview.previewId, byCandidateId: { [id]: null } },
+      {
+        previewId: preview.previewId,
+        byCandidateId: {
+          [id]: { domain: "glossary", owner: 4, scope: "public" },
+        },
+      },
+      hostileConfirmation,
+    ];
+
+    for (const malformed of malformedConfirmations) {
+      const result = await writeAdoption(preview, malformed as never);
+      expect(result.value).toBeUndefined();
+      expect(result.diagnostics.map(({ code }) => code)).toEqual([
+        "adopt.invalid-confirmations",
+      ]);
+    }
+    const hostilePreview = Object.defineProperty({}, "previewId", {
+      get() {
+        throw new Error("hostile getter");
+      },
+    });
+    for (const malformed of [
+      null,
+      [],
+      {},
+      { previewId: 4 },
+      { ...preview, previewId: "not-a-digest" },
+      hostilePreview,
+    ] as unknown[]) {
+      const result = await writeAdoption(malformed as never, valid);
+      expect(result.value).toBeUndefined();
+      expect(result.diagnostics.map(({ code }) => code)).toEqual([
+        "adopt.invalid-preview",
+      ]);
+    }
+    expect(
+      previewAdoption(null as never).diagnostics.map(({ code }) => code),
+    ).toEqual(["adopt.invalid-preview"]);
+    expect(await readFile(join(target, "policies.md"), "utf8")).toBe(before);
+  });
+
   it("rejects source aliases and source files inside the target before a directory swap", async () => {
     const target = await validTarget();
     const inside = join(target, "notes.md");
@@ -504,7 +653,14 @@ describe("writeAdoption", () => {
 
 describe("public adoption API", () => {
   it("exports the adoption API from the package root", () => {
+    const io: AdoptIo = {
+      rename,
+      remove: async (path) => rm(path, { recursive: true, force: true }),
+      syncParent: async () => undefined,
+    };
+    const options: AdoptWriteOptions = { io };
     expect(publicApi.previewAdoption).toBe(previewAdoption);
     expect(publicApi.writeAdoption).toBe(writeAdoption);
+    expect(options.io).toBe(io);
   });
 });

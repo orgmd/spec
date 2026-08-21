@@ -60,24 +60,35 @@ const previewRegistry = new WeakMap<
 
 export function previewAdoption(
   input: AdoptInput,
-): OperationResult<AdoptPreview> {
-  const candidates = extractMarkdownCandidates(input.sourceText);
+): OperationResult<AdoptPreview>;
+export function previewAdoption(input: unknown): OperationResult<AdoptPreview> {
+  const normalized = normalizeAdoptInput(input);
+  if (!normalized) return failure(invalidPreview());
+  const candidates = extractMarkdownCandidates(normalized.sourceText);
   const partial = {
-    sourcePath: input.sourcePath,
-    ...(input.target === undefined ? {} : { target: input.target }),
+    sourcePath: normalized.sourcePath,
+    ...(normalized.target === undefined ? {} : { target: normalized.target }),
     candidates,
-    rendered: renderAdoptionPreview(input.sourcePath, candidates),
+    rendered: renderAdoptionPreview(normalized.sourcePath, candidates),
   };
   const preview = deepFreeze({ ...partial, previewId: previewDigest(partial) });
   previewRegistry.set(preview, { previewId: preview.previewId });
   return { value: preview, diagnostics: Object.freeze([]) };
 }
 
-export async function writeAdoption(
+export function writeAdoption(
   preview: AdoptPreview,
   confirmations: AdoptConfirmations,
-  options: AdoptWriteOptions = {},
+  options?: AdoptWriteOptions,
+): Promise<OperationResult<readonly string[]>>;
+export async function writeAdoption(
+  preview: unknown,
+  confirmations: unknown,
+  options: unknown = {},
 ): Promise<OperationResult<readonly string[]>> {
+  if (!isPreviewShape(preview)) return failure(invalidPreview());
+  const safeConfirmations = normalizeConfirmations(confirmations);
+  if (!safeConfirmations) return failure(invalidConfirmations());
   const seal = previewRegistry.get(preview);
   if (!seal) return failure(untrustedPreview());
   if (
@@ -85,14 +96,14 @@ export async function writeAdoption(
     previewDigest(preview) !== seal.previewId
   )
     return failure(tamperedPreview());
-  if (confirmations.previewId !== preview.previewId)
+  if (safeConfirmations.previewId !== preview.previewId)
     return failure(staleConfirmation());
   if (preview.target === undefined)
     return failure(missingTarget(preview.sourcePath));
   const safety = await safeExplicitPath(preview.target);
   if (safety) return failure(safety);
 
-  const confirmed = confirmedCandidates(preview, confirmations);
+  const confirmed = confirmedCandidates(preview, safeConfirmations);
   if (!confirmed.value) return { diagnostics: confirmed.diagnostics };
   const target = await canonicalTarget(preview.target);
   if (!target.value) return { diagnostics: target.diagnostics };
@@ -107,13 +118,13 @@ export async function writeAdoption(
     target.value,
     preview.sourcePath,
     confirmed.value,
-    options.io ?? defaultIo,
+    normalizeWriteOptions(options)?.io ?? defaultIo,
   );
 }
 
 function confirmedCandidates(
   preview: AdoptPreview,
-  confirmations: AdoptConfirmations,
+  confirmations: SafeConfirmations,
 ): OperationResult<readonly ConfirmedCandidate[]> {
   const diagnostics: Diagnostic[] = [];
   const values: ConfirmedCandidate[] = [];
@@ -148,6 +159,119 @@ function confirmedCandidates(
   return diagnostics.length > 0
     ? failure(...diagnostics)
     : { value: Object.freeze(values), diagnostics: Object.freeze([]) };
+}
+
+interface SafeConfirmations {
+  readonly previewId: string;
+  readonly byCandidateId: Readonly<
+    Record<string, Readonly<Record<string, string>>>
+  >;
+}
+
+function normalizeAdoptInput(input: unknown): AdoptInput | undefined {
+  try {
+    if (!isRecord(input)) return undefined;
+    const sourcePath = input.sourcePath;
+    const sourceText = input.sourceText;
+    const target = input.target;
+    if (typeof sourcePath !== "string" || typeof sourceText !== "string")
+      return undefined;
+    if (target !== undefined && typeof target !== "string") return undefined;
+    return target === undefined
+      ? { sourcePath, sourceText }
+      : { sourcePath, sourceText, target };
+  } catch {
+    return undefined;
+  }
+}
+
+function isPreviewShape(value: unknown): value is AdoptPreview {
+  try {
+    if (!isRecord(value)) return false;
+    if (
+      !isPreviewId(value.previewId) ||
+      typeof value.sourcePath !== "string" ||
+      typeof value.rendered !== "string" ||
+      (value.target !== undefined && typeof value.target !== "string") ||
+      !Array.isArray(value.candidates)
+    ) {
+      return false;
+    }
+    return value.candidates.every(isCandidateShape);
+  } catch {
+    return false;
+  }
+}
+
+function isCandidateShape(value: unknown): value is AdoptCandidate {
+  if (!isRecord(value)) return false;
+  return (
+    typeof value.candidateId === "string" &&
+    typeof value.sourceHeading === "string" &&
+    typeof value.sourceText === "string" &&
+    value.status === "draft" &&
+    isDomain(value.suggestedDomain) &&
+    Array.isArray(value.requiredInputs) &&
+    value.requiredInputs.every(
+      (field) =>
+        typeof field === "string" &&
+        [
+          "domain",
+          "owner",
+          "scope",
+          "revisit",
+          "action",
+          "effect",
+          "route",
+        ].includes(field),
+    )
+  );
+}
+
+function normalizeConfirmations(value: unknown): SafeConfirmations | undefined {
+  try {
+    if (!isRecord(value) || !isPreviewId(value.previewId)) return undefined;
+    const supplied = value.byCandidateId;
+    if (!isRecord(supplied)) return undefined;
+    const byCandidateId: Record<string, Readonly<Record<string, string>>> = {};
+    for (const [candidateId, fields] of Object.entries(supplied)) {
+      if (!isRecord(fields)) return undefined;
+      const normalized: Record<string, string> = {};
+      for (const [field, fieldValue] of Object.entries(fields)) {
+        if (typeof fieldValue !== "string") return undefined;
+        normalized[field] = fieldValue;
+      }
+      byCandidateId[candidateId] = Object.freeze(normalized);
+    }
+    return Object.freeze({
+      previewId: value.previewId,
+      byCandidateId: Object.freeze(byCandidateId),
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeWriteOptions(value: unknown): AdoptWriteOptions | undefined {
+  try {
+    if (!isRecord(value) || value.io === undefined) return {};
+    const io = value.io;
+    if (!isRecord(io)) return undefined;
+    if (
+      typeof io.rename !== "function" ||
+      typeof io.remove !== "function" ||
+      typeof io.syncParent !== "function"
+    ) {
+      return undefined;
+    }
+    return { io: io as unknown as AdoptIo };
+  } catch {
+    return undefined;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function canonicalTarget(path: string): Promise<OperationResult<string>> {
@@ -205,9 +329,14 @@ async function writeTransaction(
     staged = undefined;
     installedStaged = true;
     await io.syncParent(parent);
-    await io.remove(backup);
-    backup = undefined;
-    await io.syncParent(parent);
+    const cleanup = await cleanupCommittedBackup(backup, parent, target, io);
+    backup = cleanup.backup;
+    preserveBackup = cleanup.preserveBackup;
+    if (cleanup.diagnostic)
+      return {
+        value: outputs.value,
+        diagnostics: Object.freeze([cleanup.diagnostic]),
+      };
     return { value: outputs.value, diagnostics: Object.freeze([]) };
   } catch {
     if (movedExisting && !installedStaged && backup !== undefined) {
@@ -240,6 +369,37 @@ async function writeTransaction(
       await io.remove(backup).catch(() => undefined);
     if (staged !== undefined) await io.remove(staged).catch(() => undefined);
   }
+}
+
+async function cleanupCommittedBackup(
+  backup: string,
+  parent: string,
+  target: string,
+  io: AdoptIo,
+): Promise<{
+  readonly backup: string | undefined;
+  readonly preserveBackup: boolean;
+  readonly diagnostic?: Diagnostic;
+}> {
+  try {
+    await io.remove(backup);
+  } catch {
+    return {
+      backup,
+      preserveBackup: true,
+      diagnostic: cleanupFailed(target, backup),
+    };
+  }
+  try {
+    await io.syncParent(parent);
+  } catch {
+    return {
+      backup: undefined,
+      preserveBackup: false,
+      diagnostic: cleanupFailed(target),
+    };
+  }
+  return { backup: undefined, preserveBackup: false };
 }
 
 async function applyDrafts(
@@ -315,8 +475,12 @@ function deepFreeze<T>(value: T): T {
   return Object.freeze(value);
 }
 
-function isDomain(value: string): value is AdoptDomain {
+function isDomain(value: unknown): value is AdoptDomain {
   return value === "identity" || value === "glossary" || value === "policy";
+}
+
+function isPreviewId(value: unknown): value is string {
+  return typeof value === "string" && /^sha256:[a-f0-9]{64}$/.test(value);
 }
 
 function contained(root: string, candidate: string): boolean {
@@ -349,6 +513,22 @@ function untrustedPreview(): Diagnostic {
     code: "adopt.untrusted-preview",
     severity: "error",
     message: "Adoption previews must be created by this process.",
+  };
+}
+
+function invalidPreview(): Diagnostic {
+  return {
+    code: "adopt.invalid-preview",
+    severity: "error",
+    message: "Adoption preview input must be a well-formed preview object.",
+  };
+}
+
+function invalidConfirmations(): Diagnostic {
+  return {
+    code: "adopt.invalid-confirmations",
+    severity: "error",
+    message: "Adoption confirmations must be plain records of string values.",
   };
 }
 
@@ -437,5 +617,16 @@ function rollbackFailed(path: string): Diagnostic {
     message:
       "Adoption could not durably restore the prior bundle; manual recovery may be required.",
     path,
+  };
+}
+
+function cleanupFailed(path: string, backup?: string): Diagnostic {
+  return {
+    code: "adopt.cleanup-failed",
+    severity: "warning",
+    message:
+      "Adoption committed the new target but could not durably clean up its prior backup.",
+    path,
+    ...(backup === undefined ? {} : { details: { backup } }),
   };
 }
