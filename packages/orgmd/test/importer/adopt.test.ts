@@ -1,10 +1,20 @@
-import { lstat, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdtemp,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { planInit, writeInitPlan } from "../../src/init/init.js";
 import { previewAdoption, writeAdoption } from "../../src/importer/adopt.js";
 import type { InitInput } from "../../src/init/types.js";
+import * as publicApi from "../../src/index.js";
 
 const directories: string[] = [];
 
@@ -37,6 +47,13 @@ async function validTarget(): Promise<string> {
   return target;
 }
 
+function confirmations(
+  preview: NonNullable<ReturnType<typeof previewAdoption>["value"]>,
+  byCandidateId: Record<string, Record<string, string>>,
+) {
+  return { previewId: preview.previewId, byCandidateId };
+}
+
 afterEach(async () => {
   await Promise.all(
     directories
@@ -62,12 +79,15 @@ describe("previewAdoption", () => {
     expect(preview.value?.candidates).toMatchObject([
       {
         sourceHeading: "Terms",
-        sourceText: "Customer means the contracting organisation.",
+        sourceText: "- Customer means the contracting organisation.\n",
         status: "draft",
         suggestedDomain: "glossary",
       },
     ]);
     expect(preview.value?.rendered).toContain("suggested domain: glossary");
+    expect(preview.value?.previewId).toMatch(/^sha256:[a-f0-9]{64}$/);
+    expect(Object.isFrozen(preview.value)).toBe(true);
+    expect(Object.isFrozen(preview.value?.candidates[0])).toBe(true);
     expect(await readFile(sourcePath, "utf8")).toBe("unchanged");
     await expect(lstat(target)).rejects.toThrow();
   });
@@ -79,11 +99,9 @@ describe("previewAdoption", () => {
     });
 
     expect(preview.value?.candidates[0]?.requiredInputs).toEqual([
+      "domain",
       "owner",
       "scope",
-      "revisit",
-      "action",
-      "effect",
     ]);
   });
 });
@@ -98,14 +116,16 @@ describe("writeAdoption", () => {
     }).value!;
     const before = await readFile(join(target, "policies.md"), "utf8");
 
-    const result = await writeAdoption(preview, {
-      byCandidateId: {
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
         [preview.candidates[0]!.candidateId]: {
+          domain: "policy",
           owner: "role.security",
           scope: "internal",
         },
-      },
-    });
+      }),
+    );
 
     expect(result.value).toBeUndefined();
     expect(result.diagnostics.map(({ code }) => code)).toContain(
@@ -123,20 +143,50 @@ describe("writeAdoption", () => {
     }).value!;
     const candidate = preview.candidates[0]!;
 
-    const result = await writeAdoption(preview, {
-      byCandidateId: {
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
         [candidate.candidateId]: {
+          domain: "glossary",
           owner: "role.editor",
           scope: "public",
         },
-      },
-    });
+      }),
+    );
 
     expect(result.diagnostics).toEqual([]);
     expect(result.value).toEqual(["glossary.md"]);
     expect(await readFile(join(target, "glossary.md"), "utf8")).toBe(
-      `---\nid: ${candidate.candidateId}\nowner: "role.editor"\nscope: "public"\nstatus: draft\nsource: native\nrev: 1\nref: "CLAUDE.md"\n---\nCustomer means the contracting organisation.\n`,
+      `---\nid: ${candidate.candidateId}\nowner: "role.editor"\nscope: "public"\nstatus: draft\nsource: native\nrev: 1\nref: "CLAUDE.md"\n---\n- Customer means the contracting organisation.\n`,
     );
+  });
+
+  it("preserves the candidate's CRLF source bytes in the draft body", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\r\n\r\n```text\r\n  - literal marker\r\n```\r\n",
+      target,
+    }).value!;
+    const candidate = preview.candidates[0]!;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [candidate.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(
+      (await readFile(join(target, "glossary.md"), "utf8")).endsWith(
+        "---\n```text\r\n  - literal marker\r\n```\r\n",
+      ),
+    ).toBe(true);
   });
 
   it("does not permit a source file to become an import output", async () => {
@@ -150,18 +200,311 @@ describe("writeAdoption", () => {
     }).value!;
     const before = await readFile(sourcePath, "utf8");
 
-    const result = await writeAdoption(preview, {
-      byCandidateId: {
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
         [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
           owner: "role.editor",
           scope: "public",
         },
+      }),
+    );
+
+    expect(result.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.source-inside-target",
+    ]);
+    expect(await readFile(sourcePath, "utf8")).toBe(before);
+  });
+
+  it("rejects stale, deserialized, and mutated preview objects", async () => {
+    const target = await validTarget();
+    const first = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- First definition.\n",
+      target,
+    }).value!;
+    const second = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Second definition.\n",
+      target,
+    }).value!;
+    const base = confirmations(first, {
+      [first.candidates[0]!.candidateId]: {
+        domain: "glossary",
+        owner: "role.editor",
+        scope: "public",
       },
     });
 
-    expect(result.diagnostics.map(({ code }) => code)).toEqual([
-      "adopt.source-output-conflict",
+    const stale = await writeAdoption(second, base);
+    const deserialized = await writeAdoption(
+      JSON.parse(JSON.stringify(first)),
+      base,
+    );
+    const mutations = await Promise.all(
+      [
+        { ...first, target: join(target, "other") },
+        { ...first, sourcePath: "other.md" },
+        {
+          ...first,
+          candidates: first.candidates.map((candidate) => ({
+            ...candidate,
+            suggestedDomain: "policy" as const,
+          })),
+        },
+      ].map((preview) => writeAdoption(preview, base)),
+    );
+
+    expect(stale.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.stale-confirmation",
     ]);
-    expect(await readFile(sourcePath, "utf8")).toBe(before);
+    expect(deserialized.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.untrusted-preview",
+    ]);
+    for (const result of mutations) {
+      expect(result.diagnostics.map(({ code }) => code)).toEqual([
+        "adopt.untrusted-preview",
+      ]);
+    }
+  });
+
+  it("requires a valid confirmed domain and can override the suggestion", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Do not publish secrets.\n",
+      target,
+    }).value!;
+    const id = preview.candidates[0]!.candidateId;
+
+    const missing = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [id]: { owner: "role.security", scope: "internal" },
+      }),
+    );
+    const invalid = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [id]: { domain: "decision", owner: "role.security", scope: "internal" },
+      }),
+    );
+    const written = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [id]: {
+          domain: "policy",
+          owner: "role.security",
+          scope: "internal",
+          revisit: "2027-02-21",
+          action: "data.secret.publish",
+          effect: "deny",
+        },
+      }),
+    );
+
+    expect(missing.diagnostics.map(({ code }) => code)).toContain(
+      "adopt.missing-confirmation",
+    );
+    expect(invalid.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.invalid-confirmation",
+    ]);
+    expect(written.value).toEqual(["policies.md"]);
+    expect(await readFile(join(target, "policies.md"), "utf8")).toContain(
+      'id: term.terms\nowner: "role.security"\nscope: "internal"\nstatus: draft',
+    );
+  });
+
+  it("restores the full target when the single staged swap fails", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText:
+        "# Terms\n\n- Definition.\n\n# Policies\n\n- Do not publish.\n",
+      target,
+    }).value!;
+    const before = await Promise.all(
+      ["org.md", "ownership.md", "policies.md"].map((path) =>
+        readFile(join(target, path), "utf8"),
+      ),
+    );
+    let renames = 0;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+        [preview.candidates[1]!.candidateId]: {
+          domain: "policy",
+          owner: "role.security",
+          scope: "internal",
+          revisit: "2027-02-21",
+          action: "data.publish",
+          effect: "deny",
+        },
+      }),
+      {
+        io: {
+          rename: async (from, to) => {
+            renames += 1;
+            if (renames === 2) throw new Error("swap failed");
+            await rename(from, to);
+          },
+          remove: async (path) => rm(path, { recursive: true, force: true }),
+          syncParent: async () => undefined,
+        },
+      },
+    );
+
+    expect(result.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.write-failed",
+    ]);
+    await expect(
+      Promise.all(
+        ["org.md", "ownership.md", "policies.md"].map((path) =>
+          readFile(join(target, path), "utf8"),
+        ),
+      ),
+    ).resolves.toEqual(before);
+  });
+
+  it("retains a recoverable backup if the staged-swap rollback fails", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    let renames = 0;
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename: async (from, to) => {
+            renames += 1;
+            if (renames === 2 || renames === 3)
+              throw new Error("rollback failed");
+            await rename(from, to);
+          },
+          remove: async (path) => rm(path, { recursive: true, force: true }),
+          syncParent: async () => undefined,
+        },
+      },
+    );
+
+    expect(result.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.rollback-failed",
+    ]);
+    expect(
+      (await readdir(dirname(target))).some((name) => name.endsWith(".backup")),
+    ).toBe(true);
+  });
+
+  it("syncs durability boundaries for a successful single-directory swap", async () => {
+    const target = await validTarget();
+    const preview = previewAdoption({
+      sourcePath: "AGENTS.md",
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const events: string[] = [];
+
+    const result = await writeAdoption(
+      preview,
+      confirmations(preview, {
+        [preview.candidates[0]!.candidateId]: {
+          domain: "glossary",
+          owner: "role.editor",
+          scope: "public",
+        },
+      }),
+      {
+        io: {
+          rename: async (from, to) => {
+            events.push("rename");
+            await rename(from, to);
+          },
+          remove: async (path) => {
+            events.push("remove");
+            await rm(path, { recursive: true, force: true });
+          },
+          syncParent: async () => events.push("sync"),
+        },
+      },
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(events).toEqual([
+      "rename",
+      "sync",
+      "rename",
+      "sync",
+      "remove",
+      "sync",
+    ]);
+  });
+
+  it("rejects source aliases and source files inside the target before a directory swap", async () => {
+    const target = await validTarget();
+    const inside = join(target, "notes.md");
+    const alias = join(await fixtureDir(), "source-alias.md");
+    await writeFile(inside, "# Terms\n\n- Existing source.\n", "utf8");
+    await symlink(join(target, "org.md"), alias);
+    const preview = previewAdoption({
+      sourcePath: inside,
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const aliasPreview = previewAdoption({
+      sourcePath: alias,
+      sourceText: "# Terms\n\n- Definition.\n",
+      target,
+    }).value!;
+    const fields = {
+      domain: "glossary",
+      owner: "role.editor",
+      scope: "public",
+    };
+
+    const insideResult = await writeAdoption(
+      preview,
+      confirmations(preview, { [preview.candidates[0]!.candidateId]: fields }),
+    );
+    const aliasResult = await writeAdoption(
+      aliasPreview,
+      confirmations(aliasPreview, {
+        [aliasPreview.candidates[0]!.candidateId]: {
+          ...fields,
+          domain: "identity",
+        },
+      }),
+    );
+
+    expect(insideResult.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.source-inside-target",
+    ]);
+    expect(aliasResult.diagnostics.map(({ code }) => code)).toEqual([
+      "adopt.source-inside-target",
+    ]);
+  });
+});
+
+describe("public adoption API", () => {
+  it("exports the adoption API from the package root", () => {
+    expect(publicApi.previewAdoption).toBe(previewAdoption);
+    expect(publicApi.writeAdoption).toBe(writeAdoption);
   });
 });

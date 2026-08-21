@@ -61,3 +61,53 @@ npm test -- packages/orgmd/test/importer packages/orgmd/test/validation packages
 npm run typecheck
 # passed
 ```
+
+## Fix Round 1
+
+### RED
+
+Expanded the importer suites before changing production code and ran:
+
+```text
+npm test -- packages/orgmd/test/importer
+```
+
+The new cases failed against the initial implementation: source slices had
+their list markers and CRLF bytes normalized away; suggested domains selected
+output files without an explicit confirmation; stale and deserialized previews
+were accepted; package-root exports were missing; and injected staged-swap,
+rollback, durability, and physical source-identity seams were absent.
+
+### GREEN
+
+- A preview now has a deterministic SHA-256 `previewId` over every
+  resolution/write-affecting public field, is recursively frozen, and is
+  privately registered in-process. `writeAdoption()` rejects untrusted,
+  tampered, and stale confirmations before filesystem mutation.
+- Source bodies are exact byte slices: list markers, indentation, fenced code,
+  paragraph line endings, and CRLF remain unchanged in candidates and rendered
+  draft bodies.
+- Every candidate requires a confirmed `domain`; suggestions remain display
+  labels only. Policy-only confirmation fields are determined from that
+  confirmed domain, including `route` for an escalation.
+- Imports now clone the validated target into a sibling stage, write every
+  output there atomically, validate the full stage, then make one durable
+  target-to-backup/stage-to-target swap. Ordinary swap failures restore the
+  original; rollback failure retains a recoverable backup and reports
+  `adopt.rollback-failed`.
+- Target and source identities are resolved physically. A source at or below
+  the target, including a symlink alias, is rejected before the directory swap.
+- The package root exports adoption functions and all adoption public types.
+
+### Verification
+
+```text
+npm test -- packages/orgmd/test/importer
+# 2 files passed, 17 tests passed
+
+npm test -- packages/orgmd/test/importer packages/orgmd/test/init packages/orgmd/test/io packages/orgmd/test/validation
+# 7 files passed, 111 tests passed
+
+npm run typecheck
+# passed
+```

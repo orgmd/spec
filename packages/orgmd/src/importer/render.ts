@@ -1,4 +1,4 @@
-import type { AdoptCandidate } from "./types.js";
+import type { AdoptCandidate, AdoptDomain } from "./types.js";
 
 export function renderAdoptionPreview(
   sourcePath: string,
@@ -22,6 +22,7 @@ export function renderAdoptionPreview(
 
 export function renderDraftRevision(
   candidate: AdoptCandidate,
+  domain: AdoptDomain,
   confirmation: Readonly<Record<string, string>>,
   sourcePath: string,
 ): string {
@@ -35,7 +36,7 @@ export function renderDraftRevision(
     "rev: 1",
     `ref: ${yaml(sourcePath)}`,
   ];
-  if (candidate.suggestedDomain === "policy") {
+  if (domain === "policy") {
     lines.push(
       `revisit: ${yaml(confirmation.revisit ?? "")}`,
       `action: ${yaml(confirmation.action ?? "")}`,
@@ -44,11 +45,11 @@ export function renderDraftRevision(
     if (confirmation.effect === "escalate")
       lines.push(`route: ${yaml(confirmation.route ?? "")}`);
   }
-  return `${lines.join("\n")}\n---\n${candidate.sourceText}\n`;
+  return `${lines.join("\n")}\n---\n${candidate.sourceText}`;
 }
 
-export function targetFile(candidate: AdoptCandidate): string {
-  switch (candidate.suggestedDomain) {
+export function targetFile(domain: AdoptDomain): string {
+  switch (domain) {
     case "glossary":
       return "glossary.md";
     case "policy":

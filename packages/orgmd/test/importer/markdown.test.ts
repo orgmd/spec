@@ -10,7 +10,7 @@ describe("extractMarkdownCandidates", () => {
     expect(candidates).toMatchObject([
       {
         sourceHeading: "Terms",
-        sourceText: "Customer means the contracting organisation.",
+        sourceText: "- Customer means the contracting organisation.\n",
         status: "draft",
         suggestedDomain: "glossary",
       },
@@ -47,23 +47,23 @@ describe("extractMarkdownCandidates", () => {
     ).toEqual([
       {
         sourceHeading: "Rules",
-        sourceText: "Never publish customer data.",
+        sourceText: "1. Never publish customer data.\n",
         suggestedDomain: "policy",
       },
       {
         sourceHeading: "Rules",
-        sourceText: "Escalate uncertainty.",
+        sourceText: "2. Escalate uncertainty.\n",
         suggestedDomain: "policy",
       },
       {
         sourceHeading: "Terms",
-        sourceText: "A customer is the contracting organisation.",
+        sourceText: "A customer is the contracting organisation.\n",
         suggestedDomain: "glossary",
       },
       {
         sourceHeading: "Terms",
         sourceText:
-          "```text\n# This is preserved rather than treated as a heading\nexample\n```",
+          "```text\n# This is preserved rather than treated as a heading\nexample\n```\n",
         suggestedDomain: "glossary",
       },
     ]);
@@ -86,5 +86,18 @@ describe("extractMarkdownCandidates", () => {
     expect(
       extractMarkdownCandidates(text).map(({ candidateId }) => candidateId),
     ).toEqual(["term.terms", "term.terms-2"]);
+  });
+
+  it("keeps byte-exact CRLF, list indentation, paragraphs, and fences", () => {
+    const source =
+      "# Terms\r\n\r\n  - Customer means the contracting organisation.\r\n\r\nA paragraph\r\ncontinues.\r\n\r\n```text\r\n  - literal marker\r\n```\r\n";
+
+    expect(
+      extractMarkdownCandidates(source).map(({ sourceText }) => sourceText),
+    ).toEqual([
+      "  - Customer means the contracting organisation.\r\n",
+      "A paragraph\r\ncontinues.\r\n",
+      "```text\r\n  - literal marker\r\n```\r\n",
+    ]);
   });
 });

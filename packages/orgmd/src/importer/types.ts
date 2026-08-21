@@ -2,7 +2,7 @@ import type { OperationResult } from "../diagnostics/types.js";
 
 export type AdoptDomain = "identity" | "glossary" | "policy";
 export type AdoptConfirmationField =
-  "owner" | "scope" | "revisit" | "action" | "effect" | "route";
+  "domain" | "owner" | "scope" | "revisit" | "action" | "effect" | "route";
 
 export interface AdoptCandidate {
   readonly candidateId: string;
@@ -22,6 +22,8 @@ export interface AdoptInput {
 }
 
 export interface AdoptPreview {
+  /** Deterministic digest of every preview field that affects a later write. */
+  readonly previewId: string;
   readonly sourcePath: string;
   readonly target?: string;
   readonly candidates: readonly AdoptCandidate[];
@@ -29,6 +31,8 @@ export interface AdoptPreview {
 }
 
 export interface AdoptConfirmations {
+  /** Must name the exact in-memory preview that is being confirmed. */
+  readonly previewId: string;
   readonly byCandidateId: Readonly<
     Record<string, Readonly<Record<string, string>>>
   >;

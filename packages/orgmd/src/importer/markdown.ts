@@ -1,27 +1,35 @@
 import type { AdoptCandidate, AdoptDomain } from "./types.js";
 
+interface Line {
+  readonly text: string;
+  readonly start: number;
+  readonly endWithEnding: number;
+}
+
 interface Section {
   readonly heading: string;
-  readonly lines: readonly string[];
+  readonly contentStart: number;
+  readonly contentEnd: number;
 }
 
 /**
- * Splits ordinary Markdown without interpreting its meaning. The only
- * classification is the documented heading-name suggestion table.
+ * Splits ordinary Markdown without normalizing or interpreting its source
+ * slices. The heading-name table produces only a visible domain suggestion.
  */
 export function extractMarkdownCandidates(
   sourceText: string,
 ): readonly AdoptCandidate[] {
+  const lines = linesOf(sourceText);
   const candidates: Omit<AdoptCandidate, "candidateId">[] = [];
-  for (const section of sections(sourceText)) {
+  for (const section of sections(lines, sourceText.length)) {
     const suggestedDomain = suggestDomain(section.heading);
-    for (const sourceText of blocks(section.lines)) {
+    for (const slice of blocks(lines, section, sourceText)) {
       candidates.push({
         sourceHeading: section.heading,
-        sourceText,
+        sourceText: slice,
         status: "draft",
         suggestedDomain,
-        requiredInputs: requiredInputs(suggestedDomain),
+        requiredInputs: ["domain", "owner", "scope"],
       });
     }
   }
@@ -41,101 +49,135 @@ export function extractMarkdownCandidates(
   );
 }
 
-function sections(sourceText: string): readonly Section[] {
-  const lines = sourceText.replace(/\r\n/g, "\n").split("\n");
-  const found: { heading: string; contentStart: number }[] = [];
+function linesOf(source: string): readonly Line[] {
+  const lines: Line[] = [];
+  let start = 0;
+  while (start < source.length) {
+    const newline = source.indexOf("\n", start);
+    const endWithEnding = newline === -1 ? source.length : newline + 1;
+    const contentEnd =
+      newline === -1
+        ? source.length
+        : source[newline - 1] === "\r"
+          ? newline - 1
+          : newline;
+    lines.push({
+      text: source.slice(start, contentEnd),
+      start,
+      endWithEnding,
+    });
+    start = endWithEnding;
+  }
+  return Object.freeze(lines);
+}
+
+function sections(
+  lines: readonly Line[],
+  sourceLength: number,
+): readonly Section[] {
+  const found: { readonly heading: string; readonly contentLine: number }[] =
+    [];
   let fence: Fence | undefined;
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
+    const line = lines[index]?.text ?? "";
     if (fence) {
       if (closesFence(line, fence)) fence = undefined;
       continue;
     }
     const atx = /^ {0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$/.exec(line);
     if (atx?.[1]) {
-      found.push({ heading: atx[1].trim(), contentStart: index + 1 });
+      found.push({ heading: atx[1].trim(), contentLine: index + 1 });
       continue;
     }
-    const underline = lines[index + 1] ?? "";
+    const underline = lines[index + 1]?.text ?? "";
     if (line.trim().length > 0 && /^ {0,3}(?:=+|-+)[ \t]*$/.test(underline)) {
-      found.push({ heading: line.trim(), contentStart: index + 2 });
+      found.push({ heading: line.trim(), contentLine: index + 2 });
       index += 1;
       continue;
     }
     fence = opensFence(line);
   }
-
   if (found.length === 0) {
     return Object.freeze([
-      Object.freeze({ heading: "Document", lines: Object.freeze(lines) }),
+      Object.freeze({
+        heading: "Document",
+        contentStart: 0,
+        contentEnd: sourceLength,
+      }),
     ]);
   }
   return Object.freeze(
-    found.map((section, index) =>
-      Object.freeze({
+    found.map((section, index) => {
+      const next = found[index + 1];
+      const start = lines[section.contentLine]?.start ?? sourceLength;
+      const nextHeading =
+        next === undefined ? undefined : headingLine(lines, next);
+      return Object.freeze({
         heading: section.heading,
-        lines: Object.freeze(
-          lines.slice(
-            section.contentStart,
-            found[index + 1]?.contentStart === undefined
-              ? lines.length
-              : headingStart(lines, found[index + 1]!),
-          ),
-        ),
-      }),
-    ),
+        contentStart: start,
+        contentEnd: nextHeading?.start ?? sourceLength,
+      });
+    }),
   );
 }
 
-function headingStart(
-  lines: readonly string[],
-  section: { readonly contentStart: number },
-): number {
-  const beforeContent = section.contentStart - 1;
-  return /^ {0,3}(?:=+|-+)[ \t]*$/.test(lines[beforeContent] ?? "")
-    ? beforeContent - 1
-    : beforeContent;
+function headingLine(
+  lines: readonly Line[],
+  section: { readonly contentLine: number },
+): Line | undefined {
+  const beforeContent = section.contentLine - 1;
+  return /^ {0,3}(?:=+|-+)[ \t]*$/.test(lines[beforeContent]?.text ?? "")
+    ? lines[beforeContent - 1]
+    : lines[beforeContent];
 }
 
-function blocks(lines: readonly string[]): readonly string[] {
+function blocks(
+  lines: readonly Line[],
+  section: Section,
+  source: string,
+): readonly string[] {
+  const startLine = lines.findIndex(
+    ({ start }) => start >= section.contentStart,
+  );
+  const endLine = lines.findIndex(({ start }) => start >= section.contentEnd);
+  const limit = endLine === -1 ? lines.length : endLine;
   const result: string[] = [];
-  let index = 0;
-  while (index < lines.length) {
-    while (index < lines.length && (lines[index] ?? "").trim() === "")
+  let index = startLine === -1 ? lines.length : startLine;
+  while (index < limit) {
+    while (index < limit && (lines[index]?.text.trim() ?? "") === "")
       index += 1;
-    if (index >= lines.length) break;
-    const opening = opensFence(lines[index] ?? "");
+    if (index >= limit) break;
+    const opening = opensFence(lines[index]?.text ?? "");
     if (opening) {
-      const start = index;
+      const first = lines[index]!;
       index += 1;
-      while (index < lines.length && !closesFence(lines[index] ?? "", opening))
+      while (index < limit && !closesFence(lines[index]?.text ?? "", opening))
         index += 1;
-      if (index < lines.length) index += 1;
-      result.push(lines.slice(start, index).join("\n"));
+      if (index < limit) index += 1;
+      result.push(source.slice(first.start, lines[index - 1]!.endWithEnding));
       continue;
     }
-    const list = listItem(lines[index] ?? "");
-    if (list !== undefined) {
-      result.push(list);
+    if (isListItem(lines[index]?.text ?? "")) {
+      const line = lines[index]!;
+      result.push(source.slice(line.start, line.endWithEnding));
       index += 1;
       continue;
     }
-    const start = index;
+    const first = lines[index]!;
     while (
-      index < lines.length &&
-      (lines[index] ?? "").trim() !== "" &&
-      listItem(lines[index] ?? "") === undefined
+      index < limit &&
+      (lines[index]?.text.trim() ?? "") !== "" &&
+      !isListItem(lines[index]?.text ?? "")
     ) {
       index += 1;
     }
-    const paragraph = lines.slice(start, index).join("\n").trim();
-    if (paragraph.length > 0) result.push(paragraph);
+    result.push(source.slice(first.start, lines[index - 1]!.endWithEnding));
   }
   return Object.freeze(result);
 }
 
-function listItem(line: string): string | undefined {
-  return /^ {0,3}(?:[-+*]|\d+[.)])[ \t]+(.+?)\s*$/.exec(line)?.[1];
+function isListItem(line: string): boolean {
+  return /^ {0,3}(?:[-+*]|\d+[.)])[ \t]+/.test(line);
 }
 
 function suggestDomain(heading: string): AdoptDomain {
@@ -149,14 +191,6 @@ function suggestDomain(heading: string): AdoptDomain {
     return "policy";
   }
   return "identity";
-}
-
-function requiredInputs(
-  domain: AdoptDomain,
-): readonly AdoptCandidate["requiredInputs"][number][] {
-  return domain === "policy"
-    ? ["owner", "scope", "revisit", "action", "effect"]
-    : ["owner", "scope"];
 }
 
 function prefix(domain: AdoptDomain): string {

@@ -77,4 +77,14 @@ export {
 export { atomicWriteFile, type AtomicWriteOptions } from "./io/atomic.js";
 export { planInit, writeInitPlan, type InitWriteOptions } from "./init/init.js";
 export type { InitInput, InitPlan, InitPlanFile } from "./init/types.js";
+export { previewAdoption, writeAdoption } from "./importer/adopt.js";
+export type {
+  AdoptCandidate,
+  AdoptConfirmationField,
+  AdoptConfirmations,
+  AdoptDomain,
+  AdoptInput,
+  AdoptPreview,
+  AdoptPreviewResult,
+} from "./importer/types.js";
 export { ORGMD_VERSION } from "./version.js";
