@@ -14,4 +14,9 @@ export type {
   RatificationStatus,
   ValidatedBundle,
 } from "./model/types.js";
+export {
+  validateBundle,
+  validateBundlePath,
+  type ValidateBundleOptions,
+} from "./validation/validate.js";
 export { ORGMD_VERSION } from "./version.js";

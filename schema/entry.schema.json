@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orgmd.dev/schema/entry.schema.json",
+  "title": "ORG.md entry revision front matter",
+  "type": "object",
+  "required": ["id", "owner", "scope", "status", "source", "rev"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*(\\.[A-Za-z0-9][A-Za-z0-9_-]*)*$"
+    },
+    "owner": { "type": "string", "minLength": 1 },
+    "scope": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "approved", "rejected"]
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^(native|synced:[^\\s:]+)$"
+    },
+    "rev": { "type": "integer" },
+    "revisit": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "upstream": {
+      "type": "object",
+      "required": ["system", "ref", "fetched", "digest"],
+      "properties": {
+        "system": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "fetched": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "digest": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "delegates": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "ref": { "type": "string", "minLength": 1 },
+    "action": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)*(\\.\\*)?$"
+    },
+    "effect": {
+      "type": "string",
+      "enum": ["allow", "escalate", "deny"]
+    },
+    "route": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["source"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^synced:" }
+        }
+      },
+      "then": { "required": ["upstream"] }
+    },
+    {
+      "if": {
+        "required": ["effect"],
+        "properties": {
+          "effect": { "type": "string", "const": "escalate" }
+        }
+      },
+      "then": { "required": ["route"] }
+    }
+  ],
+  "additionalProperties": true
+}

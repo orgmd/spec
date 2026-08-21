@@ -6,6 +6,12 @@ status: approved
 source: native
 rev: 1
 revisit: 2027-03-01
+lifecycle:
+  dec.0003:
+    state: retired
+    by: role.editor
+    date: 2026-08-21
+    ref: org/decisions/DEC-0022.md
 ---
 # ORG.md (the project)
 
