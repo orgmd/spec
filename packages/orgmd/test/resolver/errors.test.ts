@@ -80,6 +80,30 @@ describe("resolution request failures", () => {
     );
   });
 
+  it("returns a stable request error for a malformed object node instead of throwing", () => {
+    const malformed = { isRoot: true } as unknown as ValidatedBundle;
+
+    expect(() =>
+      resolveContext({
+        path: [malformed],
+        clearance: ["public"],
+        today: "2026-08-21",
+      }),
+    ).not.toThrow();
+    const result = resolveContext({
+      path: [malformed],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "unreachable_node",
+        details: { index: 0 },
+      }),
+    ]);
+  });
+
   it("requires the path to start at one root and continue with non-root nodes", () => {
     const nonRoot = bundle("division", []);
     const laterRoot = bundle("root", []);

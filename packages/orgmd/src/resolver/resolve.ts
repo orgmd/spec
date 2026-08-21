@@ -11,9 +11,11 @@ import { resolveOrdinaryDefinitions } from "./definitions.js";
 import {
   blockedEntryIds,
   entrySemanticErrors,
+  renderResolutionDiagnostics,
   renderResolutionErrors,
   validateResolutionPath,
 } from "./errors.js";
+import { logicalNodePath } from "./nodes.js";
 import { resolvePolicies } from "./policies.js";
 import { selectEffectiveRevisions } from "./revisions.js";
 import { createScopeLattice } from "./scopes.js";
@@ -53,7 +55,7 @@ export function resolveContext(request: ResolveRequest): ResolveResult {
       request.path.map((bundle) =>
         Object.freeze({
           bundleId: bundle.metadata.bundle ?? bundle.reference,
-          path: bundle.path,
+          path: logicalNodePath(bundle),
           contentId: computeContentId(bundle),
         }),
       ),
@@ -142,7 +144,13 @@ export function resolveContext(request: ResolveRequest): ResolveResult {
     latticeResult.value,
     clearance,
   );
-  const diagnostics = sortDiagnostics(authority.diagnostics);
+  const diagnostics = renderResolutionDiagnostics(
+    authority.diagnostics,
+    selections,
+    request.path,
+    latticeResult.value,
+    clearance,
+  );
   const value = Object.freeze({
     entries,
     bundles,

@@ -91,6 +91,26 @@ describe("authority-bounded resolution", () => {
     ).toBe("Board");
   });
 
+  it("does not apply a delegated branch entry to a consumer on an interleaved sibling branch", () => {
+    const context = resolve([
+      bundle("root", [
+        authority("own.payments", "Board", { delegates: ["division/a"] }),
+      ]),
+      bundle("division/a", [
+        authority("own.payments", "Division A", { owner: "role.a" }),
+      ]),
+      bundle("division/b", []),
+    ]);
+
+    expect(visible(context)[0]?.revision.body).toBe("Board");
+    expect(context.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "resolution.unauthorised-shadow",
+        path: "division/a",
+      }),
+    );
+  });
+
   it("uses the closest delegated ownership entry but ignores delegated re-delegation", () => {
     const context = resolve([
       bundle("root", [
@@ -197,6 +217,64 @@ describe("authority-bounded resolution", () => {
         bundleIndex: 1,
       },
     ]);
+  });
+
+  it("ignores revision bookkeeping and unknown keys when recognizing authority scope narrowing", () => {
+    const context = resolve([
+      bundle("root", [authority("own.payments", "Board")]),
+      bundle("division", [
+        authority("own.payments", "Board", {
+          scope: "internal",
+          rev: 2,
+          extra: { extension_note: "local bookkeeping" },
+        }),
+      ]),
+    ]);
+
+    expect(context.resolutionErrors).toEqual([]);
+    expect(context.diagnostics).toEqual([]);
+    expect(visible(context)).toMatchObject([
+      {
+        revision: { id: "own.payments", scope: "internal", rev: 2 },
+        bundleIndex: 1,
+      },
+    ]);
+  });
+
+  it("does not disclose a hidden unauthorized authority id in diagnostics", () => {
+    const result = resolveContext({
+      path: [
+        bundle("root", [
+          authority("own.acquisition-secret", "Project Kestrel board", {
+            scope: "restricted",
+          }),
+        ]),
+        bundle("division", [
+          authority("own.acquisition-secret", "Project Kestrel division", {
+            scope: "restricted",
+            owner: "role.division",
+          }),
+        ]),
+      ],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
+    expect(result.value?.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "resolution.unauthorised-shadow",
+        path: "division",
+        message: "An authority entry above this clearance was discarded.",
+      }),
+    ]);
+    expect(result.value?.diagnostics[0]?.entryId).toBeUndefined();
+    const rendered = JSON.stringify({
+      context: result.value,
+      diagnostics: result.diagnostics,
+    });
+    expect(rendered).not.toContain("own.acquisition-secret");
+    expect(rendered).not.toContain("Project Kestrel");
+    expect(rendered).not.toContain("restricted");
   });
 
   it("fails an authority id whose scope widens and does not fall back", () => {

@@ -57,6 +57,7 @@ export interface BundleMetadata {
 export interface Bundle {
   readonly reference: string;
   readonly path: string;
+  readonly nodePath?: string;
   readonly isRoot: boolean;
   readonly identityMetadata: Readonly<Record<string, unknown>>;
   readonly entries: readonly ParsedEntryRevision[];
@@ -67,6 +68,7 @@ declare const validatedBundle: unique symbol;
 export interface ValidatedBundle {
   readonly reference: string;
   readonly path: string;
+  readonly nodePath?: string;
   readonly isRoot: boolean;
   readonly metadata: BundleMetadata;
   readonly entries: readonly EntryRevision[];

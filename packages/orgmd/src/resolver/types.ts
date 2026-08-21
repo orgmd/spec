@@ -20,6 +20,10 @@ export interface ResolutionError {
   readonly id?: string;
   readonly id_withheld?: true;
   readonly detail: string;
+  readonly conflicts?: readonly {
+    readonly bundle: string;
+    readonly id: string;
+  }[];
 }
 
 export type StaleReason = "revisit" | "owner" | "upstream";

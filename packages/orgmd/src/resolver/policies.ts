@@ -1,6 +1,7 @@
 import { compareUtf8Bytes } from "../diagnostics/sort.js";
 import type { ValidatedBundle } from "../model/types.js";
 import { actionContains, effectStrength, isValidAction } from "./actions.js";
+import { logicalNodePath } from "./nodes.js";
 import type { RevisionSelection } from "./revisions.js";
 import type { ScopeLattice } from "./scopes.js";
 import type { ResolutionError, ResolvedEntry } from "./types.js";
@@ -40,7 +41,8 @@ export function resolvePolicies(
     for (const candidate of candidates) {
       const revision = candidate.revision;
       if (!revision) continue;
-      const node = path[candidate.bundleIndex]?.path ?? "";
+      const candidateBundle = path[candidate.bundleIndex];
+      const node = candidateBundle ? logicalNodePath(candidateBundle) : "";
       if (revision.action === undefined) {
         resolutionErrors.push({
           code: "invalid_entry",

@@ -8,8 +8,17 @@ import { mapDomain } from "./domain.js";
 
 export async function loadBundle(input: {
   readonly reference: string;
+  readonly nodePath?: string;
   readonly isRoot: boolean;
 }): Promise<OperationResult<Bundle>> {
+  if (input.nodePath !== undefined && !isLogicalNodePath(input.nodePath)) {
+    return failure({
+      code: "bundle.invalid-node-path",
+      severity: "error",
+      message:
+        "A logical node path must be a non-empty relative slash-separated path.",
+    });
+  }
   let root: string;
   try {
     root = await realpath(input.reference);
@@ -76,12 +85,24 @@ export async function loadBundle(input: {
     value: Object.freeze({
       reference: input.reference,
       path: root,
+      ...(input.nodePath === undefined ? {} : { nodePath: input.nodePath }),
       isRoot: input.isRoot,
       identityMetadata,
       entries: Object.freeze(entries),
     }),
     diagnostics: sortDiagnostics(diagnostics),
   };
+}
+
+function isLogicalNodePath(value: string): boolean {
+  if (value.length === 0 || value.startsWith("/") || value.endsWith("/")) {
+    return false;
+  }
+  return value
+    .split("/")
+    .every(
+      (segment) => segment.length > 0 && segment !== "." && segment !== "..",
+    );
 }
 
 async function enumerate(root: string): Promise<{

@@ -193,7 +193,14 @@ describe("constraint resolution", () => {
     ]);
 
     expect(context.resolutionErrors).toEqual([
-      expect.objectContaining({ code: "kind_mismatch", id: "rule.shared" }),
+      expect.objectContaining({
+        code: "kind_mismatch",
+        id: "rule.shared",
+        conflicts: [
+          { bundle: "org.root", id: "rule.shared" },
+          { bundle: "org.division", id: "rule.shared" },
+        ],
+      }),
     ]);
     expect(ids(context)).not.toContain("rule.shared");
   });

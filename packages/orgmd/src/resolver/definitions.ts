@@ -1,5 +1,6 @@
 import { compareUtf8Bytes } from "../diagnostics/sort.js";
 import type { ValidatedBundle } from "../model/types.js";
+import { logicalNodePath } from "./nodes.js";
 import type { RevisionSelection } from "./revisions.js";
 import type { ScopeLattice } from "./scopes.js";
 import type { ResolutionError, ResolvedEntry } from "./types.js";
@@ -53,10 +54,11 @@ export function resolveOrdinaryDefinitions(
       }
     }
     if (widenedAt) {
+      const widenedBundle = path[widenedAt.bundleIndex];
       resolutionErrors.push(
         Object.freeze({
           code: "widening",
-          node: path[widenedAt.bundleIndex]?.path ?? "",
+          node: widenedBundle ? logicalNodePath(widenedBundle) : "",
           id,
           detail:
             "Closer scope does not narrow the preceding definition scope.",

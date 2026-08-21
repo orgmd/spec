@@ -2,6 +2,7 @@ import { compareUtf8Bytes } from "../diagnostics/sort.js";
 import type { Diagnostic } from "../diagnostics/types.js";
 import { identifierCanonicalJson } from "../identifiers/canonical.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
+import { isAtOrBelow, logicalNodePath } from "./nodes.js";
 import type { RevisionSelection } from "./revisions.js";
 import type { ScopeLattice } from "./scopes.js";
 import type { ResolutionError, ResolvedEntry } from "./types.js";
@@ -36,13 +37,16 @@ export function resolveAuthorityDefinitions(
   const entries: ResolvedEntry[] = [];
   const resolutionErrors: ResolutionError[] = [];
   const diagnostics: Diagnostic[] = [];
+  const consumerBundle = path.at(-1);
+  const consumerPath = consumerBundle ? logicalNodePath(consumerBundle) : "";
   for (const [id, candidates] of [...byId.entries()].sort(([left], [right]) =>
     compareUtf8Bytes(left, right),
   )) {
     candidates.sort((left, right) => left.bundleIndex - right.bundleIndex);
     const anchor = candidates[0];
     if (!anchor?.revision) continue;
-    const anchorPath = path[anchor.bundleIndex]?.path ?? "";
+    const anchorBundle = path[anchor.bundleIndex];
+    const anchorPath = anchorBundle ? logicalNodePath(anchorBundle) : "";
     const isOwnership = anchor.revision.domain === "ownership";
     const delegates = validAnchorDelegates(
       anchor,
@@ -54,7 +58,10 @@ export function resolveAuthorityDefinitions(
 
     for (const candidate of candidates.slice(1)) {
       if (!candidate.revision) continue;
-      const candidatePath = path[candidate.bundleIndex]?.path ?? "";
+      const candidateBundle = path[candidate.bundleIndex];
+      const candidatePath = candidateBundle
+        ? logicalNodePath(candidateBundle)
+        : "";
       if (candidate.revision.delegates?.length) {
         diagnostics.push(
           ignoredDelegates(
@@ -68,7 +75,10 @@ export function resolveAuthorityDefinitions(
       const delegated =
         isOwnership &&
         candidate.revision.domain === "ownership" &&
-        delegates.some((node) => isAtOrBelow(candidatePath, node));
+        delegates.some(
+          (node) =>
+            isAtOrBelow(candidatePath, node) && isAtOrBelow(consumerPath, node),
+        );
       const scopeOnly = sameAuthorityPayload(
         anchor.revision,
         candidate.revision,
@@ -163,10 +173,6 @@ function ignoredDelegates(
   };
 }
 
-function isAtOrBelow(node: string, delegatedNode: string): boolean {
-  return node === delegatedNode || node.startsWith(`${delegatedNode}/`);
-}
-
 function sameAuthorityPayload(
   anchor: EntryRevision,
   candidate: EntryRevision,
@@ -183,13 +189,11 @@ function authorityPayload(revision: EntryRevision): Record<string, unknown> {
     owner: revision.owner,
     status: revision.status,
     source: revision.source,
-    rev: revision.rev,
     domain: revision.domain,
     body: revision.body,
     ...(revision.revisit === undefined ? {} : { revisit: revision.revisit }),
     ...(revision.ref === undefined ? {} : { ref: revision.ref }),
     ...(revision.upstream === undefined ? {} : { upstream: revision.upstream }),
-    extra: revision.extra,
   };
 }
 

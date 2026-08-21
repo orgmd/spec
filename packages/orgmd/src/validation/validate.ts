@@ -81,6 +81,7 @@ function brandValidated(bundle: Bundle, isRoot: boolean): ValidatedBundle {
   return Object.freeze({
     reference: bundle.reference,
     path: bundle.path,
+    ...(bundle.nodePath === undefined ? {} : { nodePath: bundle.nodePath }),
     isRoot,
     metadata: normalizeBundleMetadata(bundle, isRoot),
     entries,
