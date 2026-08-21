@@ -22,10 +22,19 @@ public rather than asserting a finished standard.
 
 ## v0.4 — publish the experiment *(weeks 1–3)*
 
-- [ ] SPEC.md 0.2-draft published (this repo)
-- [ ] Hypotheses A–G and kill signals published alongside it
-- [ ] Launch site live (existing mockup, promoted to front door)
-- [ ] Naming essay published same day, framed as an open experiment
+Done:
+
+- [x] SPEC.md 0.2-draft published (this repo) — since superseded by
+      0.3-draft
+- [x] Hypotheses A–G and kill signals published alongside it
+- [x] Launch site live (existing mockup, promoted to front door)
+
+In progress:
+
+- [ ] Naming essay, framed as an open experiment
+
+Planned:
+
 - [ ] Launch: HN, LinkedIn, agent-ecosystem communities
 
 **Gate: does anyone care?** One organisation that isn't the maintainer's

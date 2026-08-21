@@ -35,7 +35,12 @@ ORG.md concentrates meaning, so the design assumes the bundle is a target:
    asking with a lower clearance (SPEC §5.4). Every bundle on a resolution
    path must be delegated by its parent (SPEC §7.3); an undelegated bundle
    contributes nothing. At Extended conformance, scopes resolve to the
-   organisation's own identity system.
+   organisation's own identity system. Scope filtering is a property of
+   resolution and projection, not of storage: anyone with raw read access
+   to a bundle reads every entry in it. Raw bundle access must therefore be
+   at least as restrictive as the most restricted entry stored in it, and
+   organisations wanting finer separation split entries into separately
+   stored per-compartment bundles (SPEC §4.2).
 3. **Prompts advise; interposed verdicts enforce.** Advisory projections
    are labelled as such. A target may be labelled `enforced` only where
    the verdict is applied by a component the agent cannot bypass (SPEC

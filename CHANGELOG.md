@@ -1,5 +1,68 @@
 # Changelog
 
+## 0.3.1-draft — August 2026
+
+Correctness and clarity release. Implements the accepted items of
+`rfcs/review-triage-2026-08.md` (triage of the August 2026 independent
+review): BLOCKER 1–3, HIGH 4, 6 and 7, plus the drift item on the Core
+"afternoon" claim. No new concepts.
+
+- Ratification split from lifecycle state: a revision's `status` is
+  ratification only (`draft` / `approved` / `rejected`), while
+  contestation and retirement are entry-level acts, removing the
+  resurrection hazard by which contesting or retiring a revision silently
+  elected an older one (SPEC §2, §4.1, §4.7, §5, §6.3, §7.2, §11)
+- Bundle-level metadata folded into the content identifier: a canonical
+  bundle metadata object covering the bundle id, the scope lattice, the
+  grace window and entry lifecycle state, digested ahead of the entry
+  lines, with the general rule that every value capable of changing
+  resolution, disclosure, identity or authority must change the identifier
+  — and a conformance vector asserting it (SPEC §7.1, §5.5, §4.2, §4.5)
+- Entry lifecycle state given a normative bundle representation: a
+  reserved `lifecycle:` mapping on the bundle's identity entry, keyed by
+  entry `id`, carrying `state` (`contested` / `retired`), `by`, `date` and
+  `ref`, recorded and withdrawn by reviewed write without touching any
+  revision — the single authored form from which validation, resolution
+  and the content identifier are derived, with `by` / `date` / `ref`
+  excluded from the hash as provenance (SPEC §4.1, §7.1, §4.7, §5)
+- Grace window given the key it is authored under: `grace_days:` on the
+  root bundle's identity entry, a non-negative integer number of days
+  capped at 90, a validation error otherwise, ignored and reported in a
+  non-root bundle (SPEC §4.8, §7.1)
+- Disclosure Mode A is the only conforming Core behaviour; Mode B is an
+  Extended capability requiring an explicit deployment-wide declaration,
+  and where active the declared mode is a resolver input carried in the
+  context identifier and stated in the conformance claim (SPEC §5.4, §5,
+  §5.5, §11)
+- Core role binding clarified: Core validates organisational semantics
+  only; identity-backed ratification is an Extended guarantee via the IdP
+  mapping, and no role-binding data is added to bundles (SPEC §9, §11)
+- Raw-bundle storage invariant: scope filtering is a property of
+  resolution, not storage, so raw bundle access must be at least as
+  restrictive as its most restricted entry, and finer separation means
+  separate per-compartment bundles (SPEC §4.2; SECURITY.md)
+- Classification boundary stated: ORG.md policy actions are
+  already-classified organisational actions and the decision function
+  evaluates no business data; value-dependent rules are pre-classified
+  actions or an authored `escalate` whose prose states the condition
+  (SPEC §4.6)
+- §7.2–§7.6 marked Experimental pending a second independent
+  implementation — binding on Extended claims, unvalidated by
+  implementation evidence (SPEC §7)
+- The Core "afternoon" claim now separates adopting a bundle with
+  conformant tooling from implementing a conformant resolver (SPEC §11)
+- Compiler conformance evaluated per canonical target profile: a
+  versioned, separately published rendering specification for a
+  machine-oriented target, named in the claim, against which byte-identical
+  output is required; human-oriented targets with no published profile are
+  evaluated against the §6.1 rules alone and must not claim byte-identity.
+  This specification defines no canonical target profiles yet (SPEC §11,
+  §6.2)
+- The §7.1 bundle metadata digest added to the `org.lock` targets content,
+  so the metadata object that changes resolution and disclosure is signed
+  exactly as entry digests are, rather than being covered only by
+  whole-directory file hashing (SPEC §7.2, §7.1)
+
 ## 0.3-draft — August 2026
 
 Resolves issues #1–#15 (adversarial review of 0.2-draft). RFCs 0001–0015

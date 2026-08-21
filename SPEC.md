@@ -1,10 +1,39 @@
 # ORG.md Specification
 
-**Version:** 0.3-draft
+**Version:** 0.3.1-draft
 **Status:** Draft — open for comment via RFC (see GOVERNANCE.md)
 **Editor:** Matt (BoundFor Ltd)
 **License:** CC BY 4.0 (this document); reference implementations Apache-2.0
 **Last updated:** August 2026
+**Changed in 0.3.1:** ratification split from lifecycle state — a revision's
+`status` is now ratification only (`draft` | `approved` | `rejected`), while
+contestation and retirement are entry-level acts (§4.1, §4.7), removing the
+resurrection hazard by which contesting or retiring a revision silently
+elected an older one; bundle-level metadata folded into the content
+identifier — bundle id, scope lattice, grace window and entry lifecycle
+state now change it, and the general rule that every value capable of
+changing resolution, disclosure, identity or authority must (§7.1, §5.5);
+disclosure Mode A made the only conforming Core behaviour, Mode B an
+Extended capability whose declared mode is a resolver input (§5.4, §5,
+§11); Core role binding clarified — organisational semantics at Core,
+identity-backed ratification an Extended guarantee (§9); raw-bundle storage
+invariant added — bundle access at least as restrictive as its most
+restricted entry (§4.2, SECURITY.md); classification boundary stated —
+ORG.md evaluates no business data (§4.6); §7.2–§7.6 marked Experimental
+pending a second implementation (§7); the Core "afternoon" claim narrowed
+to adoption rather than resolver implementation (§11); entry lifecycle
+state given a normative authored form — a reserved `lifecycle:` mapping on
+the bundle's identity entry, from which validation, resolution and the
+content identifier are all derived (§4.1, §7.1); the grace window given
+the key it is authored under — `grace_days:` on the root bundle's identity
+entry, a non-negative integer of at most 90 days (§4.8, §7.1); compiler
+conformance evaluated per canonical target profile — byte-identical output
+required only for machine-oriented targets with a published profile, which
+the claim names, and the §6.1 rules alone for human-oriented targets, for
+which byte-identity MUST NOT be claimed (§11, §6.2); the §7.1 bundle
+metadata digest added to the `org.lock` targets content, so the metadata
+object that changes resolution and disclosure is signed as entry digests
+are (§7.2).
 **Changed in 0.3:** entry identity and container grammar (§3.1, §4.5; RFC
 0001/0003); scope lattice and the disclosure/applicability split (§4.2,
 §5.4; RFC 0002/0008); policy decision function and structural narrowing
@@ -60,8 +89,13 @@ outside this standard (see NON-GOALS.md, normative by reference).
   `decisions` domains) and **ordinary definitions** (§5.2).
 - **Revision** — one version of an entry: a front-matter block plus a
   body, carrying a `rev`. An entry is a sequence of revisions sharing an
-  `id`; the **effective revision** is the highest `rev` with status
-  `approved` (§4.7).
+  `id`; the **effective revision** is the highest ratified `rev` — the
+  highest `rev` whose `status` is `approved` (§4.7).
+- **Ratification** — the act by which a human owner accepts a revision
+  (§9). It is the only authored state a revision carries (§4.1).
+- **Entry lifecycle state** — contestation and retirement (§4.1). Both
+  attach to the entry, never to a revision, and neither changes which
+  revision is effective.
 - **Authority definition** — a definition in the `ownership` or
   `decisions` domain. Authority definitions resolve from their anchoring
   bundle rather than closest-wins (§5.2).
@@ -190,7 +224,7 @@ Every entry MUST carry:
 | `id`       | MUST        | Stable identifier, unique within its bundle (e.g. `term.consignment`, `policy.P-03`, `dec.014`). The same `id` in another bundle on the path denotes the same entry, overridden or narrowed per §5. |
 | `owner`    | MUST        | Exactly one accountable owner (role or identity). Disputes route here. |
 | `scope`    | MUST        | Access label. Defaults: `public`, `internal`, `restricted`. Organisations MAY define more (§4.2). |
-| `status`   | MUST        | `draft` \| `approved` \| `contested` \| `superseded` |
+| `status`   | MUST        | Ratification state of this revision: `draft` \| `approved` \| `rejected` (§4.1). Contestation and retirement are entry-level state and MUST NOT appear here. |
 | `source`   | MUST        | `native` or `synced:<system>` (§4.3) |
 | `rev`      | MUST        | Revision identifier: an integer, unique within the entry, monotonically increasing (§4.7) |
 | `revisit`  | MUST for constraints and `decisions`; SHOULD otherwise (§4.8) | Date after which the entry is treated as stale unless re-confirmed |
@@ -211,7 +245,16 @@ There is **no confidence field**. Uncertainty is expressed through
 `draft` and `contested`; a stored confidence number invites consumers to
 threshold on it, which is neither enforceable nor auditable.
 
-### 4.1 Status semantics
+### 4.1 Ratification and lifecycle semantics
+
+Two kinds of state govern an entry, and they are kept apart. **Ratification
+state** is authored, carried by `status`, and belongs to a single revision.
+**Lifecycle state** — contestation and retirement — is recorded against the
+entry as a whole and MUST NOT be expressed as a `status` value. Neither
+lifecycle act changes which revision is effective (§4.7): a dispute or a
+retirement never elects an older revision.
+
+**Ratification state (per revision).**
 
 - `draft` — proposed meaning, not yet ratified. A draft revision never
   resolves, is never emitted into a consumer projection except into an
@@ -220,27 +263,85 @@ threshold on it, which is neither enforceable nor auditable.
 - `approved` — ratified by a human currently holding the entry's `owner`
   role (§9). The highest approved `rev` is the entry's effective revision
   (§4.7); consumers use it normally.
-- `contested` — under dispute, and blocking by **reliance only** (§5 step
-  5). A consumer relies on an entry when that entry's `id` appears in the
-  `relied_upon` set of a verdict (§4.6) or is the entry returned by a
-  definition-domain read. An agent MUST NOT take autonomous action that
-  relies on a contested entry, and MUST escalate to that entry's `owner`.
-  A contested entry the action does not rely on MUST NOT block the
-  action, MUST NOT change its verdict, and MUST NOT be reported as
-  bearing on it. Contested entries MUST still be marked visibly wherever
-  they are emitted (§6.1): marking is not propagation. Only the entry's
-  `owner`, or an identity on that entry's escalation path, MAY set an
-  entry to `contested`; implementations MUST reject the transition from
-  any other identity. Any other identity, including any agent, MAY only
-  *request* it, which routes to the owner per §9. Every transition into
-  or out of `contested` MUST be attributable and recorded per §8 with the
-  acting identity, timestamp, entry `id`, the bundle version before and
-  after, and a `ref` to the dispute; an unattributable transition MUST be
-  rejected, not recorded as anonymous. A `synced:` entry MUST NOT be set
-  contested in the bundle; the transition belongs in the system of record
-  and arrives through the adapter (§4.3).
-- `superseded` — retained for history; compilers MUST NOT emit
-  superseded entries except in audit views.
+- `rejected` — put to the entry's owner and not ratified, or closed out by
+  the ratification of a higher revision (§4.7). A rejected revision never
+  resolves and is never covered by `org.lock` (§7.2). Rejected revisions,
+  and approved revisions below the effective one, are retained for
+  history; compilers MUST NOT emit either except in audit views.
+
+**Lifecycle state (per entry).**
+
+- **Contested** — the entry is under dispute, and blocking by **reliance
+  only** (§5 step 5). A consumer relies on an entry when that entry's `id`
+  appears in the `relied_upon` set of a verdict (§4.6) or is the entry
+  returned by a definition-domain read. An agent MUST NOT take autonomous
+  action that relies on a contested entry, and MUST escalate to that
+  entry's `owner`. A contested entry the action does not rely on MUST NOT
+  block the action, MUST NOT change its verdict, and MUST NOT be reported
+  as bearing on it. Contested entries MUST still be marked visibly
+  wherever they are emitted (§6.1): marking is not propagation. The
+  contest is against the entry's effective revision, which continues to
+  resolve; recording or withdrawing a contest MUST NOT change, rewrite or
+  re-status any revision. Only the entry's `owner`, or an identity on that
+  entry's escalation path, MAY record or withdraw a contest;
+  implementations MUST reject the act from any other identity. Any other
+  identity, including any agent, MAY only *request* it, which routes to
+  the owner per §9. Every recording or withdrawal of a contest MUST be
+  attributable and recorded per §8 with the acting identity, timestamp,
+  entry `id`, the bundle version before and after, and a `ref` to the
+  dispute; an unattributable act MUST be rejected, not recorded as
+  anonymous. A `synced:` entry MUST NOT be contested in the bundle; the
+  dispute belongs in the system of record and arrives through the adapter
+  (§4.3).
+- **Retired** — the entry's `owner` has withdrawn it. A retired entry does
+  not resolve, and no revision of it resolves; compilers MUST NOT emit it
+  except in audit views. Only a human currently holding the entry's
+  `owner` role MAY retire an entry or return it to service, and the act
+  MUST be attributable and recorded per §8 exactly as a contest is.
+  Retirement withdraws the entry; it MUST NOT be implemented by altering
+  the ratification state of any revision.
+
+Both lifecycle acts are recorded against the entry, alongside its
+revisions, and MUST leave every existing revision byte-identical.
+
+**Representation.** Lifecycle state is recorded in a reserved `lifecycle:`
+mapping carried on the bundle's identity entry in `org.md`, the same home
+as the scope lattice (§4.2). It MUST NOT be expressed as a `status` value.
+
+```yaml
+lifecycle:
+  policy.P-07:
+    state: contested          # or: retired
+    by: role.head-of-claims   # the acting identity
+    date: 2026-08-14          # ISO 8601 date
+    ref: https://example.org/disputes/412
+```
+
+- The keys of the mapping are entry `id`s. Each key MUST name an entry in
+  the same bundle; a key naming an unknown `id` is a validation error.
+- `state` MUST be `contested` or `retired`. `by` and `date` MUST be
+  present, `by` naming the acting identity or role and `date` being an ISO
+  8601 calendar date. `ref` MUST be present where `state` is `contested`,
+  and SHOULD be present where it is `retired`: a dispute a machine cannot
+  locate is a comment.
+- An `id` MUST appear at most once in the mapping. An entry is contested
+  or retired, never both; where an owner retires a contested entry the
+  existing mapping entry is replaced, consistent with the precedence of
+  §4.7 under which `retired` wins.
+- Recording a lifecycle act is the addition of its mapping entry through a
+  reviewed write (§7.2); withdrawing one is its removal by the same route.
+  Neither touches any revision: recording or withdrawing a lifecycle act
+  MUST NOT change, rewrite or re-status any revision. The attribution and
+  authority rules above govern who may land such a write — which identity
+  may act, that any other identity MAY only request the act, that an
+  unattributable act MUST be rejected, and that every act MUST be recorded
+  per §8.
+- The mapping is read only from the identity entry. A `lifecycle:` key on
+  any other entry MUST be ignored, and the resolver MUST report it.
+- This mapping is the sole authored form of lifecycle state. The computed
+  states of §4.7, the resolver behaviour of §5 steps 1 and 5, and the
+  `lifecycle` member of the bundle metadata object (§7.1) are all derived
+  from it.
 
 **Staleness is computed, never authored.** An entry past its `revisit`
 date, orphaned by an owner change, or whose `synced:` source has moved is
@@ -322,6 +423,17 @@ for anonymous consumers.
   below the consumer's clearance. Projections MUST NOT read as a complete
   set of constraints when they are not.
 
+**Storage invariant.** Scope-based disclosure operates at resolution and
+projection. It does not alter what raw bundle storage exposes: anyone who
+can read the bundle's files reads every entry in it, whatever its `scope`.
+Access to a raw bundle MUST therefore be at least as restrictive as the
+most restricted entry stored in it. An organisation needing finer
+separation of raw storage SHOULD split entries into separately stored
+bundles, one per compartment, and rely on the resolution path to bring
+them back together. Granting read access to a mixed-scope bundle on the
+basis that the resolver will filter it is a misconfiguration, not a
+conformance level.
+
 ### 4.3 Source semantics — canonical by exception
 
 - `synced:<system>` — the system of record is elsewhere; an adapter
@@ -329,10 +441,11 @@ for anonymous consumers.
   revision with `status: draft` and a higher `rev` than any existing
   revision. An adapter MUST NOT modify, delete, reorder, re-status or
   re-sign any existing revision, and MUST NOT write any status other than
-  `draft`. An adapter MUST NOT change an entry's `id`, `owner`, `scope`
-  or `source`; a change to any of these upstream MUST be written as a
-  draft revision proposing it, never applied. In particular an adapter
-  MUST NOT convert a `native` entry to `synced:`.
+  `draft`. An adapter MUST NOT contest or retire an entry; both are acts
+  of the human owner (§4.1). An adapter MUST NOT change an entry's `id`,
+  `owner`, `scope` or `source`; a change to any of these upstream MUST be
+  written as a draft revision proposing it, never applied. In particular
+  an adapter MUST NOT convert a `native` entry to `synced:`.
 - A human proposing a native change to a `synced:` entry MUST do so as a
   new `draft` revision, exactly as an adapter does. There is no in-place
   edit of a synced entry.
@@ -419,6 +532,18 @@ digit          = %x30-39          ; 0-9
 The single-trailing-wildcard restriction is intentional: specificity is
 then a segment count and containment a prefix test, both auditable by eye.
 
+**The classification boundary.** ORG.md policy actions are
+**already-classified organisational actions**. ORG.md does not classify raw
+business events, and its decision function evaluates no business data: no
+amounts, dates, counterparties, quantities or record contents are inputs to
+a verdict. Where a rule turns on such a value, it MUST be expressed in one
+of two ways: as distinct pre-classified actions, the classification having
+been made upstream by the system that holds the data (e.g.
+`payments.refund.issue.high-value` beside `payments.refund.issue`); or as
+an authored `escalate` whose prose body states the condition for the human
+on the `route` to apply. Both are legal and neither adds a condition
+language to this specification.
+
 **Matching.** Given an input action `A`, an entry with action value `P`
 matches `A` when `P` is a token equal to `A`, or `P` is a pattern with
 literal prefix segments `p1..pn` and `A` has at least `n+1` segments whose
@@ -497,13 +622,18 @@ history. Implementations MUST map revisions to entries by `id` and MUST
 ignore unknown keys (§3.1).
 
 The **effective revision** of an entry is the highest `rev` with status
-`approved`. Resolvers MUST resolve the effective revision and MUST ignore
-all others; `contested` and `superseded` handling in §4.1 applies to the
-effective revision. An entry with no `approved` revision has no effective
-revision and MUST NOT resolve.
+`approved`. It is a function of ratification state alone: no lifecycle act
+(§4.1) may change which revision is effective. Resolvers MUST resolve the
+effective revision and MUST ignore all others; the contested handling in
+§4.1 applies to the entry, and a retired entry does not resolve at all. An
+entry with no `approved` revision has no effective revision and MUST NOT
+resolve.
 
 **States.** An entry occupies exactly one state, computed, never
-authored:
+authored. Where more than one of the conditions below holds, the first
+matching state in this list is the entry's state — **retired**,
+**contested**, **orphaned-upstream**, then the ratification states
+**proposed**, **pending**, **current**:
 
 - **proposed** — one or more `draft` revisions, no `approved` revision.
   The entry does not resolve; nothing is projected.
@@ -512,12 +642,18 @@ authored:
 - **pending** — an `approved` revision exists and at least one `draft`
   revision has a higher `rev`. The approved revision continues to
   resolve. The pending delta is unratified drift.
-- **contested** — the effective revision is `contested` (§4.1).
+- **contested** — the entry carries an active contest against its
+  effective revision (§4.1). That revision continues to resolve, marked.
 - **orphaned-upstream** — the `upstream` reference no longer resolves.
   The approved revision continues to resolve, and the entry is stale
   (§4.8).
-- **retired** — the effective revision is `superseded`; the entry no
-  longer resolves.
+- **retired** — the entry has been retired by its owner (§4.1); it no
+  longer resolves. The entry stops resolving because it was withdrawn,
+  not because any revision's ratification state changed.
+
+Contestation and retirement are recorded acts; the states above remain
+computed, because the state is derived from the record and from the
+revision set, never authored as a status.
 
 **Transitions.**
 
@@ -529,9 +665,11 @@ authored:
 | current | adapter fetches changed upstream | pending | adapter |
 | pending | owner ratifies rev N | current | human owner |
 | pending | owner rejects rev N | current | human owner |
-| current, pending | owner or consumer raises a dispute | contested | human |
+| current, pending | owner or escalation path records a contest | contested | human owner or escalation path |
+| contested | owner withdraws the contest | current / pending | human owner or escalation path |
 | current, pending | upstream reference stops resolving | orphaned-upstream | drift tooling |
-| current | owner supersedes the entry | retired | human owner |
+| current, pending | owner retires the entry | retired | human owner |
+| retired | owner returns the entry to service | current / pending | human owner |
 
 Normative rules on those transitions:
 
@@ -540,11 +678,16 @@ Normative rules on those transitions:
   the sense of §7: adapters write proposals into the change-review
   channel, and the served bundle changes only when a ratified change
   merges. Tooling MUST NOT auto-merge, auto-ratify, or ratify on a timer.
-- Ratifying `rev` N marks every `draft` revision below N `superseded`.
-  Rejecting `rev` N marks N `superseded` and leaves the effective
-  revision unchanged. Ratification is per revision, not per entry: an
-  owner ratifying an older revision while a newer draft exists leaves the
-  entry **pending**.
+- Ratifying `rev` N marks every `draft` revision below N `rejected`; it
+  MUST NOT alter any `approved` revision, which is retained for history
+  and simply ceases to be the highest ratified one. Rejecting `rev` N
+  marks N `rejected` and leaves the effective revision unchanged.
+  Ratification is per revision, not per entry: an owner ratifying an older
+  revision while a newer draft exists leaves the entry **pending**.
+- Contesting or retiring an entry MUST NOT change its `status` fields and
+  MUST NOT change its effective revision (§4.1). An owner who wants
+  different meaning to resolve ratifies a further revision; an owner who
+  wants no meaning to resolve retires the entry.
 - Entering **orphaned-upstream** MUST NOT delete or unpublish the
   approved revision. Meaning does not disappear because a wiki page was
   moved; it goes stale and the owner decides.
@@ -570,8 +713,8 @@ input.
   in draft content, and where a model summarises a diff, its output MUST
   be labelled advisory and MUST NOT be able to ratify.
 - Gates MUST answer from effective revisions only. An action covered only
-  by a `draft` revision is not covered: the gate returns `escalate`,
-  never `allow` (§6.3).
+  by a `draft` or `rejected` revision is not covered: the gate returns
+  `escalate`, never `allow` (§6.3).
 
 ### 4.8 Staleness consequences
 
@@ -610,13 +753,18 @@ Normative consequences:
   owner may do it, as a ratified revision, and re-confirmation MUST be
   recorded rather than applied in place.
 
-**Grace period.** An organisation MAY declare a grace window in its root
-`org.md`. Where declared, an entry within `revisit + grace` resolves
-normally and MUST still be marked stale in every projection; past the
-window the gate consequences above apply. The window MUST NOT exceed 90
-days, and there is no grace for stale-by-orphaned-owner or
-stale-by-upstream-drift. Where no window is declared, consequences apply
-from the `revisit` date.
+**Grace period.** An organisation MAY declare a grace window as a
+`grace_days:` key on the root bundle's identity entry in its root
+`org.md`, the same home as the scope lattice (§4.2). Its value MUST be a
+non-negative integer number of whole days and MUST NOT exceed 90; a
+non-integer, negative or greater-than-90 value is a validation error. A
+`grace_days:` key in a non-root bundle MUST be ignored, and the resolver
+MUST report it — the window is organisation-wide, as scope vocabulary is.
+Where declared, an entry within `revisit + grace_days` resolves normally
+and MUST still be marked stale in every projection; past the window the
+gate consequences above apply. There is no grace for
+stale-by-orphaned-owner or stale-by-upstream-drift. Where no window is
+declared, consequences apply from the `revisit` date.
 
 ## 5. Resolution
 
@@ -633,7 +781,9 @@ Given the resolution path, the resolver MUST:
 
 1. Collect all entries from every bundle on the path, root to node,
    selecting the effective revision of each entry (§4.7) and ignoring all
-   other revisions.
+   other revisions. A retired entry (§4.1) contributes nothing and MUST be
+   omitted here; an entry under contest is collected normally, and its
+   contest is carried through to steps 5 and 6.
 2. Resolve definitions and compute constraint verdicts (§4.6) over the
    **complete, unfiltered** entry set. Clearance MUST NOT affect
    membership of the decision set.
@@ -656,7 +806,7 @@ Given the resolution path, the resolver MUST:
    one entry narrows another; no claim by a bundle about its relationship
    to another bundle's entry may affect resolution. A failing check is a
    resolution error scoped to that `id` (§5.3).
-5. Propagate `contested` by **reliance only** (§4.1). Resolvers MUST
+5. Propagate contestation by **reliance only** (§4.1). Resolvers MUST
    report, per response, which relied-upon entries are contested, so a
    consumer can apply the rule without re-deriving reliance.
 6. Apply the consuming identity's clearance to emission (§5.4), then emit
@@ -687,9 +837,11 @@ disclosure only, never membership of the decision set (§5.4).
 **The resolver is part of the trusted base.** Every security property of
 this standard depends on resolver correctness, so resolvers are
 first-class subjects of conformance (§11): two conforming resolvers given
-the same tree, identity, and clearance MUST produce the same effective
-context, the same relied-upon set, and the same `resolution_errors` list
-in the same order, compared over the canonical serialisation of §7.1.
+the same tree, identity, clearance, and declared disclosure mode (§5.4)
+MUST produce the same effective context, the same relied-upon set, and the
+same `resolution_errors` list in the same order, compared over the
+canonical serialisation of §7.1. At Core the mode is fixed to Mode A, so
+the tuple reduces to (tree, identity, clearance).
 
 ### 5.1 The resolution path
 
@@ -800,7 +952,7 @@ least the following as resolution errors:
 |---|---|---|
 | `widening` | A closer constraint fails the narrowing test (§5 step 4) | entry `id` |
 | `duplicate_id` | Two entries share an `id` within one bundle | entry `id` |
-| `invalid_entry` | Missing required §4 field, unknown `status`, invalid `effect`, `escalate` without `route` | entry `id` |
+| `invalid_entry` | Missing required §4 field, a `status` outside the §4.1 ratification vocabulary, invalid `effect`, `escalate` without `route` | entry `id` |
 | `invalid_action` | `action` value does not match the §4.6 grammar | entry `id` |
 | `unresolvable_route` | `route` names no identifier in the ownership domain | entry `id` |
 | `kind_mismatch` | The same `id` appears as a definition in one bundle and a constraint in another | entry `id` |
@@ -894,8 +1046,7 @@ that reads as a complete set of constraints when it is not.
 
 **Definitions — withhold whole, or mark the shadow.** Where a definition
 entry that wins resolution is above the consuming identity's clearance,
-the resolver MUST take exactly one of two behaviours, and the deployment
-MUST declare which:
+the resolver MUST take exactly one of two behaviours:
 
 - **Mode A — withhold the id.** `org.define` returns a structured miss
   with `reason: withheld`. No ancestor definition is emitted for that
@@ -906,13 +1057,19 @@ MUST declare which:
   NOT take autonomous action that depends on it and MUST escalate to the
   entry's in-clearance escalation target.
 
+**At Core conformance Mode A is the only conforming behaviour.** Mode B is
+an Extended capability: a deployment MAY select it only at Extended, and
+only by an explicit deployment-wide declaration. Where Mode B is active
+the declared mode is a resolver input: it MUST be included in the context
+identifier (§5.5) and MUST be stated in any conformance claim (§11).
+Absent such a declaration the mode is Mode A.
+
 Emitting an ancestor definition **without** the marker is prohibited: that
 is silent shadowing. A resolver that cannot determine whether a closer
 version was withheld MUST use Mode A. The mode MUST be a deployment-wide
 setting, not per-identity and not per-entry: a mode that varies gives an
-observer an oracle for which entries are shadowed. Mode A is the
-RECOMMENDED default. The same rule applies to `org.decision` and
-`org.who_owns`, which are definition-domain reads.
+observer an oracle for which entries are shadowed. The same rule applies
+to `org.decision` and `org.who_owns`, which are definition-domain reads.
 
 **Errors.** Where an `id` is in error (§5.3), the error is reported to
 every consumer; where the `id` itself is above clearance, the error is
@@ -926,11 +1083,18 @@ of a resolution error.
 - The identifier MUST be computed over a canonical serialisation — RFC
   8785 JCS, digested with SHA-256, as in §7.1 — of, at minimum: the
   ordered resolution path as a list of (bundle identifier, bundle
-  version) pairs; the clearance labels applied (§4.2); and the
-  specification version the resolver implemented.
+  version) pairs; the clearance labels applied (§4.2); the declared
+  disclosure mode (§5.4); and the specification version the resolver
+  implemented.
 - A **bundle version** is the §7.1 content identifier at Core, and the
   `org.lock` version number together with the content identifier at
   Extended. Resolvers MUST NOT substitute a timestamp.
+- Bundle-level values reach the identifier through the bundle version: the
+  §7.1 content identifier covers the bundle metadata object, so the scope
+  lattice, the grace window, the bundle identifier and entry lifecycle
+  state all change it. This is what makes the "changes whenever any input
+  to resolution changes" claim above hold; a resolver whose content
+  identifier omits any of them does not satisfy this section.
 - The identifier MUST be stable: the same inputs MUST produce the same
   identifier in every conforming resolver.
 - Projections (§6.1) and gate responses (§6.3) MUST carry the context
@@ -968,7 +1132,9 @@ Documentation MUST NOT claim policy is "enforced" where the verdict is not
 interposed by a component the consuming agent cannot bypass (§6.4),
 regardless of whether a gate is deployed. Projections emitted into
 repositories (e.g. an AGENTS.md section) MUST be delimited as generated
-content that tooling refreshes and humans do not hand-edit.
+content that tooling refreshes and humans do not hand-edit. Machine-oriented
+targets MUST be rendered per the canonical target profile published for
+that target, where one exists (§11).
 
 ### 6.3 Enforced target — the gate
 
@@ -1002,7 +1168,8 @@ set, subject to §5.4; the `routes`, required when the verdict is
 NOT return a verdict outside the three-token vocabulary.
 
 Gates MUST answer from effective revisions only (§4.7): an action covered
-only by a `draft` revision is uncovered. Where a matching policy entry is
+only by a `draft` or `rejected` revision is uncovered, as is an action
+covered only by a retired entry (§4.1). Where a matching policy entry is
 stale, the gate MUST NOT return `allow`; it MUST return `escalate` routed
 to the stale entry's owner, except that a stale entry whose verdict is
 `deny` MUST still return `deny` (§4.8). Where a contested entry is in the
@@ -1090,7 +1257,12 @@ advisory.
 
 ## 7. Integrity
 
-§7.1 is normative at **Core**. §7.2–§7.6 are normative at **Extended**.
+§7.1 is normative at **Core**. §7.2–§7.6 are normative at **Extended** and
+are additionally marked **Experimental**: they are binding on any Extended
+conformance claim, but no second independent implementation has yet
+validated them, so they MAY change by RFC on a shorter cycle than the rest
+of §3–§6. Implementations SHOULD state the specification version their
+Extended claim was tested against.
 
 ### 7.1 Bundle content identifier (Core)
 
@@ -1116,26 +1288,89 @@ Unicode NFC; replace CRLF and CR with LF; strip trailing spaces and tabs
 from every line; remove leading and trailing blank lines. No other
 transformation is applied; the body is otherwise opaque bytes.
 
-Unknown front-matter keys MUST NOT be included in the canonical form.
-§3's ignore-unknown rule governs parsing, and the Core identifier
+Unknown front-matter keys MUST NOT be included in the canonical form. The
+reserved bundle-level keys carried on the identity entry — `bundle`
+(§4.5), `scopes` (§4.2), `grace_days` (§4.8) and `lifecycle` (§4.1) — are
+not members of the entry canonical form either; they reach the content
+identifier through the bundle metadata object below, and MUST NOT also be
+hashed as part of the identity entry. §3's ignore-unknown rule governs
+parsing, and the Core identifier
 identifies parsed meaning, not file bytes. §7.4 governs unknown *files* in
 a signed bundle and reaches the opposite conclusion for that case,
 deliberately.
 
-**Serialisation.** The object MUST be serialised with the JSON
-Canonicalisation Scheme (RFC 8785). Implementations MUST NOT define a
-local canonicalisation.
+**Bundle metadata canonical form.** Entry canonical forms do not carry
+root- and bundle-level values, yet several of those values change what
+resolution produces. The governing rule: **every normative value capable
+of changing resolution, disclosure, identity or authority MUST affect the
+content identifier.** A bundle therefore also has a **bundle metadata
+object**: a JSON object with exactly these members, and no others, each
+included only where the bundle carries the value it records.
+
+- `bundle` — the bundle identifier declared on the identity entry (§4.5),
+  as a string. Omitted where no `bundle` key is present; the resolution-
+  time fallback of §4.5 is not a substitute and MUST NOT be hashed here.
+- `scopes` — the declared scope lattice (§4.2), as an object whose members
+  are the declared labels, each mapping to the array of labels named in
+  its `narrower_than`, de-duplicated and sorted ascending by byte order of
+  their UTF-8 encoding. The declared edges are recorded, never the closure,
+  and never the three default labels. Omitted where the bundle declares no
+  `scopes:` mapping (which includes every non-root bundle, §4.2).
+- `grace_days` — the grace window declared by the `grace_days:` key of
+  §4.8, as a JSON number of whole days. Omitted where the root bundle
+  declares no window; a value ignored under §4.8 MUST NOT be hashed here.
+- `lifecycle` — the entry lifecycle state authored in the `lifecycle:`
+  mapping of §4.1, as an array of objects with exactly the members `id`
+  (string) and `state` (the string `contested` or `retired`), one per
+  mapping entry. Entries the mapping does not name are in their default
+  state and contribute nothing. Because §4.1 permits an `id` at most once
+  in the mapping — a retirement replacing any contest — no entry
+  contributes twice. The mapping's `by`, `date` and `ref` are provenance
+  and MUST NOT be hashed: the identifier tracks values capable of changing
+  resolution, and those three do not change what resolves. A `lifecycle:`
+  key ignored under §4.1 MUST NOT be hashed here. The array MUST be sorted
+  ascending by byte order of the UTF-8 encoding of `id`. Omitted where the
+  array would be empty.
+
+Lifecycle state is hashed here, not in the entry canonical form, because
+it attaches to the entry rather than to a revision (§4.1) and MUST leave
+every revision byte-identical. It belongs in the identifier because
+lifecycle acts change resolution: a retired entry stops resolving (§5 step
+1), and a contest changes what a consumer relying on the entry may do
+(§5 step 5).
+
+**Serialisation.** Each canonical form object — entry or bundle metadata —
+MUST be serialised with the JSON Canonicalisation Scheme (RFC 8785).
+Implementations MUST NOT define a local canonicalisation.
 
 **Entry digest.** `entry_digest = SHA-256(JCS bytes)`, rendered as
 lowercase hexadecimal.
 
+**Metadata digest.** `metadata_digest = SHA-256(JCS bytes of the bundle
+metadata object)`, rendered as lowercase hexadecimal. The object is always
+constructed and always digested; where no member is present it is the
+empty object, whose JCS serialisation is the two bytes `{}`.
+
 **Bundle content identifier.** Sort all entries by `id`, ascending, by
 byte order of the UTF-8 encoding of the `id`. Duplicate `id` values within
 a single bundle MUST be a load failure, not a hash input. Build the digest
-input by concatenating, for each entry in that order, the UTF-8 bytes of
-`id`, then `0x0A`, then the lowercase hex `entry_digest`, then `0x0A`. The
-content identifier is `sha256:` followed by the lowercase hex SHA-256 of
-that input.
+input by concatenating, in this order:
+
+1. the UTF-8 bytes of the literal string `!bundle-metadata`, then `0x0A`,
+   then the lowercase hex `metadata_digest`, then `0x0A`;
+2. then, for each entry in the sort order above, the UTF-8 bytes of `id`,
+   then `0x0A`, then the lowercase hex `entry_digest`, then `0x0A`.
+
+The metadata line always comes first and is always present. It cannot
+collide with an entry line: `!` is outside the `id` grammar of §4.5, so no
+entry can produce a first field equal to `!bundle-metadata`. The content
+identifier is `sha256:` followed by the lowercase hex SHA-256 of that
+input.
+
+The conformance suite (§11) MUST include a vector in which only bundle
+metadata changes — for example one edge added to the `scopes:` lattice,
+with every entry byte-identical — and MUST assert that the content
+identifier changes.
 
 Implementations MUST emit the content identifier wherever §5 and §6.1
 require a bundle version, and MUST render it in full, not abbreviated.
@@ -1144,8 +1379,9 @@ content identifier at Core, and the `org.lock` version number *together
 with* the content identifier at Extended.
 
 **Effective-context canonical form.** Two conforming resolvers given the
-same tree, identity and clearance MUST produce byte-identical serialised
-effective context. The serialisation is a JCS-serialised JSON object with
+same tree, identity, clearance and declared disclosure mode (§5.4) MUST
+produce byte-identical serialised effective context. The serialisation is
+a JCS-serialised JSON object with
 members `entries` (the array of entry canonical forms, in the same sort
 order as above, after resolution) and `bundles` (an array of objects with
 `path` and `content_id`, ordered root to node). This form is the
@@ -1165,8 +1401,10 @@ ORG.md. Implementations MUST implement the four TUF top-level roles:
   rotation: a new root is accepted only when signed by a threshold of
   both the previous and the new key sets.
 - **targets** — realised as `org.lock`: the entry digests and file
-  digests of §7.4, the bundle's version number, and the delegations of
-  §7.3.
+  digests of §7.4, the bundle metadata digest of §7.1, the bundle's
+  version number, and the delegations of §7.3. The bundle metadata object
+  changes resolution and disclosure, so its digest MUST be signed exactly
+  as entry digests are.
 - **snapshot** — the names and version numbers of every targets metadata
   file in the tree. Snapshot exists to bind a *set* of bundles together;
   without it an attacker can serve a current org bundle beside a stale
@@ -1194,9 +1432,9 @@ conformance MUST verify a bundle before loading it. A bundle that fails
 verification MUST NOT be loaded. A bundle that has not been verified MUST
 NOT be loaded.
 
-**What may be signed.** `org.lock` MUST cover only revisions with status
-`approved` (§4.7). Implementations MUST NOT sign or serve unratified
-revisions. This is the property that stops the standard signing injected
+**What may be signed.** `org.lock` MUST cover only ratified revisions —
+those whose `status` is `approved` (§4.1, §4.7). Implementations MUST NOT
+sign or serve unratified revisions. This is the property that stops the standard signing injected
 text.
 
 **Reviewed writes.** Bundles MUST change only through reviewed writes.
@@ -1311,8 +1549,8 @@ specification defines no log store.
 
 Serving implementations MUST additionally emit an event per resolution
 error (§5.3), carrying `code`, `id`, `node`, requesting identity, context
-identifier and bundle versions; per transition into or out of `contested`
-(§4.1); per entry into degraded mode and per ignored undelegated bundle
+identifier and bundle versions; per contest or retirement recorded or
+withdrawn (§4.1); per entry into degraded mode and per ignored undelegated bundle
 (§7). Events SHOULD record the clearance set used rather than a single
 scope, and SHOULD record whether a verdict was interposed (§6.4), so an
 auditor can distinguish a consulted verdict from an applied one.
@@ -1337,7 +1575,8 @@ was made under fallback. Tooling MUST NOT auto-merge changes to meaning,
 and holding a role is not itself ratification. This is the standard's
 definition of AI-native authoring: machines are first-class participants in
 proposing meaning and never in ratifying it. The same rule governs the
-transition to `contested` (§4.1): agents request it, and never set it.
+lifecycle acts of §4.1 — contesting and retiring an entry: agents request
+them, and never perform them.
 
 **Owners, roles, and the owner of last resort.** `owner` MUST name
 exactly one accountable party, and SHOULD be a **role** identifier (e.g.
@@ -1350,6 +1589,18 @@ people in the bundle. A role is **empty** when it resolves to no current
 holder; an entry whose owner is an empty role, or a named individual who
 no longer exists in the identity system, is **orphaned**, and orphaned
 entries are stale (§4.8).
+
+**What Core binds, and what it does not.** At Core an implementation
+validates organisational semantics only: that `owner` names a role, and
+that the role resolves in the `ownership` domain of the resolved bundle. It
+does not, and at Core cannot, verify that the human performing a
+ratification currently holds that role, because nothing at Core binds a
+human identity to a role identifier. **Identity-backed ratification** — the
+verified guarantee that the ratifier holds the entry's `owner` role — is an
+**Extended** guarantee, delivered by resolving roles to the organisation's
+identity system per §4.2. A Core implementation MUST NOT claim it. This
+adds no data to bundles: role membership lives in the IdP, never in a
+parallel list of people alongside the meaning it governs.
 
 - Every bundle MUST be able to name an owner of last resort. The **root**
   bundle MUST declare one, as an ownership entry with `id:
@@ -1402,9 +1653,10 @@ meaning at their next resolution.
 
 | Level | Requirements |
 |---|---|
-| **Core** | §3–§6.2: bundle layout, §3.1 grammar, entry model, §4.5 identity, §4.6 field and grammar validation, §4.7 revision selection, §5.1 designated path, §5.2 authority-bounded resolution, §5.3 failure semantics, §5.4 emission under clearance, §7.1 content identifier, `revisit` validation and stale marking in advisory projections, and a root `own.last-resort`. Core implementations MUST NOT claim deterministic policy answers. Achievable by a small org in an afternoon. |
-| **Extended** | Core + §6.3 gate with deterministic verdicts per §4.6, escalate-on-stale, §6.4 enforcement labelling, and §7.2–§7.6 integrity — `org.lock` over approved revisions only — with scopes and roles resolved to the organisation's identity system. |
-| **Full** | Extended + §8 audit + §10 drift tooling, including unratified-delta and orphan-drift surfacing, fallback-ratification records, and contested-workflow support with the §4.1 authority restriction and transition records. |
+| **Core** | §3–§6.2: bundle layout, §3.1 grammar, entry model, §4.5 identity, §4.6 field and grammar validation, §4.7 revision selection by ratification
+state together with the §4.1 entry lifecycle states, §5.1 designated path, §5.2 authority-bounded resolution, §5.3 failure semantics, §5.4 emission under clearance with disclosure Mode A, §7.1 content identifier, `revisit` validation and stale marking in advisory projections, and a root `own.last-resort`. Core implementations MUST NOT claim deterministic policy answers, and MUST NOT claim identity-backed ratification (§9). **Adopting** a Core bundle — authoring the entries and resolving them with conformant tooling — is achievable by a small org in an afternoon. **Implementing** a Core-conformant resolver is not an afternoon's work, and this level makes no such claim. |
+| **Extended** | Core + §6.3 gate with deterministic verdicts per §4.6, escalate-on-stale, §6.4 enforcement labelling, and §7.2–§7.6 integrity (Experimental, §7) — `org.lock` over approved revisions only — with scopes and roles resolved to the organisation's identity system, which is what makes identity-backed ratification (§9) available. Disclosure Mode B (§5.4) MAY be selected only here, and only by explicit declaration. |
+| **Full** | Extended + §8 audit + §10 drift tooling, including unratified-delta and orphan-drift surfacing, fallback-ratification records, and contested-workflow support with the §4.1 authority restriction and lifecycle-act records. |
 
 **Conformance and benchmark scores are different claims.**
 
@@ -1425,9 +1677,24 @@ meaning at their next resolution.
    be part of the conformance suite.
 3. Resolver conformance MUST be evaluated by comparison against the
    canonical effective-context serialisation (§7.1): byte-identical
-   output for the same tree, identity and clearance.
-4. Compiler conformance MUST be evaluated by byte-identical projection
-   output for identical resolved input, together with the §6.1 rules.
+   output for the same tree, identity, clearance and declared disclosure
+   mode (§5.4). At Core the mode is fixed to Mode A and the tuple is
+   (tree, identity, clearance); a claim covering Mode B is an Extended
+   claim and MUST state the declared mode.
+4. Compiler conformance MUST be evaluated per **canonical target
+   profile**: a versioned, published rendering specification for a
+   machine-oriented target — an AGENTS.md fragment, a prompt block —
+   identified by a profile name and version. For a target with a
+   published canonical profile, conformance MUST be evaluated by
+   byte-identical projection output for identical resolved input,
+   together with the §6.1 rules, and the claim MUST name the profile and
+   version it covers. For a human-oriented target with no published
+   profile — a handbook — conformance is the §6.1 rules alone: meaning
+   preservation, the context identifier, contested and stale marking, and
+   advisory or enforced labelling, evaluated over the projection's
+   content; byte-identity MUST NOT be claimed for such a target. This
+   specification defines no canonical target profiles; they are published
+   and versioned separately, as the conformance suite is.
 5. Gate conformance MUST be evaluated by determinism of `org.policy` over
    a fixed (context identifier, identity, action) tuple, and by the
    uncovered-action rule (`escalate`, never `allow`).
