@@ -21,7 +21,12 @@ invariant added — bundle access at least as restrictive as its most
 restricted entry (§4.2, SECURITY.md); classification boundary stated —
 ORG.md evaluates no business data (§4.6); §7.2–§7.6 marked Experimental
 pending a second implementation (§7); the Core "afternoon" claim narrowed
-to adoption rather than resolver implementation (§11).
+to adoption rather than resolver implementation (§11); entry lifecycle
+state given a normative authored form — a reserved `lifecycle:` mapping on
+the bundle's identity entry, from which validation, resolution and the
+content identifier are all derived (§4.1, §7.1); the grace window given
+the key it is authored under — `grace_days:` on the root bundle's identity
+entry, a non-negative integer of at most 90 days (§4.8, §7.1).
 **Changed in 0.3:** entry identity and container grammar (§3.1, §4.5; RFC
 0001/0003); scope lattice and the disclosure/applicability split (§4.2,
 §5.4; RFC 0002/0008); policy decision function and structural narrowing
@@ -290,10 +295,46 @@ retirement never elects an older revision.
   the ratification state of any revision.
 
 Both lifecycle acts are recorded against the entry, alongside its
-revisions, and MUST leave every existing revision byte-identical. This
-specification does not fix their representation in a bundle; whatever an
-implementation uses, it MUST NOT be a `status` value, MUST be
-attributable, and MUST be recorded per §8.
+revisions, and MUST leave every existing revision byte-identical.
+
+**Representation.** Lifecycle state is recorded in a reserved `lifecycle:`
+mapping carried on the bundle's identity entry in `org.md`, the same home
+as the scope lattice (§4.2). It MUST NOT be expressed as a `status` value.
+
+```yaml
+lifecycle:
+  policy.P-07:
+    state: contested          # or: retired
+    by: role.head-of-claims   # the acting identity
+    date: 2026-08-14          # ISO 8601 date
+    ref: https://example.org/disputes/412
+```
+
+- The keys of the mapping are entry `id`s. Each key MUST name an entry in
+  the same bundle; a key naming an unknown `id` is a validation error.
+- `state` MUST be `contested` or `retired`. `by` and `date` MUST be
+  present, `by` naming the acting identity or role and `date` being an ISO
+  8601 calendar date. `ref` MUST be present where `state` is `contested`,
+  and SHOULD be present where it is `retired`: a dispute a machine cannot
+  locate is a comment.
+- An `id` MUST appear at most once in the mapping. An entry is contested
+  or retired, never both; where an owner retires a contested entry the
+  existing mapping entry is replaced, consistent with the precedence of
+  §4.7 under which `retired` wins.
+- Recording a lifecycle act is the addition of its mapping entry through a
+  reviewed write (§7.2); withdrawing one is its removal by the same route.
+  Neither touches any revision: recording or withdrawing a lifecycle act
+  MUST NOT change, rewrite or re-status any revision. The attribution and
+  authority rules above govern who may land such a write — which identity
+  may act, that any other identity MAY only request the act, that an
+  unattributable act MUST be rejected, and that every act MUST be recorded
+  per §8.
+- The mapping is read only from the identity entry. A `lifecycle:` key on
+  any other entry MUST be ignored, and the resolver MUST report it.
+- This mapping is the sole authored form of lifecycle state. The computed
+  states of §4.7, the resolver behaviour of §5 steps 1 and 5, and the
+  `lifecycle` member of the bundle metadata object (§7.1) are all derived
+  from it.
 
 **Staleness is computed, never authored.** An entry past its `revisit`
 date, orphaned by an owner change, or whose `synced:` source has moved is
@@ -705,13 +746,18 @@ Normative consequences:
   owner may do it, as a ratified revision, and re-confirmation MUST be
   recorded rather than applied in place.
 
-**Grace period.** An organisation MAY declare a grace window in its root
-`org.md`. Where declared, an entry within `revisit + grace` resolves
-normally and MUST still be marked stale in every projection; past the
-window the gate consequences above apply. The window MUST NOT exceed 90
-days, and there is no grace for stale-by-orphaned-owner or
-stale-by-upstream-drift. Where no window is declared, consequences apply
-from the `revisit` date.
+**Grace period.** An organisation MAY declare a grace window as a
+`grace_days:` key on the root bundle's identity entry in its root
+`org.md`, the same home as the scope lattice (§4.2). Its value MUST be a
+non-negative integer number of whole days and MUST NOT exceed 90; a
+non-integer, negative or greater-than-90 value is a validation error. A
+`grace_days:` key in a non-root bundle MUST be ignored, and the resolver
+MUST report it — the window is organisation-wide, as scope vocabulary is.
+Where declared, an entry within `revisit + grace_days` resolves normally
+and MUST still be marked stale in every projection; past the window the
+gate consequences above apply. There is no grace for
+stale-by-orphaned-owner or stale-by-upstream-drift. Where no window is
+declared, consequences apply from the `revisit` date.
 
 ## 5. Resolution
 
@@ -1233,8 +1279,13 @@ Unicode NFC; replace CRLF and CR with LF; strip trailing spaces and tabs
 from every line; remove leading and trailing blank lines. No other
 transformation is applied; the body is otherwise opaque bytes.
 
-Unknown front-matter keys MUST NOT be included in the canonical form.
-§3's ignore-unknown rule governs parsing, and the Core identifier
+Unknown front-matter keys MUST NOT be included in the canonical form. The
+reserved bundle-level keys carried on the identity entry — `bundle`
+(§4.5), `scopes` (§4.2), `grace_days` (§4.8) and `lifecycle` (§4.1) — are
+not members of the entry canonical form either; they reach the content
+identifier through the bundle metadata object below, and MUST NOT also be
+hashed as part of the identity entry. §3's ignore-unknown rule governs
+parsing, and the Core identifier
 identifies parsed meaning, not file bytes. §7.4 governs unknown *files* in
 a signed bundle and reaches the opposite conclusion for that case,
 deliberately.
@@ -1256,16 +1307,21 @@ included only where the bundle carries the value it records.
   their UTF-8 encoding. The declared edges are recorded, never the closure,
   and never the three default labels. Omitted where the bundle declares no
   `scopes:` mapping (which includes every non-root bundle, §4.2).
-- `grace_days` — the grace window declared in the root `org.md` (§4.8), as
-  a JSON number of whole days. Omitted where no window is declared.
-- `lifecycle` — the entry lifecycle state of §4.1, as an array of objects
-  with exactly the members `id` (string) and `state` (the string
-  `contested` or `retired`), one per entry whose state is not the default
-  — that is, one per entry carrying an active contest or a recorded
-  retirement. Entries in any other state contribute nothing. Where §4.7's
-  precedence gives an entry both, `retired` is recorded. The array MUST be
-  sorted ascending by byte order of the UTF-8 encoding of `id`. Omitted
-  where the array would be empty.
+- `grace_days` — the grace window declared by the `grace_days:` key of
+  §4.8, as a JSON number of whole days. Omitted where the root bundle
+  declares no window; a value ignored under §4.8 MUST NOT be hashed here.
+- `lifecycle` — the entry lifecycle state authored in the `lifecycle:`
+  mapping of §4.1, as an array of objects with exactly the members `id`
+  (string) and `state` (the string `contested` or `retired`), one per
+  mapping entry. Entries the mapping does not name are in their default
+  state and contribute nothing. Because §4.1 permits an `id` at most once
+  in the mapping — a retirement replacing any contest — no entry
+  contributes twice. The mapping's `by`, `date` and `ref` are provenance
+  and MUST NOT be hashed: the identifier tracks values capable of changing
+  resolution, and those three do not change what resolves. A `lifecycle:`
+  key ignored under §4.1 MUST NOT be hashed here. The array MUST be sorted
+  ascending by byte order of the UTF-8 encoding of `id`. Omitted where the
+  array would be empty.
 
 Lifecycle state is hashed here, not in the entry canonical form, because
 it attaches to the entry rather than to a revision (§4.1) and MUST leave

@@ -18,6 +18,17 @@ review): BLOCKER 1–3, HIGH 4, 6 and 7, plus the drift item on the Core
   lines, with the general rule that every value capable of changing
   resolution, disclosure, identity or authority must change the identifier
   — and a conformance vector asserting it (SPEC §7.1, §5.5, §4.2, §4.5)
+- Entry lifecycle state given a normative bundle representation: a
+  reserved `lifecycle:` mapping on the bundle's identity entry, keyed by
+  entry `id`, carrying `state` (`contested` / `retired`), `by`, `date` and
+  `ref`, recorded and withdrawn by reviewed write without touching any
+  revision — the single authored form from which validation, resolution
+  and the content identifier are derived, with `by` / `date` / `ref`
+  excluded from the hash as provenance (SPEC §4.1, §7.1, §4.7, §5)
+- Grace window given the key it is authored under: `grace_days:` on the
+  root bundle's identity entry, a non-negative integer number of days
+  capped at 90, a validation error otherwise, ignored and reported in a
+  non-root bundle (SPEC §4.8, §7.1)
 - Disclosure Mode A is the only conforming Core behaviour; Mode B is an
   Extended capability requiring an explicit deployment-wide declaration,
   and where active the declared mode is a resolver input carried in the
