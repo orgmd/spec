@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdtemp, rm } from "node:fs/promises";
+import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,11 +34,31 @@ try {
   const missing = required.filter((path) => !files.includes(path));
   if (missing.length > 0)
     throw new Error(`Packed orgmd tarball is missing: ${missing.join(", ")}`);
+  const forbidden = files.filter(
+    (path) =>
+      path.startsWith("src/") ||
+      path.startsWith("scripts/") ||
+      path.startsWith("test/") ||
+      path.includes("/test/"),
+  );
+  if (forbidden.length > 0)
+    throw new Error(
+      `Packed orgmd tarball includes forbidden paths: ${forbidden.join(", ")}`,
+    );
 
   consumer = await mkdtemp(resolve(tmpdir(), "orgmd-pack-consumer-"));
-  exec("npm", ["install", "--ignore-scripts", "--no-package-lock", tarball], {
+  exec("npm", ["install", "--no-package-lock", tarball], {
     cwd: consumer,
   });
+  const installed = resolve(consumer, "node_modules", "orgmd");
+  const manifest = JSON.parse(
+    await readFile(resolve(installed, "package.json"), "utf8"),
+  );
+  if (manifest.scripts !== undefined)
+    throw new Error("Packed manifest exposes workspace lifecycle scripts.");
+  if (manifest.devDependencies !== undefined)
+    throw new Error("Packed manifest exposes development dependencies.");
+  exec("npm", ["pack", "--json"], { cwd: installed });
   exec(
     "node",
     [

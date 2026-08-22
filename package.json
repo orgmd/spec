@@ -5,14 +5,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace orgmd",
+    "build": "tsc -p packages/orgmd/tsconfig.json && node scripts/copy-package-assets.mjs",
     "test": "vitest run",
     "typecheck": "tsc -p packages/orgmd/tsconfig.json --noEmit",
     "format:check": "prettier --check package.json tsconfig.json packages/orgmd scripts .github/workflows/ci.yml",
     "check": "npm run format:check && npm run typecheck && npm test && npm run build",
     "validate:org": "node packages/orgmd/dist/cli/bin.js validate org",
     "doctor:org": "node packages/orgmd/dist/cli/bin.js doctor org --today 2026-08-21",
-    "pack:check": "node scripts/verify-pack.mjs"
+    "pack:check": "npm run build && node scripts/verify-pack.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

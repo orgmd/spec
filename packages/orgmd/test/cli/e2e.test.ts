@@ -7,7 +7,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 const directories: string[] = [];
-const packageRoot = new URL("../..", import.meta.url);
 const bin = new URL("../../dist/cli/bin.js", import.meta.url);
 
 async function temporaryDirectory(): Promise<string> {
@@ -36,7 +35,9 @@ async function failedCli(...argv: string[]) {
 }
 
 beforeAll(async () => {
-  await execFileAsync("npm", ["run", "build"], { cwd: packageRoot.pathname });
+  await execFileAsync("npm", ["run", "build"], {
+    cwd: new URL("../../../..", import.meta.url).pathname,
+  });
 });
 afterAll(async () => {
   await Promise.all(

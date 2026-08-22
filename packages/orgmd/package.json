@@ -24,10 +24,6 @@
     "README.md",
     "LICENSE"
   ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json && node ../../scripts/copy-package-assets.mjs",
-    "prepack": "npm run build"
-  },
   "dependencies": {
     "ajv": "8.20.0",
     "canonicalize": "4.0.0",
