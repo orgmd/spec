@@ -88,7 +88,7 @@ export async function loadBundle(
     entries.find(({ domain }) => domain === "identity")?.frontMatter ?? {};
   return {
     value: Object.freeze({
-      reference: input.reference,
+      reference: input.nodePath ?? (input.isRoot ? "root" : "bundle"),
       path: root,
       ...(input.nodePath === undefined ? {} : { nodePath: input.nodePath }),
       isRoot: input.isRoot,

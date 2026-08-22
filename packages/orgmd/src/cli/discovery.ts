@@ -8,11 +8,27 @@ export async function discoverCompilePath(reference: string): Promise<{
   readonly value?: readonly ValidatedBundle[];
   readonly diagnostics: readonly Diagnostic[];
   readonly paths: readonly string[];
+}>;
+export async function discoverCompilePath(
+  reference: string,
+  io: DiscoveryIo,
+): Promise<{
+  readonly value?: readonly ValidatedBundle[];
+  readonly diagnostics: readonly Diagnostic[];
+  readonly paths: readonly string[];
+}>;
+export async function discoverCompilePath(
+  reference: string,
+  io: DiscoveryIo = defaultDiscoveryIo,
+): Promise<{
+  readonly value?: readonly ValidatedBundle[];
+  readonly diagnostics: readonly Diagnostic[];
+  readonly paths: readonly string[];
 }> {
   let target: string;
   try {
-    target = await realpath(reference);
-    if (!(await stat(target)).isDirectory()) throw new Error();
+    target = await io.realpath(reference);
+    if (!(await io.stat(target)).isDirectory()) throw new Error();
   } catch {
     return failure(
       "cli.invalid-path",
@@ -22,7 +38,13 @@ export async function discoverCompilePath(reference: string): Promise<{
   }
   const ancestors: string[] = [];
   for (let current = target; ; current = dirname(current)) {
-    if (await containsOrg(current)) ancestors.push(current);
+    const org = await containsOrg(current, io);
+    if (org.diagnostic)
+      return {
+        diagnostics: Object.freeze([org.diagnostic]),
+        paths: Object.freeze([]),
+      };
+    if (org.present) ancestors.push(current);
     const parent = dirname(current);
     if (parent === current) break;
   }
@@ -65,12 +87,44 @@ export async function discoverCompilePath(reference: string): Promise<{
       };
 }
 
-async function containsOrg(path: string): Promise<boolean> {
+export interface DiscoveryIo {
+  readonly realpath: typeof realpath;
+  readonly stat: typeof stat;
+  readonly lstat: typeof lstat;
+}
+
+const defaultDiscoveryIo: DiscoveryIo = Object.freeze({
+  realpath,
+  stat,
+  lstat,
+});
+
+async function containsOrg(
+  path: string,
+  io: DiscoveryIo,
+): Promise<{ readonly present: boolean; readonly diagnostic?: Diagnostic }> {
   try {
-    return (await lstat(join(path, "org.md"))).isFile();
-  } catch {
-    return false;
+    return { present: (await io.lstat(join(path, "org.md"))).isFile() };
+  } catch (error) {
+    if (isMissing(error)) return { present: false };
+    return {
+      present: false,
+      diagnostic: {
+        code: "cli.discovery-failed",
+        severity: "error",
+        message: "Bundle discovery could not inspect org.md.",
+        path,
+      },
+    };
   }
+}
+
+function isMissing(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
 }
 function failure(code: string, message: string, path: string) {
   return {

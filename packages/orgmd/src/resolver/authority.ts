@@ -114,7 +114,15 @@ export function resolveAuthorityDefinitions(
     }
 
     if (resolutionErrors.some((error) => error.id === id)) continue;
-    entries.push(toResolvedEntry(winner, today));
+    entries.push(
+      toResolvedEntry(
+        winner,
+        today,
+        isOwnership && winner.bundleIndex === anchor.bundleIndex
+          ? delegates
+          : [],
+      ),
+    );
   }
 
   return Object.freeze({
@@ -200,9 +208,18 @@ function authorityPayload(revision: EntryRevision): Record<string, unknown> {
 function toResolvedEntry(
   selection: RevisionSelection,
   today: string,
+  effectiveDelegates: readonly string[],
 ): ResolvedEntry {
-  const revision = selection.revision;
-  if (!revision) throw new Error("authority selection lacks a revision");
+  const selectedRevision = selection.revision;
+  if (!selectedRevision)
+    throw new Error("authority selection lacks a revision");
+  const { delegates: _ignored, ...withoutDelegates } = selectedRevision;
+  const revision: EntryRevision = Object.freeze({
+    ...withoutDelegates,
+    ...(effectiveDelegates.length === 0
+      ? {}
+      : { delegates: Object.freeze([...effectiveDelegates]) }),
+  });
   return Object.freeze({
     revision,
     bundleIndex: selection.bundleIndex,

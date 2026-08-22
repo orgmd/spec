@@ -1,4 +1,5 @@
 import {
+  link,
   lstat,
   mkdtemp,
   readFile,
@@ -85,6 +86,7 @@ describe("atomicWriteFile", () => {
       {
         overwrite: true,
         io: {
+          link,
           rename: async (from, to) => {
             events.push("rename");
             await rename(from, to);
@@ -100,5 +102,32 @@ describe("atomicWriteFile", () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(events).toEqual(["rename", "sync:replacement"]);
+  });
+
+  it("atomically refuses a no-overwrite race without replacing the winner", async () => {
+    const directory = await fixtureDir();
+    const path = join(directory, "output.txt");
+
+    const result = await atomicWriteFile(
+      path,
+      new TextEncoder().encode("orgmd candidate"),
+      {
+        overwrite: false,
+        io: {
+          rename,
+          link: async (temporary, target) => {
+            await writeFile(target, "race winner", { flag: "wx" });
+            await link(temporary, target);
+          },
+          syncParent: async () => undefined,
+        },
+      },
+    );
+
+    expect(result.value).toBeUndefined();
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({ code: "io.already-exists" }),
+    ]);
+    expect(await readFile(path, "utf8")).toBe("race winner");
   });
 });

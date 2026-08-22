@@ -1,0 +1,26 @@
+<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:0ab8f01b8f5fbe6586613acdeaf7bcae5773da7f7a51311df69a96ad249752da -->
+<!-- bundles: org.root=sha256:e293f862c046e9b07a6d64f0116ac45114fcf02c49761cd5377981025f04c289, org.leaf=sha256:3310d8e85be2009d1460611860c85ac947414967733dbff4b48371705f6e83ff -->
+## Organisational context (advisory)
+
+### Policy
+
+#### `policy.shared`
+owner: `role.editor`
+scope: `public`
+source: `native`
+revision: `1`
+action: `billing.*`
+effect: `allow`
+
+Root rule.
+
+#### `policy.shared`
+owner: `role.editor`
+scope: `public`
+source: `native`
+revision: `1`
+action: `billing.refund`
+effect: `deny`
+
+Leaf rule.
+<!-- orgmd:end -->

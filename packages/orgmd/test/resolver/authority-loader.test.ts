@@ -101,7 +101,7 @@ describe("filesystem-loaded authority delegation", () => {
       "root",
       "division",
     ]);
-    expect(root.reference).toBe(rootDirectory);
+    expect(root.reference).toBe("root");
   });
 
   it("rejects one physical bundle loaded through distinct aliases and logical paths", async () => {
@@ -129,6 +129,32 @@ describe("filesystem-loaded authority delegation", () => {
         path: "alias",
       }),
     );
+  });
+
+  it("keeps fallback bundle identity stable when an unnamed tree is relocated", async () => {
+    const firstDirectory = await fixtureDir("first-location");
+    const secondDirectory = await fixtureDir("second-location");
+    await writeBundle(firstDirectory, undefined, "Board");
+    await writeBundle(secondDirectory, undefined, "Board");
+
+    const first = await loadedValidated(firstDirectory, "root", true);
+    const second = await loadedValidated(secondDirectory, "root", true);
+    const firstResult = resolveContext({
+      path: [first],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    const secondResult = resolveContext({
+      path: [second],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+
+    expect(firstResult.value?.contextId).toBe(secondResult.value?.contextId);
+    expect(firstResult.value?.bundles).toEqual(secondResult.value?.bundles);
+    expect(firstResult.value?.bundles[0]?.bundleId).toBe("root");
+    expect(JSON.stringify(firstResult)).not.toContain(firstDirectory);
+    expect(JSON.stringify(secondResult)).not.toContain(secondDirectory);
   });
 
   it("never falls back to a filesystem realpath when logical nodePath is omitted", async () => {

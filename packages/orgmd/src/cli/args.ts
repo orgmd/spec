@@ -20,6 +20,7 @@ type CompileCommand = CommandBase & {
 };
 type InitCommand = CommandBase & {
   readonly command: "init";
+  readonly nonInteractive: boolean;
   readonly write: boolean;
   readonly preview: boolean;
   readonly overwrite: boolean;
@@ -183,10 +184,6 @@ function init(args: readonly string[]): ParsedCommand {
     return usage("Only one target path may be supplied.");
   if (result.values.write === true && result.values.preview === true)
     return usage("--write and --preview cannot be combined.");
-  if (result.values["non-interactive"] !== true)
-    return usage(
-      "init requires --non-interactive in this non-prompting interface.",
-    );
   const initValues: Record<string, string | undefined> = {};
   for (const key of [
     "organization",
@@ -211,6 +208,7 @@ function init(args: readonly string[]): ParsedCommand {
       ? {}
       : { path: result.positionals[0] }),
     json: result.values.json === true,
+    nonInteractive: result.values["non-interactive"] === true,
     write: result.values.write === true,
     preview: result.values.preview === true,
     overwrite: result.values.overwrite === true,

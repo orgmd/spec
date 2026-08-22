@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCommand } from "../../src/cli/args.js";
+import { HELP } from "../../src/cli/render.js";
 
 describe("CLI argument parsing", () => {
   it.each([
@@ -27,5 +28,15 @@ describe("CLI argument parsing", () => {
       target: "prompt",
       clearance: ["public", "internal"],
     });
+  });
+
+  it("renders interactive init and its accepted JSON output flag in help", () => {
+    expect(parseCommand(["init", "--json"])).toMatchObject({
+      kind: "command",
+      command: "init",
+      nonInteractive: false,
+      json: true,
+    });
+    expect(HELP).toContain("init [path] [--json]");
   });
 });

@@ -17,8 +17,11 @@ The envelope is exactly:
 Bundle versions keep their root-to-leaf resolution order. Domain sections use
 `### Identity`, `### Glossary`, `### Decision`, `### Policy`, `### Ownership`,
 and `### Done` in that order when present; custom domain names follow in UTF-8
-byte order. Entries within a domain are sorted by UTF-8 byte order of ID and
-have this exact shape:
+byte order. Entries within a domain are sorted first by UTF-8 byte order of
+ID. Where stacked constraints share an ID across bundles, contributors with
+that ID are then sorted by their source bundle's root-to-node position in the
+resolution path. Since an effective ID contributes at most once per bundle,
+this is a total order. Entries have this exact shape:
 
 ```md
 #### `<id>`

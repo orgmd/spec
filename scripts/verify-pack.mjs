@@ -3,18 +3,14 @@ import { cp, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  assertExactInventory,
+  assertRepeatablePack,
+  expectedPackageFiles,
+} from "./package-inventory.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const required = [
-  "dist/cli/bin.js",
-  "dist/index.js",
-  "dist/index.d.ts",
-  "dist/schema/entry.schema.json",
-  "dist/conformance/core-v0.1/manifest.json",
-  "README.md",
-  "LICENSE",
-  "package.json",
-];
+const packageRoot = resolve(root, "packages/orgmd");
 
 let tarball;
 let consumer;
@@ -22,29 +18,14 @@ let npmCache;
 
 try {
   npmCache = await mkdtemp(resolve(tmpdir(), "orgmd-pack-cache-"));
-  const packed = JSON.parse(
-    exec("npm", ["pack", "--json", "--workspace", "orgmd"]),
-  );
-  const result = packed[0];
-  if (!result || typeof result.filename !== "string")
-    throw new Error("npm pack did not return a tarball filename.");
+  const expectedFiles = await expectedPackageFiles(root, packageRoot);
+  const first = packWorkspace();
+  assertExactInventory(first.files, expectedFiles);
+  const result = packWorkspace();
+  assertExactInventory(result.files, expectedFiles);
+  assertRepeatablePack(first, result);
 
   tarball = resolve(root, result.filename);
-  const files = result.files.map((file) => file.path);
-  const missing = required.filter((path) => !files.includes(path));
-  if (missing.length > 0)
-    throw new Error(`Packed orgmd tarball is missing: ${missing.join(", ")}`);
-  const forbidden = files.filter(
-    (path) =>
-      path.startsWith("src/") ||
-      path.startsWith("scripts/") ||
-      path.startsWith("test/") ||
-      path.includes("/test/"),
-  );
-  if (forbidden.length > 0)
-    throw new Error(
-      `Packed orgmd tarball includes forbidden paths: ${forbidden.join(", ")}`,
-    );
 
   consumer = await mkdtemp(resolve(tmpdir(), "orgmd-pack-consumer-"));
   exec("npm", ["install", "--no-package-lock", tarball], {
@@ -104,4 +85,18 @@ function exec(command, args, options = {}) {
     env: { ...process.env, npm_config_cache: npmCache },
     ...options,
   });
+}
+
+function packWorkspace() {
+  const packed = JSON.parse(
+    exec("npm", ["pack", "--json", "--workspace", "orgmd"]),
+  );
+  const result = packed[0];
+  if (
+    !result ||
+    typeof result.filename !== "string" ||
+    !Array.isArray(result.files)
+  )
+    throw new Error("npm pack did not return a complete tarball result.");
+  return result;
 }

@@ -1,9 +1,12 @@
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
+import { StringDecoder } from "node:string_decoder";
 import { compileContext } from "../compiler/compile.js";
+import { sortDiagnostics } from "../diagnostics/sort.js";
 import { doctorBundle, doctorExitCode } from "../doctor/doctor.js";
 import { safeExplicitPath, atomicWriteFile } from "../io/atomic.js";
 import { previewAdoption, writeAdoption } from "../importer/adopt.js";
+import type { AdoptConfirmationField } from "../importer/types.js";
 import { planInit, writeInitPlan } from "../init/init.js";
 import { resolveContext } from "../resolver/resolve.js";
 import { isCalendarDate } from "../validation/calendar-date.js";
@@ -11,6 +14,7 @@ import { validateBundlePath } from "../validation/validate.js";
 import { ORGMD_VERSION } from "../version.js";
 import { parseCommand, type ParsedCommand } from "./args.js";
 import { discoverCompilePath } from "./discovery.js";
+import { exitForDiagnostics } from "./exit.js";
 import { HELP, renderDiagnostics, renderJson } from "./render.js";
 import type { CliExitCode, CliIo } from "./types.js";
 
@@ -98,16 +102,20 @@ async function doctor(
   }
   const reportValue = doctorBundle({ bundle: result.value, today: today! });
   const code = doctorExitCode(reportValue);
+  const diagnostics = sortDiagnostics([
+    ...result.diagnostics,
+    ...reportValue.findings,
+  ]);
   if (json)
     write(
       io.stdout,
-      renderJson("doctor", code === 0, reportValue.findings, {
+      renderJson("doctor", code === 0, diagnostics, {
         ratios: reportValue.ratios,
         pendingRevisions: reportValue.pendingRevisions,
       }),
     );
-  else if (reportValue.findings.length === 0) write(io.stdout, "doctor: ok\n");
-  else write(io.stderr, renderDiagnostics(reportValue.findings));
+  else if (diagnostics.length === 0) write(io.stdout, "doctor: ok\n");
+  else write(io.stderr, renderDiagnostics(diagnostics));
   return code;
 }
 
@@ -132,7 +140,21 @@ async function compile(
     today: parsed.today!,
   });
   if (!resolution.value) {
-    report("compile", false, resolution.diagnostics, parsed.json, io, {
+    const diagnostics = sortDiagnostics([
+      ...found.diagnostics,
+      ...resolution.diagnostics,
+    ]);
+    report("compile", false, diagnostics, parsed.json, io, {
+      path: found.paths,
+    });
+    return 1;
+  }
+  const resolutionDiagnostics = sortDiagnostics([
+    ...found.diagnostics,
+    ...resolution.diagnostics,
+  ]);
+  if (resolutionDiagnostics.some(({ severity }) => severity === "error")) {
+    report("compile", false, resolutionDiagnostics, parsed.json, io, {
       path: found.paths,
     });
     return 1;
@@ -143,7 +165,10 @@ async function compile(
   const projections = targets.map((target) =>
     compileContext(resolution.value!, target),
   );
-  const diagnostics = projections.flatMap(({ diagnostics }) => diagnostics);
+  const diagnostics = sortDiagnostics([
+    ...resolutionDiagnostics,
+    ...projections.flatMap(({ diagnostics }) => diagnostics),
+  ]);
   if (diagnostics.some(({ severity }) => severity === "error")) {
     report("compile", false, diagnostics, parsed.json, io, {
       path: found.paths,
@@ -186,7 +211,7 @@ async function compile(
     if (parsed.json)
       write(
         io.stdout,
-        renderJson("compile", true, [], {
+        renderJson("compile", true, diagnostics, {
           path: found.paths,
           files: files.map(({ path }) => path),
         }),
@@ -196,12 +221,14 @@ async function compile(
         io.stdout,
         `compile: wrote ${files.map(({ path }) => path).join(", ")}\n`,
       );
+    if (!parsed.json && diagnostics.length > 0)
+      write(io.stderr, renderDiagnostics(diagnostics));
     return 0;
   }
   if (parsed.json) {
     write(
       io.stdout,
-      renderJson("compile", true, [], {
+      renderJson("compile", true, diagnostics, {
         path: found.paths,
         projections: values,
       }),
@@ -216,6 +243,7 @@ async function compile(
         .map((value) => `=== ${value.target} ===\n${value.content}`)
         .join("\n"),
     );
+  if (diagnostics.length > 0) write(io.stderr, renderDiagnostics(diagnostics));
   return 0;
 }
 
@@ -223,7 +251,17 @@ async function initialize(
   parsed: Extract<ParsedCommand, { kind: "command"; command: "init" }>,
   io: CliIo,
 ): Promise<CliExitCode> {
-  const input = parsed.init ?? {};
+  let input = parsed.init ?? {};
+  const prompt = parsed.nonInteractive ? undefined : createPromptReader(io);
+  if (prompt) {
+    const prompted = await promptInitInput(input, prompt);
+    if (!prompted)
+      return invocation(
+        "Interactive init requires a non-empty answer for every required prompt.",
+        io,
+      );
+    input = prompted;
+  }
   const required = [
     "organization",
     "tone",
@@ -278,6 +316,17 @@ async function initialize(
     else write(io.stdout, result.value.preview);
     return 0;
   }
+  if (prompt) {
+    if (parsed.json) write(io.stderr, result.value.preview);
+    else write(io.stdout, result.value.preview);
+    const confirmation = await prompt.question("Write these files? [y/N]: ");
+    if (!confirmation || !["y", "yes"].includes(confirmation.toLowerCase())) {
+      if (parsed.json)
+        write(io.stdout, renderJson("init", true, [], { cancelled: true }));
+      else write(io.stdout, "init: cancelled; no files written.\n");
+      return 0;
+    }
+  }
   const written = await writeInitPlan(result.value);
   if (!written.value) {
     report("init", false, written.diagnostics, parsed.json, io);
@@ -290,6 +339,85 @@ async function initialize(
     );
   else write(io.stdout, `init: wrote ${written.value.join(", ")}\n`);
   return 0;
+}
+
+interface PromptReader {
+  question(text: string): Promise<string | undefined>;
+}
+
+function createPromptReader(io: CliIo): PromptReader {
+  const iterator = io.stdin[Symbol.asyncIterator]();
+  const decoder = new StringDecoder("utf8");
+  let buffer = "";
+  let ended = false;
+
+  return Object.freeze({
+    async question(text: string): Promise<string | undefined> {
+      write(io.stderr, text);
+      while (true) {
+        const newline = buffer.indexOf("\n");
+        if (newline !== -1) {
+          const answer = buffer.slice(0, newline).replace(/\r$/u, "");
+          buffer = buffer.slice(newline + 1);
+          return answer.trim();
+        }
+        if (ended) {
+          if (buffer.length === 0) return undefined;
+          const answer = buffer.replace(/\r$/u, "");
+          buffer = "";
+          return answer.trim();
+        }
+        const next = await iterator.next();
+        if (next.done) {
+          buffer += decoder.end();
+          ended = true;
+        } else if (typeof next.value === "string") {
+          buffer += next.value;
+        } else {
+          buffer += decoder.write(Buffer.from(next.value));
+        }
+      }
+    },
+  });
+}
+
+async function promptInitInput(
+  supplied: Readonly<Record<string, string | undefined>>,
+  prompt: PromptReader,
+): Promise<Record<string, string | undefined> | undefined> {
+  const input: Record<string, string | undefined> = { ...supplied };
+  const required = async (key: string, text: string): Promise<boolean> => {
+    if (input[key]?.trim()) return true;
+    const answer = await prompt.question(text);
+    if (!answer) return false;
+    input[key] = answer;
+    return true;
+  };
+
+  if (!(await required("organization", "Organisation name: ")))
+    return undefined;
+  if (!(await required("tone", "Tone: "))) return undefined;
+  if (input.terms === undefined)
+    input.terms =
+      (await prompt.question(
+        "Contested terms (comma-separated, optional): ",
+      )) ?? "";
+  if (!(await required("policy", "Non-negotiable policy: "))) return undefined;
+  if (!(await required("action", "Policy action: "))) return undefined;
+  if (!(await required("effect", "Policy effect (allow|escalate|deny): ")))
+    return undefined;
+  if (
+    input.effect === "escalate" &&
+    !(await required("route", "Escalation route: "))
+  )
+    return undefined;
+  if (!(await required("editor", "Editor role: "))) return undefined;
+  if (!(await required("owner", "Policy owner role: "))) return undefined;
+  if (!(await required("revisit", "Revisit date (YYYY-MM-DD): ")))
+    return undefined;
+  if (!(await required("today", "Resolution date (YYYY-MM-DD): ")))
+    return undefined;
+  return input;
 }
 
 async function adopt(
@@ -330,7 +458,7 @@ async function adopt(
   const result = await writeAdoption(preview.value, confirmations);
   if (!result.value) {
     report("adopt", false, result.diagnostics, parsed.json, io);
-    return 1;
+    return exitForDiagnostics(result.diagnostics);
   }
   if (parsed.json)
     write(
@@ -344,14 +472,28 @@ async function adopt(
 function parseConfirmations(previewId: string, values: readonly string[]) {
   const byCandidateId: Record<string, Record<string, string>> = {};
   for (const value of values) {
-    const match = /^([^.=]+)\.([a-z]+)=(.*)$/u.exec(value);
-    if (!match) return undefined;
-    const [, id, field, confirmation] = match;
-    if (!id || !field || confirmation === undefined) return undefined;
+    const equals = value.indexOf("=");
+    const separator = equals === -1 ? -1 : value.lastIndexOf(".", equals);
+    if (separator <= 0 || equals <= separator + 1) return undefined;
+    const id = value.slice(0, separator);
+    const field = value.slice(separator + 1, equals);
+    const confirmation = value.slice(equals + 1);
+    if (!confirmationFields.has(field as AdoptConfirmationField))
+      return undefined;
     (byCandidateId[id] ??= {})[field] = confirmation;
   }
   return { previewId, byCandidateId };
 }
+
+const confirmationFields: ReadonlySet<AdoptConfirmationField> = new Set([
+  "domain",
+  "owner",
+  "scope",
+  "revisit",
+  "action",
+  "effect",
+  "route",
+]);
 
 function initTarget(path: string | undefined, cwd: string): string {
   if (path === undefined) return cwd;
@@ -366,9 +508,12 @@ function report(
   io: CliIo,
   extra: Readonly<Record<string, unknown>> = {},
 ): void {
-  if (json) write(io.stdout, renderJson(command, ok, diagnostics, extra));
-  else if (ok) write(io.stdout, `${command}: ok\n`);
-  else write(io.stderr, renderDiagnostics(diagnostics));
+  const ordered = sortDiagnostics(diagnostics);
+  if (json) write(io.stdout, renderJson(command, ok, ordered, extra));
+  else if (ok) {
+    write(io.stdout, `${command}: ok\n`);
+    if (ordered.length > 0) write(io.stderr, renderDiagnostics(ordered));
+  } else write(io.stderr, renderDiagnostics(ordered));
 }
 function invocation(message: string, io: CliIo): 2 {
   write(io.stderr, `error cli.usage: ${message}\n`);
@@ -395,29 +540,6 @@ function invalidToday(
     io,
   );
   return 2;
-}
-function exitForDiagnostics(
-  diagnostics: readonly import("../diagnostics/types.js").Diagnostic[],
-): 1 | 2 {
-  return diagnostics.some(isOperationalDiagnostic) ? 2 : 1;
-}
-function isOperationalDiagnostic({
-  code,
-}: import("../diagnostics/types.js").Diagnostic): boolean {
-  return (
-    code.startsWith("io.") ||
-    [
-      "bundle.invalid-reference",
-      "bundle.read-error",
-      "cli.invalid-path",
-      "init.invalid-parent",
-      "init.invalid-target",
-      "init.symlink-target",
-      "init.validation-failed",
-      "init.write-failed",
-      "init.rollback-failed",
-    ].includes(code)
-  );
 }
 function write(stream: NodeJS.WritableStream, text: string): void {
   stream.write(text);

@@ -3,6 +3,7 @@ import type { Diagnostic } from "../diagnostics/types.js";
 import type { BundleFailure } from "../identifiers/context-id.js";
 import { isLogicalNodePath } from "../bundle/node-path.js";
 import type { EntryRevision, ValidatedBundle } from "../model/types.js";
+import { isCalendarDate } from "../validation/calendar-date.js";
 import { validateEntrySchema } from "../validation/schema.js";
 import {
   isLifecycleRecord,
@@ -26,6 +27,7 @@ export function isResolveRequestEnvelope(
     Array.isArray(value.clearance) &&
     value.clearance.every((label) => typeof label === "string") &&
     typeof value.today === "string" &&
+    isCalendarDate(value.today) &&
     (value.anonymous === undefined || typeof value.anonymous === "boolean") &&
     (value.bundleFailures === undefined || Array.isArray(value.bundleFailures))
   );

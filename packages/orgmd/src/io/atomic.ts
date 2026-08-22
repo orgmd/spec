@@ -1,4 +1,4 @@
-import { lstat, open, rename, unlink } from "node:fs/promises";
+import { link, lstat, open, rename, unlink } from "node:fs/promises";
 import { basename, dirname, parse, resolve, sep } from "node:path";
 import type { Diagnostic, OperationResult } from "../diagnostics/types.js";
 
@@ -10,11 +10,12 @@ export interface AtomicWriteOptions {
 }
 
 export interface AtomicIo {
+  readonly link: (from: string, to: string) => Promise<void>;
   readonly rename: (from: string, to: string) => Promise<void>;
   readonly syncParent: (path: string) => Promise<void>;
 }
 
-/** Writes a regular file through a same-directory temporary file and rename. */
+/** Writes a regular file through a same-directory temporary file. */
 export async function atomicWriteFile(
   path: string,
   bytes: Uint8Array,
@@ -46,11 +47,19 @@ export async function atomicWriteFile(
     await handle.sync();
     await handle.close();
     handle = undefined;
+    if (!options.overwrite) {
+      try {
+        await io.link(temporary, path);
+      } catch (error) {
+        return failure(isExists(error) ? alreadyExists(path) : ioError(path));
+      }
+      await io.syncParent(dirname(path));
+      return { value: undefined, diagnostics: Object.freeze([]) };
+    }
     try {
       const current = await lstat(path);
       if (current.isSymbolicLink()) return failure(symlinkTarget(path));
       if (!current.isFile()) return failure(notRegularFile(path));
-      if (!options.overwrite) return failure(alreadyExists(path));
     } catch (error) {
       if (!isMissing(error)) return failure(ioError(path));
     }
@@ -66,6 +75,7 @@ export async function atomicWriteFile(
 }
 
 const defaultIo: AtomicIo = Object.freeze({
+  link,
   rename,
   syncParent: syncDirectory,
 });
@@ -138,6 +148,14 @@ function isMissing(error: unknown): error is NodeJS.ErrnoException {
     typeof error === "object" &&
     error !== null &&
     (error as NodeJS.ErrnoException).code === "ENOENT"
+  );
+}
+
+function isExists(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as NodeJS.ErrnoException).code === "EEXIST"
   );
 }
 

@@ -1,8 +1,10 @@
 import { compareUtf8Bytes } from "../diagnostics/sort.js";
-import { identifierCanonicalJson } from "./canonical.js";
+import { isCalendarDate } from "../validation/calendar-date.js";
+import { identifierCanonicalJson, IdentifierError } from "./canonical.js";
 import { sha256Hex } from "./content-id.js";
 
 export interface ContextIdInput {
+  readonly as_of: string;
   readonly bundles: readonly {
     readonly bundle_id: string;
     readonly content_id: string;
@@ -35,8 +37,17 @@ export interface BundleVersion {
 export function computeContextId(
   bundles: readonly BundleVersion[],
   clearance: readonly string[],
+  asOf: string,
   bundleFailures: readonly BundleFailure[] = [],
 ): string {
+  if (!isCalendarDate(asOf)) {
+    throw new IdentifierError({
+      code: "identifier.invalid-as-of",
+      severity: "error",
+      message: "Context identifier as_of must be an ISO 8601 calendar date.",
+      details: { as_of: asOf },
+    });
+  }
   const failures = [...bundleFailures].sort(
     (left, right) =>
       left.bundleIndex - right.bundleIndex ||
@@ -44,6 +55,7 @@ export function computeContextId(
       compareUtf8Bytes(left.detail, right.detail),
   );
   const input: ContextIdInput = {
+    as_of: asOf,
     bundles: bundles.map(({ bundleId, contentId, path }) => ({
       bundle_id: bundleId,
       content_id: contentId,

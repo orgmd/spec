@@ -77,6 +77,14 @@ export function doctorBundle(input: DoctorInput): DoctorReport {
   for (const error of input.context?.resolutionErrors ?? []) {
     findings.push(resolutionFinding(error));
   }
+  for (const diagnostic of input.context?.diagnostics ?? []) {
+    findings.push(
+      Object.freeze({
+        ...diagnostic,
+        blocking: diagnostic.severity === "error",
+      }),
+    );
+  }
   findings.push(...upstreamStalenessFindings(input));
 
   return Object.freeze({

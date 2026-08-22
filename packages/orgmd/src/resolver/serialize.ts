@@ -1,8 +1,8 @@
-import { compareUtf8Bytes } from "../diagnostics/sort.js";
 import {
   entryCanonicalForm,
   identifierCanonicalJson,
 } from "../identifiers/canonical.js";
+import { compareResolvedEntries } from "./order.js";
 import type {
   ResolvedContext,
   ResolvedEntry,
@@ -18,9 +18,7 @@ function isWithheld(
 export function serializeEffectiveContext(context: ResolvedContext): string {
   const visible = context.entries
     .filter((entry): entry is ResolvedEntry => !isWithheld(entry))
-    .sort((left, right) =>
-      compareUtf8Bytes(left.revision.id, right.revision.id),
-    )
+    .sort(compareResolvedEntries)
     .map(({ revision }) => entryCanonicalForm(revision));
   const withheld = context.entries
     .filter(isWithheld)

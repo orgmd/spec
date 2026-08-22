@@ -19,6 +19,7 @@ import {
   validateResolutionPath,
 } from "./errors.js";
 import { logicalNodePath } from "./nodes.js";
+import { compareResolvedEntries } from "./order.js";
 import { resolvePolicies } from "./policies.js";
 import { selectEffectiveRevisions } from "./revisions.js";
 import { createScopeLattice } from "./scopes.js";
@@ -94,7 +95,12 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
         }),
       ),
     );
-    contextId = computeContextId(bundles, clearance, bundleFailures);
+    contextId = computeContextId(
+      bundles,
+      clearance,
+      request.today,
+      bundleFailures,
+    );
   } catch (error) {
     if (error instanceof IdentifierError) return failure(error.diagnostic);
     return failure({
@@ -170,11 +176,7 @@ function resolveContextTrusted(request: ResolveRequest): ResolveResult {
       withheldCount += 1;
     }
   }
-  visible.sort(
-    (left, right) =>
-      compareUtf8Bytes(left.revision.id, right.revision.id) ||
-      left.bundleIndex - right.bundleIndex,
-  );
+  visible.sort(compareResolvedEntries);
   const entries = Object.freeze([
     ...visible,
     ...Array.from({ length: withheldCount }, () => WITHHELD_MARKER),

@@ -41,6 +41,85 @@ function resolveOk(value: ValidatedBundle) {
 }
 
 describe("effective-context serialization", () => {
+  it("orders stacked same-id contributors by root-to-node bundle position", () => {
+    const rootRevision = {
+      ...entry("policy.shared"),
+      domain: "policy",
+      body: "Root rule.",
+      action: "billing.*",
+      effect: "allow" as const,
+      revisit: "2027-01-01",
+    };
+    const leafRevision = {
+      ...rootRevision,
+      body: "Leaf rule.",
+      action: "billing.refund",
+      effect: "deny" as const,
+    };
+    const serialized = serializeEffectiveContext({
+      contextId: "sha256:context",
+      bundles: [
+        { bundleId: "root", path: "root", contentId: "sha256:root" },
+        { bundleId: "leaf", path: "root/leaf", contentId: "sha256:leaf" },
+      ],
+      entries: [
+        {
+          revision: leafRevision,
+          bundleIndex: 1,
+          contested: false,
+          staleReasons: [],
+        },
+        {
+          revision: rootRevision,
+          bundleIndex: 0,
+          contested: false,
+          staleReasons: [],
+        },
+      ],
+      resolutionErrors: [],
+      diagnostics: [],
+    });
+
+    expect(
+      (JSON.parse(serialized) as { entries: { body: string }[] }).entries.map(
+        ({ body }) => body,
+      ),
+    ).toEqual(["Root rule.", "Leaf rule."]);
+  });
+
+  it("changes context identity when the resolution date changes staleness", () => {
+    const root = bundle([
+      {
+        ...entry("term.temporal"),
+        revisit: "2027-01-01",
+      },
+    ]);
+    const current = resolveContext({
+      path: [root],
+      clearance: ["public"],
+      today: "2026-08-21",
+    });
+    const stale = resolveContext({
+      path: [root],
+      clearance: ["public"],
+      today: "2028-08-21",
+    });
+    if (!current.value || !stale.value)
+      throw new Error("expected resolved contexts");
+
+    expect(current.value.contextId).not.toBe(stale.value.contextId);
+    expect(
+      current.value.entries.flatMap((value) =>
+        "revision" in value ? value.staleReasons : [],
+      ),
+    ).toEqual([]);
+    expect(
+      stale.value.entries.flatMap((value) =>
+        "revision" in value ? value.staleReasons : [],
+      ),
+    ).toEqual(["revisit"]);
+  });
+
   it("serializes only visible canonical entries and bundle versions", () => {
     const root = bundle([entry("term.alpha")]);
     const context = resolveOk(root);

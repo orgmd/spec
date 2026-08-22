@@ -262,6 +262,50 @@ describe("deterministic bundle doctor", () => {
     expect(finding?.message).not.toContain("id could not");
   });
 
+  it("preserves resolver diagnostics and derives blocking behavior from severity", () => {
+    const context: ResolvedContext = {
+      entries: [],
+      bundles: [],
+      contextId: "ctx",
+      diagnostics: [
+        {
+          code: "resolution.ignored-delegates",
+          severity: "warning",
+          message: "Delegation was ignored.",
+          path: "root",
+          entryId: "dec.board",
+        },
+        {
+          code: "resolution.unauthorised-shadow",
+          severity: "error",
+          message: "An authority shadow was discarded.",
+          path: "root/division",
+          entryId: "own.payments",
+        },
+      ],
+      resolutionErrors: [],
+    };
+    const report = doctorBundle({
+      bundle: bundle([entry("own.editor", { domain: "ownership" })]),
+      context,
+      today: "2026-08-21",
+    });
+
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "resolution.ignored-delegates",
+          blocking: false,
+        }),
+        expect.objectContaining({
+          code: "resolution.unauthorised-shadow",
+          blocking: true,
+        }),
+      ]),
+    );
+    expect(doctorExitCode(report)).toBe(1);
+  });
+
   it("reports a visible upstream-stale resolved entry exactly once", () => {
     const synced = entry("term.synced", {
       source: "synced:notion",

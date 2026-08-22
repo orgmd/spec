@@ -49,7 +49,7 @@
     "expected": {
       "target": "agents-md",
       "profile": "orgmd-agents-md-v1",
-      "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9 -->\n<!-- bundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f -->\n## Organisational context (advisory)\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n<!-- orgmd:end -->\n"
+      "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:fa6bfe2487728b0997e68bbbf4bbe73ab9d6c3fff4373ce01efcbee0c7428e46 -->\n<!-- bundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f -->\n## Organisational context (advisory)\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n<!-- orgmd:end -->\n"
     }
   },
   {
@@ -102,7 +102,72 @@
     "expected": {
       "target": "prompt",
       "profile": "orgmd-prompt-v1",
-      "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:ecc44a2253db723ede8a3009b1d9d12024f9e4acb4afb264085cecc300b9abe9\nbundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n[end ORG.md advisory context]\n"
+      "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:fa6bfe2487728b0997e68bbbf4bbe73ab9d6c3fff4373ce01efcbee0c7428e46\nbundles: org.root=sha256:b6a76582d75da42d0f0c6b1b56a83507573beadf7be06134656ade9e5572a57f\n\n### Glossary\n\n#### `term.public`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nPublic.\n\n### Withheld\n\nWithheld entries: 1 (clearance).\n[end ORG.md advisory context]\n"
+    }
+  },
+  {
+    "name": "agents md compiler orders same-id stacked contributors root-to-node",
+    "operation": "compile-agents-md",
+    "input": {
+      "path": [
+        {
+          "reference": "root",
+          "path": "/fixtures/root",
+          "node_path": "root",
+          "is_root": true,
+          "metadata": { "bundle": "org.root", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "policy.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Root rule.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.*",
+              "effect": "allow",
+              "extra": {}
+            }
+          ]
+        },
+        {
+          "reference": "leaf",
+          "path": "/fixtures/root/leaf",
+          "node_path": "root/leaf",
+          "is_root": false,
+          "metadata": { "bundle": "org.leaf", "lifecycle": {} },
+          "entries": [
+            {
+              "id": "policy.shared",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "domain": "policy",
+              "body": "Leaf rule.",
+              "source_path": "policies.md",
+              "line": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.refund",
+              "effect": "deny",
+              "extra": {}
+            }
+          ]
+        }
+      ],
+      "clearance": ["public"],
+      "today": "2026-08-21"
+    },
+    "expected": {
+      "target": "agents-md",
+      "profile": "orgmd-agents-md-v1",
+      "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:0ab8f01b8f5fbe6586613acdeaf7bcae5773da7f7a51311df69a96ad249752da -->\n<!-- bundles: org.root=sha256:e293f862c046e9b07a6d64f0116ac45114fcf02c49761cd5377981025f04c289, org.leaf=sha256:3310d8e85be2009d1460611860c85ac947414967733dbff4b48371705f6e83ff -->\n## Organisational context (advisory)\n\n### Policy\n\n#### `policy.shared`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `billing.*`\neffect: `allow`\n\nRoot rule.\n\n#### `policy.shared`\nowner: `role.editor`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `billing.refund`\neffect: `deny`\n\nLeaf rule.\n<!-- orgmd:end -->\n"
     }
   }
 ]

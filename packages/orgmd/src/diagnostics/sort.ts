@@ -1,3 +1,4 @@
+import canonicalize from "canonicalize";
 import type { Diagnostic } from "./types.js";
 
 export function compareUtf8Bytes(left: string, right: string): number {
@@ -24,8 +25,20 @@ function compareDiagnostics(left: Diagnostic, right: Diagnostic): number {
     compareOptionalNumbers(left.line, right.line) ||
     compareOptionalNumbers(left.column, right.column) ||
     compareOptionalStrings(left.entryId, right.entryId) ||
-    compareUtf8Bytes(left.code, right.code)
+    compareUtf8Bytes(left.code, right.code) ||
+    compareUtf8Bytes(left.message, right.message) ||
+    compareUtf8Bytes(
+      canonicalDetails(left.details),
+      canonicalDetails(right.details),
+    )
   );
+}
+
+function canonicalDetails(
+  details: Readonly<Record<string, unknown>> | undefined,
+): string {
+  if (details === undefined) return "";
+  return canonicalize(details) ?? "";
 }
 
 export function sortDiagnostics(

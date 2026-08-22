@@ -16,33 +16,68 @@ const leaf: BundleVersion = {
 };
 
 describe("Core context identifiers", () => {
+  it("includes the validated temporal resolution date in the versioned contract", () => {
+    expect(
+      computeContextId(
+        [root, leaf],
+        ["public", "internal", "public"],
+        "2026-08-21",
+      ),
+    ).toBe(
+      "sha256:3109681a7b58facc6663ff66c0144ac9e2b3764586da07b3c89d4d0bc06b7c52",
+    );
+    expect(
+      computeContextId(
+        [root, leaf],
+        ["public", "internal", "public"],
+        "2028-08-21",
+      ),
+    ).toBe(
+      "sha256:8d7d5030598025b9c93eff80503f82f383a46d9b8a4fdb0728fc005c71562c13",
+    );
+  });
+
   it("locks Mode A and spec 0.3.1 into the fixed JCS input", () => {
     expect(
-      computeContextId([root, leaf], ["public", "internal", "public"]),
+      computeContextId(
+        [root, leaf],
+        ["public", "internal", "public"],
+        "2026-08-21",
+      ),
     ).toBe(
-      "sha256:9a3e816cc4b26e84fcfed38a83fa36dfe28669c585cf00d83f5082c8fdf40813",
+      "sha256:3109681a7b58facc6663ff66c0144ac9e2b3764586da07b3c89d4d0bc06b7c52",
     );
   });
 
   it("sorts and de-duplicates clearance labels by UTF-8 byte order", () => {
-    expect(computeContextId([root, leaf], ["public", "internal"])).toBe(
-      computeContextId([root, leaf], ["internal", "public", "public"]),
+    expect(
+      computeContextId([root, leaf], ["public", "internal"], "2026-08-21"),
+    ).toBe(
+      computeContextId(
+        [root, leaf],
+        ["internal", "public", "public"],
+        "2026-08-21",
+      ),
     );
   });
 
   it("preserves resolution-path order", () => {
-    expect(computeContextId([leaf, root], ["public", "internal"])).toBe(
-      "sha256:f34182c7ee0aee66ea536136baa7db4ad8af013b094c226d6ff5dab13c6b80f0",
+    expect(
+      computeContextId([leaf, root], ["public", "internal"], "2026-08-21"),
+    ).toBe(
+      "sha256:e0acae992f351ba336a5fd95b6457517a92355233d66d7bd42188122b82a3ce0",
     );
-    expect(computeContextId([leaf, root], ["public", "internal"])).not.toBe(
-      computeContextId([root, leaf], ["public", "internal"]),
+    expect(
+      computeContextId([leaf, root], ["public", "internal"], "2026-08-21"),
+    ).not.toBe(
+      computeContextId([root, leaf], ["public", "internal"], "2026-08-21"),
     );
   });
 
   it("treats logical node placement as resolution-affecting", () => {
-    expect(computeContextId([{ ...root, path: "other" }], ["public"])).not.toBe(
-      computeContextId([root], ["public"]),
-    );
+    expect(
+      computeContextId([{ ...root, path: "other" }], ["public"], "2026-08-21"),
+    ).not.toBe(computeContextId([root], ["public"], "2026-08-21"));
   });
 
   it("does not include an incidental physical filesystem path", () => {
@@ -50,8 +85,8 @@ describe("Core context identifiers", () => {
       ...root,
       physicalPath: "/private/tmp/root",
     } as BundleVersion;
-    expect(computeContextId([withPhysicalPath], ["public"])).toBe(
-      computeContextId([root], ["public"]),
+    expect(computeContextId([withPhysicalPath], ["public"], "2026-08-21")).toBe(
+      computeContextId([root], ["public"], "2026-08-21"),
     );
   });
 
@@ -70,11 +105,15 @@ describe("Core context identifiers", () => {
     ];
     const reversed = [...failures].reverse();
 
-    expect(computeContextId([root, leaf], ["public"], failures)).toBe(
-      "sha256:fb7cba41f5d40abcee5a963b9e6966ddc915452065c21d1ca1a4d2805c0cd31f",
+    expect(
+      computeContextId([root, leaf], ["public"], "2026-08-21", failures),
+    ).toBe(
+      "sha256:63f6bf74a723fd04de113308c89081d8994f0e77f2d7cc975209806e6aad4709",
     );
-    expect(computeContextId([root, leaf], ["public"], reversed)).toBe(
-      "sha256:fb7cba41f5d40abcee5a963b9e6966ddc915452065c21d1ca1a4d2805c0cd31f",
+    expect(
+      computeContextId([root, leaf], ["public"], "2026-08-21", reversed),
+    ).toBe(
+      "sha256:63f6bf74a723fd04de113308c89081d8994f0e77f2d7cc975209806e6aad4709",
     );
   });
 });

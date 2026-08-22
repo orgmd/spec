@@ -150,6 +150,7 @@ describe("authority-bounded resolution", () => {
       "resolution.ignored-delegates",
       "resolution.unauthorised-shadow",
     ]);
+    expect(visible(context)[0]?.revision.delegates).toBeUndefined();
   });
 
   it("never delegates decisions and reports both the ignored delegation and shadow", () => {
@@ -176,6 +177,7 @@ describe("authority-bounded resolution", () => {
       "resolution.ignored-delegates",
       "resolution.unauthorised-shadow",
     ]);
+    expect(visible(context)[0]?.revision.delegates).toBeUndefined();
   });
 
   it("does not let ownership delegation authorize a decision-domain replacement", () => {

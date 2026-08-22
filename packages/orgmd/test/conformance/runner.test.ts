@@ -38,11 +38,21 @@ it("loads the declared Core suite and exercises every declared operation", () =>
 });
 
 it.each([
-  ["compile-agents-md", "compiler/agents-md-v1.txt"],
-  ["compile-prompt", "compiler/prompt-v1.txt"],
-])("compares %s output as UTF-8 bytes", async (operation, expectedPath) => {
-  const vector = loadVectors().find((value) => value.operation === operation);
-  if (!vector) throw new Error(`compiler vector is missing: ${operation}`);
+  [
+    "agents md compiler renders the fixed v1 advisory bytes",
+    "compiler/agents-md-v1.txt",
+  ],
+  [
+    "prompt compiler renders the fixed v1 advisory bytes",
+    "compiler/prompt-v1.txt",
+  ],
+  [
+    "agents md compiler orders same-id stacked contributors root-to-node",
+    "compiler/same-id-agents-md-v1.txt",
+  ],
+])("compares %s output as UTF-8 bytes", async (name, expectedPath) => {
+  const vector = loadVectors().find((value) => value.name === name);
+  if (!vector) throw new Error(`compiler vector is missing: ${name}`);
 
   const result = await executeVector(vector);
   const content = (result as { readonly content?: unknown }).content;

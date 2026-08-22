@@ -4,6 +4,7 @@ import type {
   ResolvedEntry,
   WithheldMarker,
 } from "../resolver/types.js";
+import { compareResolvedEntries } from "../resolver/order.js";
 
 const CORE_DOMAINS = [
   "identity",
@@ -74,11 +75,7 @@ export function renderDomainSections(context: ResolvedContext): string {
   }
   const sections = orderedDomains(entries).map((domain) => {
     const values = groups.get(domain) ?? [];
-    values.sort(
-      (left, right) =>
-        compareUtf8Bytes(left.revision.id, right.revision.id) ||
-        left.bundleIndex - right.bundleIndex,
-    );
+    values.sort(compareResolvedEntries);
     return [`### ${displayDomain(domain)}`, ...values.map(renderEntry)].join(
       "\n\n",
     );

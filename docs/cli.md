@@ -115,21 +115,31 @@ orgmd doctor org --today 2026-08-21 --json
 ## `init`
 
 ```text
+orgmd init [path] [--write] [--preview] [--overwrite] [--json]
+```
+
+Create a minimal Core-shaped bundle. By default, the CLI prompts for the
+organization, tone, optional disputed terms, policy, first rule, editor,
+owner, revisit date, and deterministic `today` date. An escalate rule also
+prompts for its route.
+
+The safe default is preview: without `--write` (or with `--preview`) the three
+proposed files are printed and nothing changes. Interactive `--write` shows
+the preview and asks for confirmation before touching the target.
+`--overwrite` permits replacing existing scaffold files only when writing;
+use it only after confirming the target.
+
+Automation must use the fully explicit form:
+
+```text
 orgmd init [path] --non-interactive --organization NAME --tone TEXT \
   --policy TEXT --action ACTION --effect allow|escalate|deny \
   --editor ROLE --owner ROLE --revisit YYYY-MM-DD --today YYYY-MM-DD \
   [--terms a,b] [--route ROLE] [--write] [--preview] [--overwrite] [--json]
 ```
 
-Create a minimal Core-shaped bundle. The current CLI is deliberately
-non-prompting, so `--non-interactive` and every required value above are
-mandatory. `--terms` accepts a comma-separated list of disputed terms.
-`--route` is required when `--effect escalate` is selected.
-
-The safe default is preview: without `--write` (or with `--preview`) the
-three proposed files are printed and nothing changes. After review, repeat
-the same command with `--write`. `--overwrite` permits replacing existing
-scaffold files only when writing; use it only after confirming the target.
+`--terms` accepts a comma-separated list of disputed terms. `--route` is
+required when `--effect escalate` is selected.
 
 ```sh
 orgmd init example-org --non-interactive \

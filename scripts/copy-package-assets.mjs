@@ -6,7 +6,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const packageRoot = resolve(root, "packages/orgmd");
 const dist = resolve(packageRoot, "dist");
 
-await removeSourceMaps(dist);
+await rm(dist, { force: true, recursive: true });
 await copyFile(
   resolve(root, "LICENSE-APACHE"),
   resolve(packageRoot, "LICENSE"),
@@ -52,14 +52,4 @@ async function assertNotSymlink(path) {
   if (stat.isSymbolicLink())
     throw new Error(`Refusing to copy symlinked package asset: ${path}`);
   return stat;
-}
-
-async function removeSourceMaps(path) {
-  const entries = await readdir(path, { withFileTypes: true });
-  for (const entry of entries) {
-    const child = resolve(path, entry.name);
-    if (entry.isDirectory()) await removeSourceMaps(child);
-    else if (entry.isFile() && entry.name.endsWith(".js.map"))
-      await rm(child, { force: true });
-  }
 }

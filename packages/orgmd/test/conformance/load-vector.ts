@@ -195,6 +195,7 @@ function executeContextId(input: Readonly<Record<string, unknown>>): unknown {
     context_id: computeContextId(
       bundles,
       arrayField(input, "clearance").map((value) => string(value, "clearance")),
+      stringField(input, "as_of"),
       vectorBundleFailures(input),
     ),
   };

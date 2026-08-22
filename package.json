@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc -p packages/orgmd/tsconfig.json && node scripts/copy-package-assets.mjs",
+    "build": "node scripts/copy-package-assets.mjs && tsc -p packages/orgmd/tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc -p packages/orgmd/tsconfig.json --noEmit",
     "format:check": "prettier --check package.json tsconfig.json packages/orgmd scripts .github/workflows/ci.yml",

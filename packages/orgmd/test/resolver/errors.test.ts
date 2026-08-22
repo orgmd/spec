@@ -39,6 +39,22 @@ function bundle(
 }
 
 describe("resolution request failures", () => {
+  it.each(["2026-02-30", "not-a-date", ""])(
+    "rejects invalid temporal resolution input %j",
+    (today) => {
+      const result = resolveContext({
+        path: [bundle("root", [entry("term.root")])],
+        clearance: ["public"],
+        today,
+      });
+
+      expect(result.value).toBeUndefined();
+      expect(result.diagnostics).toEqual([
+        expect.objectContaining({ code: "resolution.invalid-request" }),
+      ]);
+    },
+  );
+
   it.each([
     [
       "negative index",

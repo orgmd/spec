@@ -34,4 +34,37 @@ describe("sortDiagnostics", () => {
     expect(Object.isFrozen(result)).toBe(true);
     expect(input[0]?.code).toBe("z");
   });
+
+  it("uses message and canonical details as deterministic final tie-breakers", () => {
+    const diagnostics = [
+      {
+        code: "same",
+        severity: "warning" as const,
+        message: "same message",
+        path: "same.md",
+        details: { value: "z" },
+      },
+      {
+        code: "same",
+        severity: "warning" as const,
+        message: "alpha message",
+        path: "same.md",
+        details: { value: "middle" },
+      },
+      {
+        code: "same",
+        severity: "warning" as const,
+        message: "same message",
+        path: "same.md",
+        details: { value: "a" },
+      },
+    ];
+    const expected = ["middle", "a", "z"];
+
+    for (const permutation of [diagnostics, [...diagnostics].reverse()]) {
+      expect(
+        sortDiagnostics(permutation).map(({ details }) => details?.value),
+      ).toEqual(expected);
+    }
+  });
 });
