@@ -44,3 +44,12 @@ it("labels signing and non-advisory projections as future v0.5 work", () => {
   expect(site).not.toContain("The bundle's release seal is re-signed");
   expect(site).not.toContain("the gate, the handbook. Nobody chases surfaces");
 });
+
+it("keeps remaining signing and projection examples outside v0.5", () => {
+  const site = read("site/index.html");
+
+  expect(site).not.toContain("# release seal · tamper-evident");
+  expect(site).not.toContain("merged · sealed into org.lock");
+  expect(site).toContain('data-v0-5="future-projections"');
+  expect(site).toContain("Future projection examples — not shipped in v0.5.");
+});
