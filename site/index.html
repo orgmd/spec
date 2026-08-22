@@ -139,8 +139,7 @@
   .state .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding-top:3px;}
   .chip.s-draft{color:var(--text-soft);}
   .chip.s-approved{color:var(--pass);}
-  .chip.s-contested{color:var(--kowhai);}
-  .chip.s-superseded{color:var(--text-soft);}
+  .chip.s-rejected{color:var(--deny);}
   .state p{font-size:14.5px;color:var(--text-soft);line-height:1.6;}
 
   /* industry examples: tabs + panels */
@@ -395,13 +394,13 @@ term.consignment  <span class="k">rev 3 → 4</span>
       </div>
       <div class="chg-row">
         <span class="no">03</span>
-        <p><b>Seal.</b> The bundle's release seal is re-signed, so every consumer can verify it holds the current, untampered version — and prove which version produced any answer.</p>
-        <span class="tag">org.lock ✓</span>
+        <p><b>Future hardening.</b> Signing and <code>org.lock</code> are future hardening; v0.5 has no signing or release seal.</p>
+        <span class="tag">future · no org.lock</span>
       </div>
       <div class="chg-row">
         <span class="no">04</span>
-        <p><b>Land.</b> Every projection recompiles: the coding agent's fragment, the customer bot's prompt, the gate, the handbook. Nobody chases surfaces; none is missed.</p>
-        <span class="tag">4 audiences · 0 chased</span>
+        <p><b>Land advisory context.</b> In v0.5, the CLI compiles only the coding agent's fragment and customer-bot prompt. Gate and handbook projections are future work.</p>
+        <span class="tag">2 advisory projections</span>
       </div>
     </div>
     <p class="lede lede-after">And when people disagree — the normal case in a real organisation — disagreement is a state the format can hold, not a failure:</p>
@@ -415,14 +414,11 @@ term.consignment  <span class="k">rev 3 → 4</span>
         <p>Ratified by the owner. This is what every surface receives.</p>
       </div>
       <div class="state">
-        <span class="chip s-contested">contested</span>
-        <p>Under dispute. Marked visibly everywhere it appears; agents that would rely on it must stop and escalate to the owner instead of guessing.</p>
-      </div>
-      <div class="state">
-        <span class="chip s-superseded">superseded</span>
-        <p>Retired but kept. History stays auditable without being mistaken for truth.</p>
+        <span class="chip s-rejected">rejected</span>
+        <p>Not ratified. It is never delivered as current organisational context.</p>
       </div>
     </div>
+    <p class="lede lede-after">Contestation and retirement are lifecycle states recorded only in <code>org.identity.lifecycle</code>; they do not extend the revision-status vocabulary.</p>
   </section>
 
   <section id="industries">

@@ -81,11 +81,12 @@ kinds of meaning travel by three different rules:
 This is also why the registers stay small at scale: mass is distributed —
 each layer holds only the meaning it owns — and the write-doctrine admits
 an entry only where a consumer acting on the wrong version is expensive
-(SPEC §9). The decision register holds *active* decisions only
-(superseded entries are kept but never emitted), and full rationale stays
-in your systems of record via `ref:` or `synced:` sources. Start as one
-bundle; split a layer out only when it needs to own its own meaning — the
-narrowing and anchoring rules make each split safe by construction.
+(SPEC §9). Revision status is exactly `draft`, `approved`, or `rejected`.
+Contestation and retirement are recorded only in `org.identity.lifecycle`.
+Full rationale stays in your systems of record via `ref:` or `synced:`
+sources. Start as one bundle; split a layer out only when it needs to own its
+own meaning — the narrowing and anchoring rules make each split safe by
+construction.
 
 ## Quickstart
 
@@ -144,8 +145,9 @@ trades that expressiveness away for authoring cost: formal ontology asks
 domain experts to author like logicians, wants meaning globally
 consistent, and was built for machine consumers that hadn't arrived yet.
 ORG.md takes the other side of each trade — LLMs read prose, so domain
-owners write meaning directly; truth is local and `contested` is a legal
-state; and the agents arrived first this time.
+owners write meaning directly; truth is local and contestation is recorded in
+`org.identity.lifecycle`, not invented as a fourth revision status; and the
+agents arrived first this time.
 The never-write list and the no-ontology rule (NON-GOALS #9) are the
 guardrails against sliding back down that hill.
 
