@@ -81,3 +81,27 @@ ORG.md concentrates meaning, so the design assumes the bundle is a target:
 - The leakage properties of scoped prompts under adversarial pressure are
   an open research question; leakage checks are on the bench roadmap
   (v0.7–0.9) precisely because we don't yet claim them.
+
+## v0.5 CLI boundaries
+
+The reference CLI validates and compiles local bundle content; it is not a
+sandbox, policy enforcement point, identity system, or safe executor for
+untrusted repositories. Its `agents-md` and `prompt` projections are advisory
+text. Their scope filtering reduces what is emitted, but it cannot stop a
+recipient with legitimate clearance from copying, disclosing, or ignoring the
+text. Withheld markers can also reveal that restricted material affects an
+action.
+
+For loading, bundle paths are canonicalized and a discovered child that
+resolves outside the bundle root is rejected. For `compile --output` and
+`init` writes, traversal segments and symbolic links in target paths are
+rejected; writes use same-directory temporary files and atomic rename. `adopt
+--write` only accepts an existing non-symlink target bundle. These controls
+reduce common path-redirection mistakes, but callers should still run with the
+least filesystem privilege and inspect previews before writing.
+
+Parser limits are 16 MiB per content file, 10,000 entries per file, and 100
+YAML aliases. v0.5 has no aggregate bundle-size, traversal-depth, or CPU time
+limit. Use an operating-system or container resource limit before processing
+an untrusted tree, and treat importer source text as untrusted until an owner
+reviews the resulting draft.

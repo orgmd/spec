@@ -218,7 +218,8 @@
     <h1>ORG<span class="md">.md</span></h1>
     <p class="thesis">One source of <span class="hl-strong">org meaning</span> — written once, <span class="hl">filtered, and delivered</span> to every AI tool and every person.</p>
     <p class="standfirst">In plain terms: your company's words, rules, decisions and owners, written down once. ORG.md is the shared format they are written in; the tooling built on it keeps that meaning current, works out who may see what, and delivers the right version to every AI tool and every person.</p>
-    <p class="status-line">Early draft · one maintainer · seeking collaborators — this page is the ask.</p>
+    <p class="status-line">0.5.0 reference implementation available in this repository · release-ready · npm, tag, GitHub Release, and Pages publication still pending.</p>
+    <p class="flow-note">The implemented <code>agents-md</code> and <code>prompt</code> projections are advisory context, not runtime enforcement.</p>
     <div class="flow">
       <div class="src-card">
         <p class="eyebrow">One source</p>
@@ -358,24 +359,22 @@ term.consignment  <span class="k">rev 3 → 4</span>
 <span class="c">merged · sealed into org.lock</span></div>
       </div>
       <div class="step">
-        <p class="step-head"><span class="no">03</span><span>Compile by audience</span></p>
-        <p class="d">One command emits a projection per audience, filtered by <b>who may see what</b>. What an audience may not see isn't redacted or watermarked — it's absent, so it can't be paraphrased or leaked.</p>
-        <div class="snip"><span class="k">$ orgmd compile --all</span>
+        <p class="step-head"><span class="no">03</span><span>Compile advisory context</span></p>
+        <p class="d">The 0.5 CLI resolves a bundle and emits one of two <b>advisory</b> projections, filtered by clearance. What a projection omits is not a claim that a recipient cannot already access the raw bundle.</p>
+        <div class="snip"><span class="k">$ orgmd compile org --all --today 2026-08-21</span>
 → AGENTS.md fragments   <span class="c">coding agents</span>
 → system-prompt blocks  <span class="c">bots · assistants</span>
-→ MCP gate tables       <span class="c">autonomous agents</span>
-→ handbook pages        <span class="c">people, per role</span></div>
+<span class="c">both projections are advisory</span></div>
       </div>
       <div class="step">
-        <p class="step-head"><span class="no">04</span><span>Deliver — and enforce</span></p>
-        <p class="d">Tools that read prose get the text. Agents that <b>act</b> get a gate: before doing something, the agent asks <em>"may I?"</em> and receives <b>allow</b>, <b>escalate</b> or <b>deny</b> — the same answer every time, naming the rule it stood on and the person to ask.</p>
-        <div class="snip"><span class="k">org.policy</span>("payments.refund.issue")
-→ verdict:      <span class="c">escalate</span>
-  relied_upon:  [policy.P-07]
-  route:        own.finance
+        <p class="step-head"><span class="no">04</span><span>Review before delivery</span></p>
+        <p class="d">Review generated text before placing it in a prompt or agent instruction file. Version 0.5 has no MCP server or policy gate, so it cannot interpose on actions or turn this context into runtime enforcement.</p>
+        <div class="snip"><span class="k">$ orgmd validate org</span>
+<span class="ok">validate: ok</span>
+<span class="k">$ orgmd doctor org --today 2026-08-21</span>
+<span class="ok">doctor: ok</span>
 
-<span class="c">"pause — this one goes to finance,
- under rule P-07."</span></div>
+<span class="c">review generated context before use</span></div>
       </div>
     </div>
   </section>

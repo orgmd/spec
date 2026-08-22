@@ -12,9 +12,10 @@ applicable context to every AI tool and every person.
 > actually *means*, organisation-wide — has no widely adopted portable
 > standard. This is that layer.
 
-**Status: 0.3-draft — seeking feedback.** Nothing here is frozen. If you
-run agents in an organisation and this problem is yours, we want your
-issues, your counterexamples, and your bundle.
+**Status: 0.3-draft specification; 0.5.0 reference implementation
+release-ready in this repository.** The CLI package, tag, GitHub release, and
+Pages deployment have not been published by this work. The two implemented
+compiler projections are advisory; they do not provide runtime enforcement.
 
 ## The problem in one table
 
@@ -88,15 +89,20 @@ narrowing and anchoring rules make each split safe by construction.
 
 ## Quickstart
 
-The reference CLI ships at v0.5 (see [ROADMAP.md](./ROADMAP.md)); the
-commands below are its target interface, not a released package:
+The v0.5.0 reference CLI is available in this repository. Build it, then run
+the executable against this project's bundle:
 
-```text
-orgmd init          # scaffold a bundle, interview-style
-orgmd compile --all # emit every projection
-orgmd doctor        # find stale, orphaned, or drifted entries
-orgmd serve --mcp   # mount the gate (advisory unless interposed)
+```sh
+npm run build
+node packages/orgmd/dist/cli/bin.js validate org
+node packages/orgmd/dist/cli/bin.js doctor org --today 2026-08-21
+node packages/orgmd/dist/cli/bin.js compile org --all --today 2026-08-21
 ```
+
+See the one-page [CLI guide](./docs/cli.md) for installation after
+publication, all commands and flags, JSON diagnostics, and safe preview/write
+flows. The v0.5 compiler emits only the advisory `agents-md` and `prompt`
+projections; an MCP server is future work.
 
 A three-file bundle — identity, an owner of last resort, and one meaning
 file — is fully Core-conformant. Start with the ~20 terms your org argues
@@ -111,6 +117,8 @@ about and one policy your agents must not break.
 | [GOVERNANCE.md](./GOVERNANCE.md) | How decisions get made (spoiler: with ORG.md) |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute, per repo |
 | [SECURITY.md](./SECURITY.md) | Threat model and disclosure |
+| [docs/cli.md](./docs/cli.md) | v0.5.0 CLI contract and safe usage |
+| [docs/release/0.5.0-checklist.md](./docs/release/0.5.0-checklist.md) | Manual publication and deployment steps still to complete |
 | [NON-GOALS.md](./NON-GOALS.md) | What this will never be |
 | [AGENT-BRIEF.md](./AGENT-BRIEF.md) | The build sequence for the reference implementation |
 | [org/](./org/) | This project's own bundle — governance, dogfooded |

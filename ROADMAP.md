@@ -43,24 +43,25 @@ weeks, not months.
 
 ## v0.5 — reference implementation *(weeks 3–6)*
 
-- [ ] `orgmd init` — interview-style scaffold
-- [ ] **Reference resolver** — effective context per §5, with the
+- [x] `orgmd init` — interview-style scaffold
+- [x] **Reference resolver** — effective context per §5, with the
       definition/constraint split; this is the trusted base, so it gets
       tests before features
-- [ ] `orgmd compile` — two advisory targets: AGENTS.md fragment +
+- [x] `orgmd compile` — two advisory targets: AGENTS.md fragment +
       prompt block (deterministic, zero inference cost)
-- [ ] `orgmd adopt` — importer drafting a bundle from existing
+- [x] `orgmd adopt` — importer drafting a bundle from existing
       CLAUDE.md / AGENTS.md / wiki exports (nobody starts from blank)
-- [ ] `orgmd doctor` — computed staleness: revisit dates, orphaned
+- [x] `orgmd doctor` — computed staleness: revisit dates, orphaned
       owners, upstream drift; and the **synced-to-native ratio for every
       bundle** it inspects, as a count and a percentage, broken down by
       domain (SPEC §4.3 makes this a health signal; from v0.5 it is a
       tracked number, and it is the measurement that decides Hypothesis H)
-- [ ] **First conformance-suite release** (deterministic resolver
+- [x] **First conformance-suite release** (deterministic resolver
       vectors) — ships with the reference resolver, not waiting for v0.7
-- [ ] Entry front-matter published as a **JSON Schema** — free
+- [x] Entry front-matter published as a **JSON Schema** — free
       validation in every editor and CI system from day one
-- [ ] Dogfood: two real public bundles (BoundFor, FieldReport)
+- [ ] Dogfood: two real public bundles (BoundFor, FieldReport) — source and
+      owner review are external and remain outstanding.
 
 ## v0.6 — the MVE *(the evidence milestone)*
 

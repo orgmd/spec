@@ -23,9 +23,10 @@ file. The spec is the contract; this brief is the sequence.
 
 ## Stack
 
-TypeScript, Node 20+, single package `orgmd`, published later via `npx`.
-Vitest for tests. No framework for the CLI beyond a light arg parser. Keep
-the dependency list short enough to read aloud.
+TypeScript, Node 20+, single package `orgmd`, prepared for publication via
+`npx` but not published by the reference-implementation work. Vitest for
+tests. No framework for the CLI beyond a light arg parser. Keep the dependency
+list short enough to read aloud.
 
 ## Build sequence (v0.5 — do these in order, each with tests)
 
@@ -36,7 +37,8 @@ the dependency list short enough to read aloud.
   `id, owner, scope, status, source, rev`; optional `ref, delegates`;
   `revisit` required on constraint and decision entries, optional
   elsewhere; `upstream` required when `source` is `synced:<system>`;
-  `status ∈ {draft, approved, contested, superseded}`;
+  `status ∈ {draft, approved, rejected}`; contestation and retirement are
+  lifecycle state, not revision status;
   `source` matches `native` or `synced:<system>`.
 - Constraint entries (`policies.md`) additionally require `action` and
   `effect`, plus `route` when `effect: escalate` (SPEC §4.6). `action`
@@ -63,8 +65,8 @@ the dependency list short enough to read aloud.
   anything else is a resolution error scoped to that `id` (SPEC §5.3);
   clearance applied to emission **after** resolution, never before (SPEC
   §5.4); withheld markers; contested propagated by reliance only;
-  superseded and draft never emitted (drafts only with
-  `--include-drafts`).
+  rejected revisions never emitted; lifecycle determines whether an approved
+  revision is current, pending, contested, or retired.
 - Emit the bundle versions resolved from (git short SHA of each dir if
   available; else content hash).
 - **Property to defend in tests:** same tree + identity + clearance ⇒
@@ -89,23 +91,29 @@ the dependency list short enough to read aloud.
   gate on it.
 
 ### 5. `orgmd init` — interview-style scaffold
-- Asks: org name, tone, the ~10 words people argue about, one policy
-  agents must not break, who owns each. Writes a Core-conformant bundle.
+- Accepts non-interactive org name, tone, disputed terms, one policy, and
+  owners; previews before an explicit write of a Core-conformant bundle.
 - Must produce something `orgmd validate` and `orgmd doctor` accept.
 
-### 6. CI
+### 6. `orgmd adopt` — draft migration from existing Markdown
+- Preview candidates from an existing AGENTS.md, CLAUDE.md, or Markdown
+  export without changing a bundle.
+- Write only exact, human-reviewed confirmations to an existing target bundle;
+  imported entries remain drafts.
+
+### 7. CI
 - GitHub Action: on PR and push, run `validate` and `doctor` against
   `org/`, run tests. Fail the build on either.
 
 ## Deliverables checklist for the PR that closes v0.5
 
-- [ ] `packages/orgmd/` with the five commands and tests
-- [ ] `schema/entry.schema.json`
-- [ ] `org/` validates and doctors clean in CI
-- [ ] `docs/cli.md` — one page, examples for each command
+- [x] `packages/orgmd/` with the five commands and tests
+- [x] `schema/entry.schema.json`
+- [x] `org/` validates and doctors clean in CI
+- [x] `docs/cli.md` — one page, examples for each command
 - [ ] Issues opened for every simplification you made (narrowing
       semantics at minimum)
-- [ ] `CHANGELOG.md` updated under a `0.5.0` heading
+- [x] `CHANGELOG.md` updated under a `0.5.0` heading
 
 ## Explicitly out of scope for this build
 
