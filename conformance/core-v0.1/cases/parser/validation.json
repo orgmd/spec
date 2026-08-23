@@ -1,0 +1,628 @@
+[
+  {
+    "name": "validator rejects a legacy superseded status",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.legacy",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "superseded",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Legacy.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 9
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "invalid_entry",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 9,
+          "entry_id": "term.legacy"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator requires revisit on decisions",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "dec.001",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Decision.",
+            "domain": "decision",
+            "source_path": "decisions/001.md",
+            "line": 1
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "validation.missing-revisit",
+          "severity": "error",
+          "path": "decisions/001.md",
+          "line": 1,
+          "entry_id": "dec.001"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator requires complete upstream metadata for synced entries",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.synced",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "synced:notion",
+              "rev": 1
+            },
+            "body": "Synced.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 12
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "validation.missing-upstream",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 12,
+          "entry_id": "term.synced"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects lifecycle references to unknown entries",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root",
+          "lifecycle": {
+            "term.missing": {
+              "state": "retired",
+              "by": "role.editor",
+              "date": "2026-08-21"
+            }
+          }
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root",
+              "lifecycle": {
+                "term.missing": {
+                  "state": "retired",
+                  "by": "role.editor",
+                  "date": "2026-08-21"
+                }
+              }
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "validation.invalid-lifecycle-ref",
+          "severity": "error",
+          "path": "org.md",
+          "line": 1,
+          "entry_id": "term.missing"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects cycles in the custom scope lattice",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root",
+          "scopes": {
+            "alpha": { "narrower_than": ["beta"] },
+            "beta": { "narrower_than": ["alpha"] }
+          }
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root",
+              "scopes": {
+                "alpha": { "narrower_than": ["beta"] },
+                "beta": { "narrower_than": ["alpha"] }
+              }
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "validation.scope-cycle",
+          "severity": "error",
+          "path": "org.md",
+          "line": 1,
+          "entry_id": "org.identity"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects a policy without action and effect",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "policy.incomplete",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "revisit": "2027-01-01"
+            },
+            "body": "Policy.",
+            "domain": "policy",
+            "source_path": "policies.md",
+            "line": 22
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "invalid_entry",
+          "severity": "error",
+          "path": "policies.md",
+          "line": 22,
+          "entry_id": "policy.incomplete"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects malformed constraint actions",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "policy.action",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "revisit": "2027-01-01",
+              "action": "Billing.*",
+              "effect": "deny"
+            },
+            "body": "Policy.",
+            "domain": "policy",
+            "source_path": "policies.md",
+            "line": 31
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "invalid_action",
+          "severity": "error",
+          "path": "policies.md",
+          "line": 31,
+          "entry_id": "policy.action"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator requires an escalation route that resolves at the root",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "root",
+        "path": "/fixtures/root",
+        "node_path": "root",
+        "is_root": true,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "bundle": "org.root"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "bundle": "org.root"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "own.last-resort",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Editor.",
+            "domain": "ownership",
+            "source_path": "ownership.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "policy.route",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "revisit": "2027-01-01",
+              "action": "billing.refund",
+              "effect": "escalate",
+              "route": "own.missing"
+            },
+            "body": "Policy.",
+            "domain": "policy",
+            "source_path": "policies.md",
+            "line": 41
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "unresolvable_route",
+          "severity": "error",
+          "path": "policies.md",
+          "line": 41,
+          "entry_id": "policy.route"
+        }
+      ]
+    }
+  }
+]

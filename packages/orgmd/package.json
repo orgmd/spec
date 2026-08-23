@@ -1,0 +1,32 @@
+{
+  "name": "orgmd",
+  "version": "0.5.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "orgmd": "./dist/cli/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": "./dist/schema/entry.schema.json",
+    "./conformance/manifest": "./dist/conformance/core-v0.1/manifest.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "ajv": "8.20.0",
+    "canonicalize": "4.0.0",
+    "yaml": "2.9.0"
+  }
+}

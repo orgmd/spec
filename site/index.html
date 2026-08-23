@@ -139,8 +139,7 @@
   .state .chip{font-family:var(--mono);font-size:12px;letter-spacing:.04em;padding-top:3px;}
   .chip.s-draft{color:var(--text-soft);}
   .chip.s-approved{color:var(--pass);}
-  .chip.s-contested{color:var(--kowhai);}
-  .chip.s-superseded{color:var(--text-soft);}
+  .chip.s-rejected{color:var(--deny);}
   .state p{font-size:14.5px;color:var(--text-soft);line-height:1.6;}
 
   /* industry examples: tabs + panels */
@@ -218,7 +217,8 @@
     <h1>ORG<span class="md">.md</span></h1>
     <p class="thesis">One source of <span class="hl-strong">org meaning</span> — written once, <span class="hl">filtered, and delivered</span> to every AI tool and every person.</p>
     <p class="standfirst">In plain terms: your company's words, rules, decisions and owners, written down once. ORG.md is the shared format they are written in; the tooling built on it keeps that meaning current, works out who may see what, and delivers the right version to every AI tool and every person.</p>
-    <p class="status-line">Early draft · one maintainer · seeking collaborators — this page is the ask.</p>
+    <p class="status-line">0.5.0 reference implementation available in this repository · release-ready · npm, tag, GitHub Release, and Pages publication still pending.</p>
+    <p class="flow-note">The implemented <code>agents-md</code> and <code>prompt</code> projections are advisory context, not runtime enforcement.</p>
     <div class="flow">
       <div class="src-card">
         <p class="eyebrow">One source</p>
@@ -312,8 +312,7 @@ org/
 ├── decisions/      <span class="c"># active decisions, with owners</span>
 ├── policies.md     <span class="c"># what agents may / must-not do</span>
 ├── ownership.md    <span class="c"># who decides what · where to escalate</span>
-├── done.md         <span class="c"># definitions of done</span>
-└── org.lock        <span class="c"># release seal · tamper-evident</span></div>
+└── done.md         <span class="c"># definitions of done</span></div>
     <div class="commitments">
       <div class="commit">
         <span class="name">Canonical by exception</span>
@@ -355,27 +354,25 @@ a synonym for one.</div>
         <div class="snip"><span class="c">pull request · glossary.md</span>
 term.consignment  <span class="k">rev 3 → 4</span>
 <span class="ok">✓ approved</span> · role.product-owner
-<span class="c">merged · sealed into org.lock</span></div>
+<span class="c">merged · revision history records the review</span></div>
       </div>
       <div class="step">
-        <p class="step-head"><span class="no">03</span><span>Compile by audience</span></p>
-        <p class="d">One command emits a projection per audience, filtered by <b>who may see what</b>. What an audience may not see isn't redacted or watermarked — it's absent, so it can't be paraphrased or leaked.</p>
-        <div class="snip"><span class="k">$ orgmd compile --all</span>
+        <p class="step-head"><span class="no">03</span><span>Compile advisory context</span></p>
+        <p class="d">The 0.5 CLI resolves a bundle and emits one of two <b>advisory</b> projections, filtered by clearance. What a projection omits is not a claim that a recipient cannot already access the raw bundle.</p>
+        <div class="snip"><span class="k">$ orgmd compile org --all --today 2026-08-21</span>
 → AGENTS.md fragments   <span class="c">coding agents</span>
 → system-prompt blocks  <span class="c">bots · assistants</span>
-→ MCP gate tables       <span class="c">autonomous agents</span>
-→ handbook pages        <span class="c">people, per role</span></div>
+<span class="c">both projections are advisory</span></div>
       </div>
       <div class="step">
-        <p class="step-head"><span class="no">04</span><span>Deliver — and enforce</span></p>
-        <p class="d">Tools that read prose get the text. Agents that <b>act</b> get a gate: before doing something, the agent asks <em>"may I?"</em> and receives <b>allow</b>, <b>escalate</b> or <b>deny</b> — the same answer every time, naming the rule it stood on and the person to ask.</p>
-        <div class="snip"><span class="k">org.policy</span>("payments.refund.issue")
-→ verdict:      <span class="c">escalate</span>
-  relied_upon:  [policy.P-07]
-  route:        own.finance
+        <p class="step-head"><span class="no">04</span><span>Review before delivery</span></p>
+        <p class="d">Review generated text before placing it in a prompt or agent instruction file. Version 0.5 has no MCP server or policy gate, so it cannot interpose on actions or turn this context into runtime enforcement.</p>
+        <div class="snip"><span class="k">$ orgmd validate org</span>
+<span class="ok">validate: ok</span>
+<span class="k">$ orgmd doctor org --today 2026-08-21</span>
+<span class="ok">doctor: ok</span>
 
-<span class="c">"pause — this one goes to finance,
- under rule P-07."</span></div>
+<span class="c">review generated context before use</span></div>
       </div>
     </div>
   </section>
@@ -396,13 +393,13 @@ term.consignment  <span class="k">rev 3 → 4</span>
       </div>
       <div class="chg-row">
         <span class="no">03</span>
-        <p><b>Seal.</b> The bundle's release seal is re-signed, so every consumer can verify it holds the current, untampered version — and prove which version produced any answer.</p>
-        <span class="tag">org.lock ✓</span>
+        <p><b>Future hardening.</b> Signing and <code>org.lock</code> are future hardening; v0.5 has no signing or release seal.</p>
+        <span class="tag">future · no org.lock</span>
       </div>
       <div class="chg-row">
         <span class="no">04</span>
-        <p><b>Land.</b> Every projection recompiles: the coding agent's fragment, the customer bot's prompt, the gate, the handbook. Nobody chases surfaces; none is missed.</p>
-        <span class="tag">4 audiences · 0 chased</span>
+        <p><b>Land advisory context.</b> In v0.5, the CLI compiles only the coding agent's fragment and customer-bot prompt. Gate and handbook projections are future work.</p>
+        <span class="tag">2 advisory projections</span>
       </div>
     </div>
     <p class="lede lede-after">And when people disagree — the normal case in a real organisation — disagreement is a state the format can hold, not a failure:</p>
@@ -416,18 +413,16 @@ term.consignment  <span class="k">rev 3 → 4</span>
         <p>Ratified by the owner. This is what every surface receives.</p>
       </div>
       <div class="state">
-        <span class="chip s-contested">contested</span>
-        <p>Under dispute. Marked visibly everywhere it appears; agents that would rely on it must stop and escalate to the owner instead of guessing.</p>
-      </div>
-      <div class="state">
-        <span class="chip s-superseded">superseded</span>
-        <p>Retired but kept. History stays auditable without being mistaken for truth.</p>
+        <span class="chip s-rejected">rejected</span>
+        <p>Not ratified. It is never delivered as current organisational context.</p>
       </div>
     </div>
+    <p class="lede lede-after">Contestation and retirement are lifecycle states recorded only in <code>org.identity.lifecycle</code>; they do not extend the revision-status vocabulary.</p>
   </section>
 
-  <section id="industries">
+  <section id="industries" data-v0-5="future-projections">
     <div class="sec-head"><span class="no">§5</span><h2>Your industry, your tools</h2></div>
+    <p class="lede"><b>Future projection examples — not shipped in v0.5.</b> Gate and handbook destinations below illustrate later work; v0.5 ships only advisory <code>agents-md</code> and <code>prompt</code> projections.</p>
     <p class="lede">The bundle is the same handful of files everywhere. What changes is which entry is expensive to get wrong — and which tools are listening. One entry per industry, and the three surfaces it lands on:</p>
     <div class="tabs" role="tablist" aria-label="Industry examples">
       <button class="tab" role="tab" id="tab-freight" aria-controls="panel-freight" aria-selected="true">Freight &amp; logistics</button>

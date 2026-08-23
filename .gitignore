@@ -5,6 +5,9 @@ dist/
 coverage/
 *.log
 *.tsbuildinfo
+.worktrees/
+packages/orgmd/dist/
+orgmd-*.tgz
 
 # local working material, not for publication
 site/deep-dive.html

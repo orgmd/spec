@@ -1,0 +1,517 @@
+[
+  {
+    "name": "content id hashes empty metadata and every revision",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Café",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "content id changes when only a draft revision body changes",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Café",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Changed pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "content_id": "sha256:c0e58bbeac69b19680f71acb17439dfb72dec45ddad6277184f9463e8ff5d491",
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "content id changes for metadata-only lifecycle state",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "lifecycle": {
+            "term.freight": {
+              "state": "retired",
+              "by": "role.editor",
+              "date": "2026-08-21"
+            }
+          }
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "lifecycle": {
+                "term.freight": {
+                  "state": "retired",
+                  "by": "role.editor",
+                  "date": "2026-08-21"
+                }
+              }
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Café",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "789e27e78b5d58ee21c00145987e3d45f955a7408dc610ebd437e0c978140895",
+      "content_id": "sha256:9617ab8cff51f4e554279e21f9649d27f504e497447edc83d00d01558f279d4b",
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "content id ignores unknown extension keys",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1,
+          "extension_note": "ignored"
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "extension_note": "ignored"
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1,
+              "extension_note": { "nested": true }
+            },
+            "body": "Café",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "content id normalizes Unicode line endings and trailing whitespace",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Café  \r\n",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "content id is invariant to entry enumeration order",
+    "operation": "content-id",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 3
+            },
+            "body": "Rejected.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Café",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Root.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          }
+        ]
+      }
+    },
+    "expected": {
+      "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "diagnostics": []
+    }
+  }
+]

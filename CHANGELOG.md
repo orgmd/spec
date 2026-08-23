@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0 — 2026-08-21
+
+Reference implementation release preparation. The implementation is
+release-ready in this repository; npm publication, a version tag, a GitHub
+release, and a Pages deployment remain maintainer actions.
+
+- Packaged the `orgmd` ESM library and Node 20+ CLI, including package asset
+  verification and a tarball consumer smoke test.
+- Published the entry front-matter JSON Schema and the data-first Core v0.1
+  conformance corpus, including resolver and compiler profiles.
+- Added the deterministic resolver, scope-aware advisory compiler, stable
+  diagnostics, and the five CLI commands: validate, compile, doctor, init,
+  and adopt.
+- Added preview-first scaffolding and Markdown adoption with explicit
+  confirmations; imported content is written as draft material for review.
+- Migrated the repository dogfood bundle to the DEC-0003 lifecycle model and
+  made validation, doctor, test, build, and pack checks part of CI.
+- The only implemented projections are advisory `agents-md` and `prompt`
+  text. No MCP gate, runtime enforcement, hosted service, signing, or handbook
+  renderer is included in 0.5.0.
+
 ## 0.3.1-draft — August 2026
 
 Correctness and clarity release. Implements the accepted items of

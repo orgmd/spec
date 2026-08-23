@@ -1,0 +1,108 @@
+[
+  {
+    "name": "context id fixes Mode A spec version path and clearance",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "root"
+        },
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        }
+      ],
+      "clearance": ["public", "internal", "public"],
+      "as_of": "2026-08-21"
+    },
+    "expected": {
+      "context_id": "sha256:3109681a7b58facc6663ff66c0144ac9e2b3764586da07b3c89d4d0bc06b7c52"
+    }
+  },
+  {
+    "name": "context id is invariant to clearance order and duplicates",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "root"
+        },
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        }
+      ],
+      "clearance": ["internal", "public", "public"],
+      "as_of": "2026-08-21"
+    },
+    "expected": {
+      "context_id": "sha256:3109681a7b58facc6663ff66c0144ac9e2b3764586da07b3c89d4d0bc06b7c52"
+    }
+  },
+  {
+    "name": "context id preserves designated path order",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        },
+        { "bundle_id": "root", "content_id": "sha256:aaa", "node_path": "root" }
+      ],
+      "clearance": ["public", "internal"],
+      "as_of": "2026-08-21"
+    },
+    "expected": {
+      "context_id": "sha256:e0acae992f351ba336a5fd95b6457517a92355233d66d7bd42188122b82a3ce0"
+    }
+  },
+  {
+    "name": "context id includes the logical node path",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "other"
+        }
+      ],
+      "clearance": ["public"],
+      "as_of": "2026-08-21"
+    },
+    "expected": {
+      "context_id": "sha256:c0b4e945fe509b62781ef6e6722501cde4ba6183b15c533da8001daae04a0eb0"
+    }
+  },
+  {
+    "name": "context id changes with temporal resolution input",
+    "operation": "context-id",
+    "input": {
+      "bundles": [
+        {
+          "bundle_id": "root",
+          "content_id": "sha256:aaa",
+          "node_path": "root"
+        },
+        {
+          "bundle_id": "leaf",
+          "content_id": "sha256:bbb",
+          "node_path": "root/leaf"
+        }
+      ],
+      "clearance": ["public", "internal", "public"],
+      "as_of": "2028-08-21"
+    },
+    "expected": {
+      "context_id": "sha256:8d7d5030598025b9c93eff80503f82f383a46d9b8a4fdb0728fc005c71562c13"
+    }
+  }
+]
