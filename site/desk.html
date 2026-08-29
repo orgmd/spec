@@ -4,132 +4,148 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<meta name="description" content="An illustrative, local-only ORG.md Desk concept showing how non-technical owners might review organisational meaning. No backend or persistence.">
+<meta name="description" content="ORG.md Desk is an interactive design concept for reviewing important organisational guidance without editing files.">
 <link rel="canonical" href="https://orgmd.github.io/spec/desk.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="ORG.md Desk concept — an illustrative interface for organisational meaning">
-<meta property="og:description" content="A fictional local-only product concept. It does not connect to a repository, save changes, approve revisions, sync systems, or enforce actions.">
+<meta property="og:title" content="ORG.md Desk — a simpler way to review guidance">
+<meta property="og:description" content="A nontechnical interface concept with Git keeping the history underneath.">
 <meta property="og:url" content="https://orgmd.github.io/spec/desk.html">
 <meta property="og:image" content="https://orgmd.github.io/spec/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="ORG.md Desk concept">
-<meta name="twitter:description" content="An illustrative local-only interface for organisational meaning.">
+<meta name="twitter:description" content="Review important guidance without editing files.">
 <meta name="twitter:image" content="https://orgmd.github.io/spec/assets/og.png">
-<title>ORG.md Desk concept — an illustrative interface for organisational meaning</title>
+<title>ORG.md Desk — review guidance without editing files</title>
 <link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{color-scheme:dark;--bg:#101720;--surface:#161E2A;--surface-2:#1B2432;--inset:#0B0F15;--text:#E9EBE5;--text-soft:#A7B1BF;--line:#2B3546;--kowhai:#F5BE1A;--kowhai-dim:rgba(245,190,26,.14);--pass:#46D6AB;--pass-dim:rgba(70,214,171,.12);--deny:#FF8A73;--deny-dim:rgba(255,138,115,.12);--mono:'IBM Plex Mono',ui-monospace,monospace;--disp:'Libre Franklin',system-ui,sans-serif;--body:'Source Serif 4',Georgia,serif;}
-  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{color-scheme:dark;--bg:#101720;--surface:#161e2a;--inset:#0b0f15;--text:#e9ebe5;--soft:#a7b1bf;--line:#2b3546;--gold:#f5be1a;--gold-soft:rgba(245,190,26,.13);--pass:#46d6ab;--danger:#ff9a86;--mono:'IBM Plex Mono',ui-monospace,monospace;--display:'Libre Franklin',system-ui,sans-serif;--body:'Source Serif 4',Georgia,serif;}
+  *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
-  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;}
-  a{color:inherit;}.app{max-width:760px;margin:0 auto;padding:0 16px 70px;}::selection{background:var(--kowhai);color:#101720;}:focus-visible{outline:2px solid var(--kowhai);outline-offset:2px;}
-  .skip{position:absolute;left:16px;top:-80px;z-index:10;background:var(--kowhai);color:#101720;padding:10px 14px;border-radius:0 0 8px 8px;font-family:var(--mono);font-size:12px;font-weight:600;}.skip:focus{top:0;}
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0 12px;border-bottom:1px solid var(--line);}.brand{font-family:var(--disp);font-weight:900;font-size:18px;letter-spacing:-.01em;text-decoration:none;}.brand .desk{color:var(--kowhai);}.brand .org{font-family:var(--mono);font-weight:400;font-size:11px;color:var(--text-soft);display:block;margin-top:2px;letter-spacing:.05em;}.back{font-family:var(--mono);font-size:11px;color:var(--text-soft);}
-  .concept{margin:18px 0 12px;border:1px solid var(--kowhai);border-left-width:4px;border-radius:12px;background:var(--kowhai-dim);padding:18px;}.concept .eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--kowhai);margin-bottom:8px;}.concept h1{font-family:var(--disp);font-weight:900;font-size:clamp(22px,5vw,30px);letter-spacing:-.02em;line-height:1.2;}.concept p{margin-top:9px;font-size:14.5px;color:var(--text-soft);}.concept p strong{color:var(--text);}.concept-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px!important;font-family:var(--mono);font-size:11px!important;}.concept-links a{color:var(--kowhai);}
-  .prototype-boundaries{margin-top:12px;border-top:1px solid rgba(245,190,26,.35);padding-top:10px;}.prototype-boundaries summary{cursor:pointer;font-family:var(--mono);font-size:11px;color:var(--kowhai);}.prototype-boundaries p{margin-top:8px!important;font-size:13px!important;}
-  .hostline{font-family:var(--mono);font-size:10.5px;color:var(--text-soft);padding:8px 0;border-bottom:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;}.hostline .warn{color:var(--kowhai);}
-  .poc-workflow{margin:22px 0 14px;}.poc-workflow .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--kowhai);}.poc-workflow h2{margin-top:5px;font-family:var(--disp);font-size:20px;font-weight:800;letter-spacing:-.01em;}.poc-workflow>p{margin-top:7px;font-size:13.5px;color:var(--text-soft);}.workflow-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:14px;list-style:none;}.workflow-step{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:13px;}.workflow-step:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);font-family:var(--mono);color:var(--kowhai);}.workflow-step .state{display:block;font-family:var(--mono);font-size:9.5px;line-height:1.35;letter-spacing:.05em;text-transform:uppercase;color:var(--text-soft);}.workflow-step.works{border-color:var(--pass);}.workflow-step.works .state{color:var(--pass);}.workflow-step.next{border-color:var(--kowhai);}.workflow-step.next .state{color:var(--kowhai);}.workflow-step strong{display:block;margin:7px 0 4px;font-family:var(--disp);font-size:14px;line-height:1.3;}.workflow-step p{font-size:12.5px;line-height:1.45;color:var(--text-soft);}
-  .location{margin:12px 0 4px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:13px 15px;}.location .label{font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-soft);}.location-path{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-top:7px;font-family:var(--disp);font-size:14px;font-weight:700;}.location-path .arrow{color:var(--kowhai);}.location p{margin-top:6px;font-size:12.5px;color:var(--text-soft);}
-  .tabs{display:flex;gap:2px;overflow-x:auto;margin:14px 0 18px;background:var(--inset);border:1px solid var(--line);border-radius:99px;padding:4px;}.tab{appearance:none;border:none;background:none;font-family:var(--mono);font-size:12px;padding:9px 14px;border-radius:99px;color:var(--text-soft);cursor:pointer;white-space:nowrap;flex:1;}.tab[aria-selected="true"]{background:var(--kowhai);color:#101720;font-weight:600;}.tab .n{font-size:10.5px;opacity:.85;}.greet{font-family:var(--disp);font-weight:800;font-size:clamp(20px,5vw,26px);letter-spacing:-.01em;margin:6px 0 4px;}.greetsub{font-size:14px;color:var(--text-soft);margin-bottom:18px;}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px;}.card .why{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--kowhai);margin-bottom:8px;}.card h3{font-family:var(--disp);font-size:17px;font-weight:800;line-height:1.35;margin-bottom:10px;}.card p{font-size:14.5px;color:var(--text-soft);line-height:1.6;}.card p b{color:var(--text);font-weight:600;}.diff{margin:12px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:14px;}.diff .d{padding:10px 14px;}.diff .old{background:var(--deny-dim);color:var(--text-soft);}.diff .old .lbl{color:var(--deny);}.diff .new{background:var(--pass-dim);border-top:1px solid var(--line);}.diff .new .lbl{color:var(--pass);}.diff .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px;}.impact{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;}.ichip{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:99px;padding:3px 10px;color:var(--text-soft);}.actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px;}.btn{appearance:none;border-radius:8px;padding:10px 16px;font-family:var(--disp);font-weight:700;font-size:14px;cursor:pointer;border:1px solid var(--kowhai);background:var(--kowhai);color:#101720;}.concept-only{font-family:var(--mono);font-size:10.5px;color:var(--text-soft);}.under{margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--text-soft);border-top:1px dashed var(--line);padding-top:9px;line-height:1.6;}.card.previewed{border-color:var(--pass);}.donebar{display:none;align-items:center;gap:8px;color:var(--pass);font-family:var(--mono);font-size:12px;margin-top:12px;}.card.previewed .donebar{display:flex;}
-  .search{width:100%;background:var(--inset);border:1px solid var(--line);border-radius:10px;color:var(--text-soft);font-family:var(--mono);font-size:13px;padding:12px 14px;margin-bottom:12px;}.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}.fchip{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:99px;padding:5px 12px;color:var(--text-soft);background:none;}.search:disabled,.fchip:disabled{opacity:.72;cursor:not-allowed;}.entry{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;}.entry .kind{font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-soft);}.entry h3{font-family:var(--disp);font-size:16.5px;font-weight:800;margin:4px 0 6px;}.entry p{font-size:14px;color:var(--text-soft);line-height:1.6;}.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}.schip{font-family:var(--mono);font-size:10.5px;border-radius:99px;padding:3px 10px;border:1px solid var(--line);color:var(--text-soft);}.schip.ok{color:var(--pass);border-color:var(--pass);}.schip.warn{color:var(--kowhai);border-color:var(--kowhai);}.schip.hot{color:var(--deny);border-color:var(--deny);}
-  .lrow{display:grid;grid-template-columns:105px 1fr;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);font-size:14px;}.lrow .t{font-family:var(--mono);font-size:10.5px;color:var(--kowhai);padding-top:2px;}.lrow div{color:var(--text-soft);line-height:1.55;}.lrow b{color:var(--text);font-weight:600;}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;}.stat .v{font-family:var(--disp);font-weight:900;font-size:30px;letter-spacing:-.02em;}.stat .v.good{color:var(--pass);}.stat .v.warn{color:var(--kowhai);}.stat .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-soft);margin-top:4px;line-height:1.5;}.notice{background:var(--kowhai-dim);border:1px solid var(--kowhai);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text);}.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--text-soft);}.foot a{color:var(--kowhai);}[hidden]{display:none!important;}
-  @media(max-width:680px){.workflow-steps{grid-template-columns:1fr 1fr;}.workflow-step:nth-child(2)::after{display:none;}}
-  @media(max-width:520px){.topbar{align-items:flex-start;flex-direction:column;}.stats{grid-template-columns:1fr;}.lrow{grid-template-columns:1fr;gap:3px;}.workflow-steps{grid-template-columns:1fr;gap:12px;}.workflow-step:nth-child(2)::after{display:block;}.workflow-step:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-15px;transform:translateX(-50%);}.tabs{display:grid;grid-template-columns:1fr 1fr;border-radius:12px;overflow:visible;}.tab{white-space:normal;}}
+  body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:17px;line-height:1.6;}
+  a{color:inherit;} button{font:inherit;}
+  ::selection{background:var(--gold);color:var(--bg);}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  [hidden]{display:none!important;}
+  .wrap{width:min(100% - 40px,900px);margin:0 auto;}
+  .skip{position:absolute;left:16px;top:-80px;z-index:10;background:var(--gold);color:var(--bg);padding:10px 14px;border-radius:0 0 8px 8px;font-family:var(--mono);font-size:12px;font-weight:600;}
+  .skip:focus{top:0;}
+  .mast{border-bottom:1px solid var(--line);}
+  .mast-row{min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+  .brand{font-family:var(--display);font-size:20px;font-weight:900;text-decoration:none;letter-spacing:-.03em;}
+  .brand span{color:var(--gold);}
+  .back{font-family:var(--mono);font-size:11px;color:var(--soft);}
+  .hero{padding:62px 0 42px;max-width:760px;}
+  .eyebrow,.kicker{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--gold);}
+  h1,h2,h3{font-family:var(--display);letter-spacing:-.025em;}
+  h1{margin-top:12px;font-size:clamp(39px,6.5vw,60px);font-weight:900;line-height:1.05;}
+  .hero .lede{margin-top:18px;max-width:52ch;font-size:19px;line-height:1.5;}
+  .boundary{margin-top:14px;border-left:3px solid var(--gold);padding-left:14px;color:var(--soft);font-size:14px;max-width:72ch;}
+  section{padding:44px 0 8px;}
+  .section-head h2{margin-top:8px;font-size:clamp(27px,4.5vw,38px);line-height:1.15;}
+  .section-head p{margin-top:11px;max-width:60ch;color:var(--soft);font-size:15px;}
+  .workflow{margin-top:24px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;list-style:none;counter-reset:flow;}
+  .workflow li{position:relative;min-width:0;border:1px solid var(--line);border-radius:10px;padding:18px;background:var(--surface);counter-increment:flow;}
+  .workflow li::before{content:"0" counter(flow);display:block;margin-bottom:8px;font-family:var(--mono);font-size:10px;color:var(--gold);}
+  .workflow li:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:50%;transform:translateY(-50%);color:var(--gold);font-family:var(--mono);}
+  .workflow strong{display:block;font-family:var(--display);font-size:16px;}
+  .workflow p{margin-top:5px;color:var(--soft);font-size:13px;line-height:1.45;}
+  .under-note{margin-top:15px;font-size:13.5px;color:var(--soft);}
+  .under-note strong{color:var(--text);}
+  .path{margin-top:22px;display:flex;flex-wrap:wrap;gap:7px 10px;border:1px solid var(--line);border-radius:9px;padding:13px 15px;background:var(--inset);font-family:var(--display);font-size:13px;font-weight:800;}
+  .path span:not(:last-child)::after{content:"›";margin-left:10px;color:var(--gold);font-family:var(--mono);}
+  .task{margin-top:22px;border:1px solid var(--gold);border-radius:13px;padding:clamp(20px,4vw,30px);background:linear-gradient(145deg,var(--gold-soft),var(--surface));}
+  .task .type{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);}
+  .task h3{margin-top:8px;max-width:27ch;font-size:clamp(23px,4vw,31px);line-height:1.2;}
+  .task .why{margin-top:10px;max-width:62ch;color:var(--soft);font-size:14px;}
+  .diff{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .version{border:1px solid var(--line);border-radius:9px;padding:15px;background:var(--inset);}
+  .version.new{border-color:rgba(70,214,171,.5);}
+  .version .label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--soft);}
+  .version.new .label{color:var(--pass);}
+  .version p{margin-top:8px;font-size:15px;line-height:1.5;}
+  .task-actions{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;}
+  .preview{appearance:none;border:1px solid var(--gold);border-radius:8px;padding:10px 14px;background:var(--gold);color:var(--bg);font-family:var(--display);font-size:13px;font-weight:800;cursor:pointer;}
+  .preview[aria-pressed="true"]{background:var(--pass);border-color:var(--pass);}
+  .task-note{color:var(--soft);font-family:var(--mono);font-size:10.5px;}
+  .done{margin-top:13px;border:1px solid rgba(70,214,171,.45);border-radius:8px;padding:11px 13px;background:rgba(70,214,171,.1);color:var(--pass);font-size:13px;}
+  .preview-grid{margin-top:23px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+  .preview-card{min-width:0;border:1px solid var(--line);border-radius:10px;padding:17px;background:var(--surface);}
+  .preview-card .icon{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--gold-soft);color:var(--gold);font-family:var(--mono);font-size:12px;}
+  .preview-card h3{margin-top:11px;font-size:16px;}
+  .preview-card p{margin-top:5px;color:var(--soft);font-size:13px;line-height:1.45;}
+  .try-link{margin-top:21px;font-family:var(--display);font-size:14px;font-weight:800;color:var(--gold);}
+  footer{margin-top:62px;border-top:2px solid var(--gold);padding:24px 0 50px;}
+  .foot{color:var(--soft);font-family:var(--mono);font-size:11px;}
+  @media(max-width:700px){.workflow,.preview-grid{grid-template-columns:1fr;gap:22px;}.workflow li:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-21px;transform:translateX(-50%);}.diff{grid-template-columns:1fr;}}
+  @media(max-width:520px){.wrap{width:min(100% - 28px,900px);}.mast-row{align-items:flex-start;flex-direction:column;padding:13px 0;gap:5px;}.hero{padding-top:44px;}.preview{width:100%;}}
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Skip to the Desk concept</a>
-<div class="app">
-  <header class="topbar"><a class="brand" href="index.html">ORG.md <span class="desk">Desk</span><span class="org">KŌWHAI FREIGHT LTD · FICTIONAL</span></a><a class="back" href="index.html">← Specification</a></header>
-  <main id="main">
-    <section class="concept" aria-labelledby="concept-title">
-      <p class="eyebrow">Concept prototype · fictional data · no backend</p>
-      <h1 id="concept-title">A possible non-technical interface for ORG.md</h1>
-      <p>This clickable local prototype shows how organisational owners might work with Git-tracked meaning without editing repository files directly. <strong>It changes only this page, not a real organisation.</strong></p>
-      <p><strong>Today:</strong> ORG.md is available as the 0.5.0 source CLI with advisory <code>agents-md</code> and <code>prompt</code> outputs.</p>
-      <details class="prototype-boundaries"><summary>Prototype boundaries</summary><p>It does not connect to a repository, save or ratify changes, verify approver identity, sync source systems, publish projections, enforce actions, or create audit evidence.</p></details>
-      <p class="concept-links"><a href="playground/">Try the working v0.5 example</a><a href="https://github.com/orgmd/spec/blob/main/docs/cli.md">Read the CLI guide</a></p>
+<header class="mast"><div class="wrap mast-row"><a class="brand" href="./">ORG.md <span>Desk</span></a><a class="back" href="./">← What is ORG.md?</a></div></header>
+
+<main id="main">
+  <div class="wrap">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">Design concept · fictional data</p>
+      <h1 id="page-title">Review important guidance without editing files.</h1>
+      <p class="lede">A future ORG.md Desk could show proposed changes in plain language while Git keeps the history underneath.</p>
+      <p class="boundary"><strong>Concept only.</strong> This page uses local browser state only. Nothing is saved, approved, synced, published, or enforced.</p>
     </section>
-    <section class="poc-workflow" aria-labelledby="workflow-title">
-      <p class="eyebrow">Direction of travel</p>
-      <h2 id="workflow-title">Possible POC workflow — not implemented by this page</h2>
-      <p>The interface is the approachable layer; Git remains the record underneath.</p>
-      <ol class="workflow-steps">
-        <li class="workflow-step next"><span class="state">Future Desk</span><strong>Owner proposes</strong><p>A guided form creates a draft change.</p></li>
-        <li class="workflow-step next"><span class="state">Proposed POC</span><strong>Git records review</strong><p>The change, discussion and decision remain traceable.</p></li>
-        <li class="workflow-step works"><span class="state">Works today</span><strong>ORG.md resolves</strong><p>The CLI validates and generates advisory context.</p></li>
-        <li class="workflow-step"><span class="state">Deployment choice</span><strong>Person reviews delivery</strong><p>A configured workflow places the approved view.</p></li>
+
+    <section aria-labelledby="workflow-title">
+      <div class="section-head"><p class="kicker">A simple workflow</p><h2 id="workflow-title">Three everyday steps.</h2><p>The interface stays approachable. The reviewed record stays traceable underneath.</p></div>
+      <ol class="workflow">
+        <li><strong>Owner proposes</strong><p>Describe the change in a guided form.</p></li>
+        <li><strong>Person reviews</strong><p>See the old and proposed wording side by side.</p></li>
+        <li><strong>Guidance is available</strong><p>An approved version can be prepared for delivery.</p></li>
       </ol>
-    </section>
-    <div class="hostline" aria-label="Prototype status"><span class="warn">● concept prototype</span><span>local browser state only</span><span>no repository or service connection</span></div>
-    <aside class="location" aria-label="Fictional organisational location">
-      <span class="label">Fictional location</span>
-      <div class="location-path"><span>Kōwhai Freight</span><span class="arrow" aria-hidden="true">›</span><span>Operations</span><span class="arrow" aria-hidden="true">›</span><span>North Island</span></div>
-      <p>The examples here represent company-wide meaning plus Operations and North Island meaning — one path, not one undifferentiated company register.</p>
-    </aside>
-    <div class="tabs" role="tablist" aria-label="Desk concept sections">
-      <button class="tab" id="tab-inbox" role="tab" aria-controls="v-inbox" aria-selected="true" data-v="inbox" tabindex="0">For you <span class="n">· 3</span></button>
-      <button class="tab" id="tab-meaning" role="tab" aria-controls="v-meaning" aria-selected="false" data-v="meaning" tabindex="-1">Our meaning</button>
-      <button class="tab" id="tab-changes" role="tab" aria-controls="v-changes" aria-selected="false" data-v="changes" tabindex="-1">Changes</button>
-      <button class="tab" id="tab-health" role="tab" aria-controls="v-health" aria-selected="false" data-v="health" tabindex="-1">Health</button>
-    </div>
-
-    <section id="v-inbox" role="tabpanel" aria-labelledby="tab-inbox">
-      <h2 class="greet">Morning, Tema. Three fictional examples need you.</h2>
-      <p class="greetsub">These cards illustrate what future sync and review workflows could surface. Nothing changes outside this page.</p>
-      <article class="card" id="card-vacancy"><div class="why">Future example · an HR adapter proposes a draft</div><h3>The Ops duty manager has left. Where should delivery questions go now?</h3><div class="diff"><div class="d old"><span class="lbl">Currently says</span>Customer delivery questions escalate to: <b>Ops duty manager</b> (role now vacant)</div><div class="d new"><span class="lbl">Proposed</span>Customer delivery questions escalate to: <b>Duty Operations Lead</b></div></div><p>This matters because an advisory prompt could tell a website assistant where to hand off delivery questions. A future integration would still need to place that prompt in the consumer.</p><div class="impact"><span class="ichip">fictional website assistant</span><span class="ichip">illustrative impact only</span></div><div class="actions"><button class="btn" type="button" data-preview="card-vacancy">Preview approved state</button><span class="concept-only">Other review controls are concept-only</span></div><div class="donebar" role="status">✓ Illustrative approved state. No repository, revision, or generated output changed.</div><div class="under">A future Desk could record owner ratification through a reviewed repository change. This prototype does not perform that action.</div></article>
-      <article class="card" id="card-revisit"><div class="why">Future example · scheduled review</div><h3>“Road-first routing for North Island freight” is due its review</h3><p>The fictional decision was confirmed in May 2026. A future Desk could help an owner record a new attributable revision. <b>Is it still true?</b></p><div class="actions"><button class="btn" type="button" data-preview="card-revisit">Preview reconfirmed state</button><span class="concept-only">Editing is not implemented here</span></div><div class="donebar" role="status">✓ Illustrative reconfirmed state. Nothing was saved and no review date changed.</div><div class="under">The current CLI can report revisit findings; it does not reconfirm entries or persist revisions.</div></article>
-      <article class="card"><div class="why">Future example · contested meaning</div><h3>Two teams disagree about what “active customer” means</h3><p><b>Sales:</b> ordered within the last 12 months. <b>Finance:</b> holds a current account. Generated context can mark the term as contested and advise consumers to escalate. The current prototype cannot control consumer behaviour.</p><div class="impact"><span class="ichip">fictional churn report</span><span class="ichip">fictional sales assistant</span></div><div class="under">Contestation is an attributable lifecycle state in ORG.md, not an automatic cautious mode supplied by Desk.</div></article>
+      <p class="under-note"><strong>Today:</strong> the v0.5.0 CLI creates advisory output. A person or configured workflow must still place it where it is used.</p>
     </section>
 
-    <section id="v-meaning" role="tabpanel" aria-labelledby="tab-meaning" hidden>
-      <h2 class="greet">Our meaning</h2><p class="greetsub">Fictional entries illustrating how a future browser might present operative text, ownership, visibility, review state, and configured consumers.</p>
-      <input class="search" value="Concept search — not active" aria-label="Concept search is not active" disabled>
-      <div class="filters" aria-label="Concept filters"><button class="fchip" disabled>All · 4 examples</button><button class="fchip" disabled>Words</button><button class="fchip" disabled>Rules</button><button class="fchip" disabled>Decisions</button></div>
-      <article class="entry"><span class="kind">Word · illustrative</span><h3>consignment</h3><p>One customer booking, end to end. May span multiple legs and carriers. A <em>shipment</em> is a single leg — do not mix them.</p><div class="meta"><span class="schip ok">Approved example</span><span class="schip">Public</span><span class="schip">Owner: role.product</span><span class="schip">Could be projected manually</span></div></article>
-      <article class="entry"><span class="kind">Rule · illustrative</span><h3>Never quote delivery times to customers</h3><p>Advisory in today's CLI. A future deployment could enforce this only through a declared, interposed enforcement point.</p><div class="meta"><span class="schip ok">Approved · advisory example</span><span class="schip">Internal</span><span class="schip">Owner: role.operations</span><span class="schip">No adapter connected</span></div></article>
-      <article class="entry"><span class="kind">Decision · illustrative</span><h3>North Island freight goes road-first</h3><p>Rail only when road capacity runs short. Fictional decision, reviewed yearly.</p><div class="meta"><span class="schip warn">Review due example</span><span class="schip">Internal</span><span class="schip">Owner: role.network</span></div></article>
-      <article class="entry"><span class="kind">Word · illustrative</span><h3>active customer</h3><p>Two definitions in play. A resolver can surface the contested lifecycle state; consumer handling remains a deployment choice.</p><div class="meta"><span class="schip hot">Contested example</span><span class="schip">Internal</span><span class="schip">Owner: role.customer</span></div></article>
+    <section aria-labelledby="task-title">
+      <div class="section-head"><p class="kicker">One realistic task</p><h2 id="task-title">Make a change easy to understand.</h2></div>
+      <div class="path" aria-label="Organisational path"><span>Kōwhai Freight</span><span>Operations</span><span>North Island</span></div>
+      <article class="task">
+        <p class="type">Proposed owner change</p>
+        <h3>Where should delivery questions go now?</h3>
+        <p class="why">The former duty-manager role is vacant. A website assistant needs the approved hand-off point.</p>
+        <div class="diff">
+          <div class="version"><p class="label">Currently says</p><p>Refer delivery questions to the <strong>Operations Duty Manager</strong>.</p></div>
+          <div class="version new"><p class="label">Proposed</p><p>Refer delivery questions to the <strong>Duty Operations Lead</strong>.</p></div>
+        </div>
+        <div class="task-actions"><button class="preview" id="preview-change" type="button" aria-pressed="false">Preview approved view</button><span class="task-note">Preview only · no change is saved</span></div>
+        <p class="done" id="preview-result" role="status" hidden>Preview: the proposed wording is shown as approved. The repository and generated guidance are unchanged.</p>
+      </article>
     </section>
 
-    <section id="v-changes" role="tabpanel" aria-labelledby="tab-changes" hidden>
-      <h2 class="greet">Changes</h2><p class="greetsub">Illustrative activity history. This prototype does not persist actions or produce audit evidence.</p>
-      <div class="lrow"><span class="t">Future example</span><div><b>An owner records</b> a reviewed escalation-route change through a repository workflow.</div></div><div class="lrow"><span class="t">Future example</span><div><b>An HR adapter proposes</b> a draft after noticing a vacant role. A person must still review it.</div></div><div class="lrow"><span class="t">Future example</span><div><b>A generated projection is published</b> by a separately configured deployment pipeline.</div></div><div class="lrow"><span class="t">Future example</span><div><b>A contested lifecycle change</b> records who raised it and why.</div></div><div class="lrow"><span class="t">Future example</span><div><b>An audit integration assembles</b> version and ratification evidence for export.</div></div>
+    <section aria-labelledby="desk-could-title">
+      <div class="section-head"><p class="kicker">What Desk could bring together</p><h2 id="desk-could-title">One calm place for owners.</h2></div>
+      <div class="preview-grid">
+        <article class="preview-card"><span class="icon" aria-hidden="true">01</span><h3>Browse guidance</h3><p>See the words, rules and decisions that apply here.</p></article>
+        <article class="preview-card"><span class="icon" aria-hidden="true">02</span><h3>Review changes</h3><p>Compare plain-language versions before approval.</p></article>
+        <article class="preview-card"><span class="icon" aria-hidden="true">03</span><h3>Check health</h3><p>Find missing owners, open drafts and overdue reviews.</p></article>
+      </div>
+      <p class="try-link"><a href="playground/">Try the working v0.5 example →</a></p>
     </section>
+  </div>
+</main>
 
-    <section id="v-health" role="tabpanel" aria-labelledby="tab-health" hidden>
-      <h2 class="greet">Health</h2><p class="greetsub">Illustrative metrics a future Desk could derive from validated bundles, doctor findings, and separately configured integrations.</p>
-      <div class="stats"><div class="stat"><div class="v warn">2</div><div class="l">fictional entries due review</div></div><div class="stat"><div class="v warn">1</div><div class="l">fictional contested entry</div></div><div class="stat"><div class="v good">0</div><div class="l">source systems connected</div></div><div class="stat"><div class="v good">0</div><div class="l">changes persisted by this page</div></div></div>
-      <div class="notice"><b>Future integration:</b> an audit service could assemble version and ratification evidence for export. v0.5 and this page do not create an evidence pack.</div>
-    </section>
-  </main>
-  <footer class="foot">Tabs and preview buttons change only this page's local display. Nothing is saved, approved, synced, published, or enforced. <a href="playground/">See what v0.5 really runs today →</a></footer>
-</div>
+<footer><div class="wrap foot">ORG.md Desk · interactive concept · local browser state only</div></footer>
 <script>
 (function(){
   'use strict';
-  var tabs=[].slice.call(document.querySelectorAll('.tab'));
-  var panels=tabs.map(function(tab){return document.getElementById(tab.getAttribute('aria-controls'));});
-  tabs.forEach(function(tab,index){
-    tab.addEventListener('click',function(){select(index,false);});
-    tab.addEventListener('keydown',function(event){
-      var next;
-      if(event.key==='ArrowRight')next=(index+1)%tabs.length;
-      if(event.key==='ArrowLeft')next=(index-1+tabs.length)%tabs.length;
-      if(event.key==='Home')next=0;
-      if(event.key==='End')next=tabs.length-1;
-      if(next===undefined)return;
-      event.preventDefault();select(next,true);
-    });
+  var button=document.getElementById('preview-change');
+  var result=document.getElementById('preview-result');
+  button.addEventListener('click',function(){
+    var active=button.getAttribute('aria-pressed')!=='true';
+    button.setAttribute('aria-pressed',active?'true':'false');
+    button.textContent=active?'Approved view previewed':'Preview approved view';
+    result.hidden=!active;
   });
-  document.querySelectorAll('[data-preview]').forEach(function(button){button.addEventListener('click',function(){var card=document.getElementById(button.getAttribute('data-preview'));card.classList.add('previewed');button.disabled=true;button.textContent='Local preview shown';});});
-  function select(index,focus){tabs.forEach(function(tab,tabIndex){var selected=index===tabIndex;tab.setAttribute('aria-selected',selected?'true':'false');tab.tabIndex=selected?0:-1;panels[tabIndex].hidden=!selected;});if(focus)tabs[index].focus();}
 })();
 </script>
 </body>
