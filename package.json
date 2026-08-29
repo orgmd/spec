@@ -8,11 +8,13 @@
     "build": "node scripts/copy-package-assets.mjs && tsc -p packages/orgmd/tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc -p packages/orgmd/tsconfig.json --noEmit",
-    "format:check": "prettier --check package.json tsconfig.json packages/orgmd scripts .github/workflows/ci.yml",
-    "check": "npm run format:check && npm run typecheck && npm test && npm run build",
+    "format:check": "prettier --check package.json tsconfig.json packages/orgmd scripts .github/workflows/ci.yml .github/workflows/pages.yml",
+    "check": "npm run format:check && npm run typecheck && npm test && npm run build && npm run site:playground:check",
     "validate:org": "node packages/orgmd/dist/cli/bin.js validate org",
     "doctor:org": "node packages/orgmd/dist/cli/bin.js doctor org --today 2026-08-21",
-    "pack:check": "npm run build && node scripts/verify-pack.mjs"
+    "pack:check": "npm run build && node scripts/verify-pack.mjs",
+    "site:playground:generate": "npm run build && node scripts/generate-site-playground.mjs --write",
+    "site:playground:check": "node scripts/generate-site-playground.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",

@@ -4,7 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
-<title>ORG.md — the organisational meaning layer · Draft 0.3, request for comments</title>
+<meta name="description" content="ORG.md is a draft open standard for portable organisational meaning. Explore the 0.5.0 reference CLI for validating, resolving and compiling advisory AGENTS.md and prompt context.">
+<link rel="canonical" href="https://orgmd.github.io/spec/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ORG.md — a portable contract for organisational meaning">
+<meta property="og:description" content="A draft open standard and source-available reference CLI for validated, scope-resolved organisational context.">
+<meta property="og:url" content="https://orgmd.github.io/spec/">
+<meta property="og:image" content="https://orgmd.github.io/spec/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ORG.md — a portable contract for organisational meaning">
+<meta name="twitter:description" content="Explore the 0.3.1-draft specification and the source-available 0.5.0 reference CLI.">
+<meta name="twitter:image" content="https://orgmd.github.io/spec/assets/og.png">
+<title>ORG.md — a portable contract for organisational meaning · 0.3.1-draft</title>
 <link rel="icon" type="image/svg+xml" href="assets/logo-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -35,6 +46,8 @@
   .wrap{max-width:760px;margin:0 auto;padding:0 20px;}
   ::selection{background:var(--kowhai);color:#101720;}
   :focus-visible{outline:2px solid var(--kowhai);outline-offset:2px;}
+  .skip{position:absolute;left:16px;top:-80px;z-index:10;background:var(--kowhai);color:#101720;padding:10px 14px;border-radius:0 0 8px 8px;font-family:var(--mono);font-size:12px;font-weight:600;}
+  .skip:focus{top:0;}
 
   header.mast{border-bottom:1px solid var(--line);}
   .meta-row{display:flex;flex-wrap:wrap;gap:8px 18px;padding:14px 0;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-soft);}
@@ -50,6 +63,10 @@
   .standfirst{margin-top:18px;font-size:16px;line-height:1.65;color:var(--text-soft);max-width:58ch;}
   .standfirst b{color:var(--text);font-weight:600;}
   .status-line{margin-top:22px;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--kowhai);}
+  .hero-actions{margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;}
+  .hero-actions a{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-family:var(--disp);font-size:14px;font-weight:700;text-decoration:none;background:var(--surface);}
+  .hero-actions a.primary{background:var(--kowhai);border-color:var(--kowhai);color:#101720;}
+  .hero-actions a:hover{border-color:var(--text-soft);}
   /* hero: one source -> four audiences */
   .flow{margin-top:28px;display:grid;grid-template-columns:1fr auto 1.3fr;gap:16px;align-items:center;}
   .flow .eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);margin-bottom:10px;}
@@ -79,6 +96,21 @@
   .sec-head h2{font-family:var(--disp);font-weight:800;font-size:clamp(24px,4.5vw,32px);letter-spacing:-.02em;}
   p.lede{max-width:60ch;margin-bottom:18px;}
   .lede-after{margin-top:18px;}
+
+  /* current implementation boundary */
+  .cap-grid{display:grid;gap:1px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--line);}
+  .cap{display:grid;grid-template-columns:150px 1fr 1fr;gap:14px;background:var(--surface);padding:14px 16px;}
+  .cap.head{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-soft);background:var(--inset);}
+  .cap .name{font-family:var(--disp);font-size:14px;font-weight:800;}
+  .cap p{font-size:13.5px;line-height:1.55;color:var(--text-soft);}
+  .cap p strong{color:var(--pass);font-weight:600;}
+  @media(max-width:650px){
+    .cap{grid-template-columns:1fr;gap:5px;}
+    .cap.head{display:none;}
+    .cap p::before{display:block;margin-bottom:2px;font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--kowhai);}
+    .cap p:nth-child(2)::before{content:"0.5 today";}
+    .cap p:nth-child(3)::before{content:"Later integration";}
+  }
 
   /* problem: drift rows */
   .drift{margin-top:28px;border:1px solid var(--line);border-radius:8px;background:var(--surface);overflow:hidden;}
@@ -150,7 +182,7 @@
   .panel{margin-top:20px;}
   .panel[hidden]{display:none;}
   .panel-label{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--kowhai);margin-bottom:12px;}
-  .js .panel-label{display:none;}
+  .future-badge{display:inline-block;margin-bottom:12px;border:1px solid var(--kowhai);border-radius:999px;padding:4px 9px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--kowhai);}
   .scenario{font-size:15.5px;line-height:1.6;max-width:60ch;margin-bottom:14px;color:var(--text-soft);}
   .scenario b{color:var(--text);font-weight:600;}
   .snip-cap{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-soft);margin-bottom:8px;}
@@ -203,22 +235,30 @@
 </head>
 <body>
 
+<a class="skip" href="#main">Skip to the main content</a>
+
 <header class="mast">
   <div class="wrap">
     <div class="meta-row">
-      <span>ORG.md</span><span class="dot">Draft 0.3</span><span class="dot">August 2026</span><span class="dot">Open standard</span><span class="dot">Spec CC BY 4.0 · code Apache-2.0</span><span class="dot new">Request for comments</span>
+      <span>ORG.md</span><span class="dot">Specification 0.3.1-draft</span><span class="dot">August 2026</span><span class="dot">Open standard</span><span class="dot">Spec CC BY 4.0 · code Apache-2.0</span><span class="dot new">Request for comments</span>
     </div>
   </div>
 </header>
 
-<main>
+<main id="main">
 <div class="wrap">
   <div class="hero">
     <h1>ORG<span class="md">.md</span></h1>
-    <p class="thesis">One source of <span class="hl-strong">org meaning</span> — written once, <span class="hl">filtered, and delivered</span> to every AI tool and every person.</p>
-    <p class="standfirst">In plain terms: your company's words, rules, decisions and owners, written down once. ORG.md is the shared format they are written in; the tooling built on it keeps that meaning current, works out who may see what, and delivers the right version to every AI tool and every person.</p>
-    <p class="status-line">0.5.0 reference implementation available in this repository · release-ready · npm, tag, GitHub Release, and Pages publication still pending.</p>
-    <p class="flow-note">The implemented <code>agents-md</code> and <code>prompt</code> projections are advisory context, not runtime enforcement.</p>
+    <p class="thesis">A portable contract for <span class="hl-strong">organisational meaning</span> — versioned, resolved by scope, and projected as context for people and AI systems.</p>
+    <p class="standfirst">Record your organisation's vocabulary, policies, decisions, owners and definitions of done in a small, human-readable bundle. The 0.5.0 reference CLI validates that bundle, resolves approved revisions, and compiles clearance-filtered advisory context for AGENTS.md and prompts.</p>
+    <p class="status-line">Specification 0.3.1-draft · reference CLI 0.5.0 source-available and runnable from this repository · Pages live · npm package, Git tag and GitHub Release pending.</p>
+    <p class="flow-note">The current CLI emits advisory text only. It does not enforce actions, authenticate approvers, sync systems of record, or operate a hosted service.</p>
+    <div class="hero-actions" aria-label="Get started">
+      <a class="primary" href="playground/">Try the v0.5 example</a>
+      <a href="https://github.com/orgmd/spec/blob/main/docs/cli.md">Read the CLI guide</a>
+      <a href="https://github.com/orgmd/spec">View the source</a>
+      <a href="desk.html">Explore the Desk concept</a>
+    </div>
     <div class="flow">
       <div class="src-card">
         <p class="eyebrow">One source</p>
@@ -232,14 +272,28 @@
         <span class="lbl">filtered by who may see what</span>
       </div>
       <div class="aud">
-        <div class="row"><span class="who">Coding agents</span><span class="scope">sees: internal</span></div>
-        <div class="row"><span class="who">Customer bots</span><span class="scope">sees: public</span></div>
-        <div class="row"><span class="who">Staff assistants</span><span class="scope">sees: internal</span></div>
-        <div class="row"><span class="who">People &mdash; the handbook</span><span class="scope">sees: their role</span></div>
+        <div class="row"><span class="who">AGENTS.md fragment</span><span class="scope">agents-md · v0.5</span></div>
+        <div class="row"><span class="who">Prompt block</span><span class="scope">prompt · v0.5</span></div>
+        <div class="row"><span class="who">People &mdash; a handbook</span><span class="scope">future profile</span></div>
+        <div class="row"><span class="who">Gates &amp; adapters</span><span class="scope">future integration</span></div>
       </div>
     </div>
-    <p class="flow-note">Change an entry once; every audience gets its own right version.</p>
+    <p class="flow-note">Available today: generate and review advisory AGENTS.md and prompt context. Future integrations may add handbooks, gates and automated delivery.</p>
   </div>
+
+  <section id="capabilities">
+    <div class="sec-head"><span class="no">Now</span><h2>What works today</h2></div>
+    <p class="lede">The specification defines the wider contract. This separates the source-available 0.5.0 implementation from integrations the project is still exploring.</p>
+    <div class="cap-grid">
+      <div class="cap head"><span>Capability</span><span>Available in 0.5.0</span><span>Later integration</span></div>
+      <div class="cap"><span class="name">Bundle contract</span><p><strong>Available.</strong> Validate entries and their semantic rules against the 0.3.1-draft contract.</p><p>Continue specification work through RFCs.</p></div>
+      <div class="cap"><span class="name">Resolution</span><p><strong>Available.</strong> Select effective approved revisions and apply scope, authority and staleness rules.</p><p>Identity-backed roles and ratifier verification.</p></div>
+      <div class="cap"><span class="name">Maintenance</span><p><strong>Available.</strong> Report overdue reviews, orphaned owners, source drift and pending revisions with <code>doctor</code>.</p><p>Source adapters and managed review workflows.</p></div>
+      <div class="cap"><span class="name">Authoring</span><p><strong>Available.</strong> Preview/create a minimal bundle with <code>init</code>; preview/import draft candidates with <code>adopt</code>.</p><p>Guided authoring through a non-technical Desk interface.</p></div>
+      <div class="cap"><span class="name">Projections</span><p><strong>Available.</strong> Compile deterministic <code>agents-md</code> and <code>prompt</code> outputs. Both are advisory.</p><p>Handbook rendering and additional projection profiles.</p></div>
+      <div class="cap"><span class="name">Enforcement &amp; operations</span><p>Not included in 0.5.0.</p><p>Interposed gates, signing, audit/SIEM integration, hosted services and automated delivery.</p></div>
+    </div>
+  </section>
 
   <section id="problem">
     <div class="sec-head"><span class="no">§1</span><h2>The problem</h2></div>
@@ -316,7 +370,7 @@ org/
     <div class="commitments">
       <div class="commit">
         <span class="name">Canonical by exception</span>
-        <p>Entries sync in from your existing systems of record, so this doesn't become another wiki that quietly rots.</p>
+        <p>The specification supports entries sourced from existing systems of record. Source adapters are deployment integrations and are not included in v0.5.</p>
       </div>
       <div class="commit">
         <span class="name">Small on purpose</span>
@@ -324,15 +378,15 @@ org/
       </div>
       <div class="commit">
         <span class="name">Borrow, never build</span>
-        <p>Sign-in, keys and audit come from the systems your company already runs. ORG.md owns a format and a compiler, nothing else.</p>
+        <p>Deployments are intended to reuse existing identity, key-management and audit systems. Those integrations are outside the v0.5 CLI.</p>
       </div>
     </div>
   </section>
 
   <section id="how">
     <div class="sec-head"><span class="no">§3</span><h2>How it works</h2></div>
-    <p class="lede">Nothing in the pipeline is new. Meaning is written as plain text, reviewed like code, compiled per audience, and delivered in whatever form each consumer already reads. The only novel part is agreeing on the format.</p>
-    <p class="lede">In plain terms: someone writes a rule down once, the right person signs it off, and software carries the right version of it to every bot, agent and colleague. The grey boxes below are the real thing — ordinary text files a person can read without any tooling.</p>
+    <p class="lede">The current implementation uses familiar pieces: plain-text entries, deterministic validation and resolution, and generated advisory context. Delivery into a consumer remains a deployment choice.</p>
+    <p class="lede">A human records ratification in the bundle. The CLI selects the effective approved revision and generates text for review; it does not operate an approval system or deliver that text automatically.</p>
     <div class="steps">
       <div class="step">
         <p class="step-head"><span class="no">01</span><span>Write it once</span></p>
@@ -350,11 +404,11 @@ a synonym for one.</div>
       </div>
       <div class="step">
         <p class="step-head"><span class="no">02</span><span>Review it like code</span></p>
-        <p class="d">Changes arrive as pull requests. Only the entry's named <b>owner</b> can ratify one — the merge is the approval, and the git history is the audit trail. No steering committee, no wiki edit wars.</p>
+        <p class="d">The specification requires a human owner to ratify a revision. A Git pull request can record that review, but v0.5 does not verify the reviewer's identity or treat a merge itself as ratification.</p>
         <div class="snip"><span class="c">pull request · glossary.md</span>
 term.consignment  <span class="k">rev 3 → 4</span>
-<span class="ok">✓ approved</span> · role.product-owner
-<span class="c">merged · revision history records the review</span></div>
+<span class="ok">review recorded by the Git workflow</span>
+<span class="c">status: approved is authored in the bundle</span></div>
       </div>
       <div class="step">
         <p class="step-head"><span class="no">03</span><span>Compile advisory context</span></p>
@@ -378,12 +432,12 @@ term.consignment  <span class="k">rev 3 → 4</span>
   </section>
 
   <section id="change">
-    <div class="sec-head"><span class="no">§4</span><h2>One change, everywhere</h2></div>
+    <div class="sec-head"><span class="no">§4</span><h2>One source, controlled revisions</h2></div>
     <p class="lede">In §1, a wiki page last edited in 2024 was still telling every reader — human and machine — that the company prioritises rail. Here is the same update, made where meaning lives:</p>
     <div class="chg">
       <div class="chg-row">
         <span class="no">01</span>
-        <p><b>Edit.</b> Ops moves the long-haul default from rail to coastal shipping. One entry changes — <em>dec.014</em> — and the change opens as a pull request.</p>
+        <p><b>Edit.</b> Ops moves the long-haul default from rail to coastal shipping. One entry changes — <em>dec.014</em> — and, in a Git-based workflow, the change can be reviewed through a pull request.</p>
         <span class="tag">dec.014 · rev 6 → 7</span>
       </div>
       <div class="chg-row">
@@ -406,15 +460,15 @@ term.consignment  <span class="k">rev 3 → 4</span>
     <div class="states">
       <div class="state">
         <span class="chip s-draft">draft</span>
-        <p>Proposed meaning. Never delivered to any consumer, so a half-formed idea can't ship.</p>
+        <p>Not selected by a conforming resolver or emitted as the effective organisational meaning. Its presence still changes bundle and context identifiers.</p>
       </div>
       <div class="state">
         <span class="chip s-approved">approved</span>
-        <p>Ratified by the owner. This is what every surface receives.</p>
+        <p>Eligible to become the effective revision and appear in permitted projections.</p>
       </div>
       <div class="state">
         <span class="chip s-rejected">rejected</span>
-        <p>Not ratified. It is never delivered as current organisational context.</p>
+        <p>Not selected as the effective revision.</p>
       </div>
     </div>
     <p class="lede lede-after">Contestation and retirement are lifecycle states recorded only in <code>org.identity.lifecycle</code>; they do not extend the revision-status vocabulary.</p>
@@ -423,7 +477,7 @@ term.consignment  <span class="k">rev 3 → 4</span>
   <section id="industries" data-v0-5="future-projections">
     <div class="sec-head"><span class="no">§5</span><h2>Your industry, your tools</h2></div>
     <p class="lede"><b>Future projection examples — not shipped in v0.5.</b> Gate and handbook destinations below illustrate later work; v0.5 ships only advisory <code>agents-md</code> and <code>prompt</code> projections.</p>
-    <p class="lede">The bundle is the same handful of files everywhere. What changes is which entry is expensive to get wrong — and which tools are listening. One entry per industry, and the three surfaces it lands on:</p>
+    <p class="lede">The bundle is the same handful of files everywhere. What changes is which entry is expensive to get wrong. These are illustrative current and future destinations, not integrations shipped by v0.5:</p>
     <div class="tabs" role="tablist" aria-label="Industry examples">
       <button class="tab" role="tab" id="tab-freight" aria-controls="panel-freight" aria-selected="true">Freight &amp; logistics</button>
       <button class="tab" role="tab" id="tab-health" aria-controls="panel-health" aria-selected="false">Healthcare</button>
@@ -434,7 +488,8 @@ term.consignment  <span class="k">rev 3 → 4</span>
 
     <div class="panel" id="panel-freight" role="tabpanel" aria-labelledby="tab-freight">
       <p class="panel-label">Freight &amp; logistics</p>
-      <p class="scenario"><b>The rule:</b> never let a bot promise a delivery time. Written once by ops, it reaches every surface below — including the ones from §1 that used to drift.</p>
+      <p class="future-badge">Illustrative future integration · not included in v0.5</p>
+      <p class="scenario"><b>The rule:</b> never let a bot promise a delivery time. Written once by ops, future integrations could carry it to the surfaces below.</p>
       <div class="panel-grid">
         <div>
         <p class="snip-cap">the entry — a plain text file</p>
@@ -452,7 +507,7 @@ Quote the published service window;
 anything firmer is ops' call.</div>
         </div>
         <div>
-        <p class="snip-cap">where it lands</p>
+        <p class="snip-cap">illustrative current and future destinations</p>
         <div class="lands">
           <div class="copy">
             <span class="src">customer bot · intercom prompt</span>
@@ -482,6 +537,7 @@ anything firmer is ops' call.</div>
 
     <div class="panel" id="panel-health" role="tabpanel" aria-labelledby="tab-health">
       <p class="panel-label">Healthcare</p>
+      <p class="future-badge">Illustrative future integration · not included in v0.5</p>
       <p class="scenario"><b>The rule:</b> no patient record leaves the practice without the privacy officer sighting the request. The interesting part is who <em>doesn't</em> see the rule — and gets gated anyway.</p>
       <div class="panel-grid">
         <div>
@@ -498,10 +554,11 @@ anything firmer is ops' call.</div>
 <span class="c">---</span>
 No patient record leaves the practice
 without the privacy officer sighting
-the request. HIPC 2020 applies.</div>
+the request. Apply the organisation's
+Health Information Privacy Code 2020 policy.</div>
         </div>
         <div>
-        <p class="snip-cap">where it lands</p>
+        <p class="snip-cap">illustrative current and future destinations</p>
         <div class="lands">
           <div class="copy">
             <span class="src">reception chatbot · public scope</span>
@@ -531,6 +588,7 @@ the request. HIPC 2020 applies.</div>
 
     <div class="panel" id="panel-fintech" role="tabpanel" aria-labelledby="tab-fintech">
       <p class="panel-label">Fintech</p>
+      <p class="future-badge">Illustrative future integration · not included in v0.5</p>
       <p class="scenario"><b>The rule:</b> agents may draft refunds, but above NZ$500 a human in finance issues them. One number, one home — and a paper trail for the regulator. To be exact about the split: the gate answers <b>escalate</b> to every <b>payments.refund.issue</b>, and the NZ$500 threshold lives in the rule's prose, applied by the finance person on the route — ORG.md carries meaning to the people and agents who act on it; it does not read amounts or classify raw business events.</p>
       <div class="panel-grid">
         <div>
@@ -550,7 +608,7 @@ amount; above NZ$500 a human in
 finance issues them.</div>
         </div>
         <div>
-        <p class="snip-cap">where it lands</p>
+        <p class="snip-cap">illustrative current and future destinations</p>
         <div class="lands">
           <div class="copy">
             <span class="src">support agent · zendesk / fin</span>
@@ -580,6 +638,7 @@ finance issues them.</div>
 
     <div class="panel" id="panel-aviation" role="tabpanel" aria-labelledby="tab-aviation">
       <p class="panel-label">Airports &amp; aviation</p>
+      <p class="future-badge">Illustrative future integration · not included in v0.5</p>
       <p class="scenario"><b>The rule:</b> nothing moves airside without an active clearance. Written once at the top of the airport's tree; Terminal 2 tightens it for its own apron. An operation this broad — airside, retail, security, ground handlers — is exactly why bundles nest.</p>
       <div class="panel-grid">
         <div>
@@ -600,7 +659,7 @@ narrow this for their own apron;
 none may weaken it.</div>
         </div>
         <div>
-        <p class="snip-cap">where it lands</p>
+        <p class="snip-cap">illustrative current and future destinations</p>
         <div class="lands">
           <div class="copy">
             <span class="src">gse dispatch agent · mcp gate</span>
@@ -630,6 +689,7 @@ none may weaken it.</div>
 
     <div class="panel" id="panel-saas" role="tabpanel" aria-labelledby="tab-saas">
       <p class="panel-label">SaaS</p>
+      <p class="future-badge">Illustrative future integration · not included in v0.5</p>
       <p class="scenario"><b>The rule:</b> "done" means shipped behind a flag with telemetry and a rollback path. Not a policy — a shared definition, which is most of what teams actually argue about.</p>
       <div class="panel-grid">
         <div>
@@ -647,7 +707,7 @@ a rollback path — not when the
 pull request merges.</div>
         </div>
         <div>
-        <p class="snip-cap">where it lands</p>
+        <p class="snip-cap">illustrative current and future destinations</p>
         <div class="lands">
           <div class="copy">
             <span class="src">coding agent · claude code / cursor</span>
@@ -774,7 +834,9 @@ pull request merges.</div>
   <footer>
     <p class="foot-cta">If this is your problem too, <span class="hl">I want to hear from you</span>.</p>
     <div class="foot-row">
-      <span>ORG.md · Draft 0.3</span>
+      <span>ORG.md · Specification 0.3.1-draft</span>
+      <a href="playground/">Working example</a>
+      <a href="desk.html">Desk concept</a>
       <a href="mailto:matt@boundfor.co.nz">matt@boundfor.co.nz</a>
       <a href="https://www.linkedin.com/in/matthewawood/">LinkedIn</a>
       <a href="https://github.com/orgmd/spec">github.com/orgmd/spec</a>
@@ -803,8 +865,12 @@ pull request merges.</div>
   tabs.forEach(function(t,i){
     t.addEventListener('click',function(){select(i);});
     t.addEventListener('keydown',function(e){
-      var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;
-      if(d){e.preventDefault();select((i+d+tabs.length)%tabs.length,true);}
+      var next;
+      if(e.key==='ArrowRight')next=(i+1)%tabs.length;
+      if(e.key==='ArrowLeft')next=(i-1+tabs.length)%tabs.length;
+      if(e.key==='Home')next=0;
+      if(e.key==='End')next=tabs.length-1;
+      if(next!==undefined){e.preventDefault();select(next,true);}
     });
   });
   select(0);

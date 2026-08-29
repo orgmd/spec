@@ -53,3 +53,38 @@ it("keeps remaining signing and projection examples outside v0.5", () => {
   expect(site).toContain('data-v0-5="future-projections"');
   expect(site).toContain("Future projection examples — not shipped in v0.5.");
 });
+
+it("publishes the current release boundary without stale Pages claims", () => {
+  const readme = read("README.md");
+  const site = read("site/index.html");
+
+  for (const document of [readme, site]) {
+    expect(document).toContain("0.3.1-draft");
+    expect(document).toContain("0.5.0");
+    expect(document).toContain("Pages");
+    expect(document).not.toContain("Pages publication still pending");
+    expect(document).not.toContain("Pages deployment have not been published");
+  }
+  expect(site).toContain("The current CLI emits advisory text only.");
+  expect(site).toContain('href="playground/"');
+  expect(site).toContain('href="desk.html"');
+});
+
+it("keeps the Desk page visibly bounded as a local concept", () => {
+  const desk = read("site/desk.html");
+
+  expect(desk).toContain("Concept prototype · fictional data · no backend");
+  expect(desk).toContain("local browser state only");
+  expect(desk).toContain(
+    "Nothing is saved, approved, synced, published, or enforced.",
+  );
+  for (const staleClaim of [
+    "self-hosted on your infrastructure",
+    "last sync:",
+    "Enforced automatically",
+    "Approved · enforced",
+    "live across every assistant",
+  ]) {
+    expect(desk).not.toContain(staleClaim);
+  }
+});

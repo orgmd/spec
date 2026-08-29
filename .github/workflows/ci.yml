@@ -21,6 +21,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run site:playground:check
       - run: npm run validate:org
       - run: npm run doctor:org
       - if: matrix.node == 20
