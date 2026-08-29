@@ -23,8 +23,8 @@ it("keeps revision statuses separate from lifecycle state", () => {
   const readme = read("README.md");
   const site = read("site/index.html");
 
-  expect(readme).toContain(
-    "Revision status is exactly `draft`, `approved`, or `rejected`.",
+  expect(readme).toMatch(
+    /Revision status is exactly `draft`,\s+`approved`,\s+or `rejected`\./,
   );
   expect(site).toContain('class="chip s-rejected">rejected');
   expect(site).toContain(
@@ -87,4 +87,47 @@ it("keeps the Desk page visibly bounded as a local concept", () => {
   ]) {
     expect(desk).not.toContain(staleClaim);
   }
+});
+
+it("explains composition and large-organisation scale without overstating v0.5", () => {
+  const readme = read("README.md");
+  const site = read("site/index.html");
+
+  expect(site).toContain('data-v0-5="large-org-boundary"');
+  expect(site).toContain(
+    "It is not the name of one enormous company document.",
+  );
+  expect(site).toContain(
+    "Entries make up bundles. Bundles on the chosen path make up effective context.",
+  );
+  expect(site).toContain("Sibling branches are not merged into that view.");
+  expect(site).toContain("A bounded POC, not proven enterprise scale");
+  expect(site).toContain("projection filtering is not access control");
+  expect(readme).toContain(
+    "ORG.md is the name of the standard, not one enormous document.",
+  );
+  for (const document of [readme, site]) {
+    expect(document).not.toMatch(/enterprise[- ]ready|proven at scale/i);
+  }
+});
+
+it("puts the playground decision before its technical evidence", () => {
+  const playground = read("site/playground/index.html");
+
+  expect(playground).toContain("The decision before the technical detail");
+  expect(playground).toContain("Meaning currently in force");
+  expect(playground).toContain(
+    "A newer draft does not replace approved meaning.",
+  );
+  expect(playground).toContain("Evidence: recorded bundle source");
+});
+
+it("shows the Desk POC workflow without presenting it as implemented", () => {
+  const desk = read("site/desk.html");
+
+  expect(desk).toContain(
+    "Possible POC workflow — not implemented by this page",
+  );
+  expect(desk).toContain("The interface is the approachable layer");
+  expect(desk).toContain("one path, not one undifferentiated company register");
 });

@@ -38,7 +38,8 @@ once.
 
 ## What ORG.md does
 
-One small, git-versioned bundle:
+One small, git-versioned bundle for a small organisation or organisational
+layer:
 
 ```
 org/
@@ -74,10 +75,12 @@ Three design commitments carry the whole thing:
 
 ## Layers and scale
 
-A two-person company runs one bundle. A larger organisation — board,
-exec, business units, teams — gives each layer its own, and every
-consumer resolves down one designated path of the tree (SPEC §5). Three
-kinds of meaning travel by three different rules:
+ORG.md is the name of the standard, not one enormous document. A two-person
+company can run one bundle. A larger organisation gives accountable layers —
+company, division, team, repository — their own small bundles, and every
+consumer resolves one designated root-to-consumer path (SPEC §5). Sibling
+branches are not merged into that view. Three kinds of meaning travel by three
+different rules:
 
 | Kind                            | Across layers                                                 | So that                                                                                 |
 | ------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -85,15 +88,19 @@ kinds of meaning travel by three different rules:
 | Policies                        | all apply; a closer layer may only narrow (SPEC §5, §4.6)     | no subtree can weaken a rule from above                                                 |
 | Decisions, ownership            | the anchoring bundle — closest to the root — wins (SPEC §5.2) | a team cannot rewrite a board decision; delegation is explicit, and never for decisions |
 
-This is also why the registers stay small at scale: mass is distributed —
-each layer holds only the meaning it owns — and the write-doctrine admits
-an entry only where a consumer acting on the wrong version is expensive
-(SPEC §9). Revision status is exactly `draft`, `approved`, or `rejected`.
-Contestation and retirement are recorded only in `org.identity.lifecycle`.
-Full rationale stays in your systems of record via `ref:` or `synced:`
-sources. Start as one bundle; split a layer out only when it needs to own its
-own meaning — the narrowing and anchoring rules make each split safe by
-construction.
+The design intent is to distribute ownership and keep each layer bounded: the
+write-doctrine admits an entry only where a consumer acting on the wrong
+version is expensive (SPEC §9). Revision status is exactly `draft`, `approved`,
+or `rejected`. Contestation and retirement are recorded only in
+`org.identity.lifecycle`. Full rationale stays in your systems of record via
+`ref:` or `synced:` sources.
+
+The v0.5 CLI proves this model for local filesystem ancestors. It does not yet
+provide an organisation registry, arbitrary sibling or multi-repository
+composition, authenticated clearance, task-specific retrieval, or an
+enterprise-volume benchmark. Start as one bundle; split by accountable layer or
+raw-storage boundary when that part of the organisation needs to own distinct
+meaning. Scope-filtered projections are not a raw-file access-control boundary.
 
 ## Quickstart
 
