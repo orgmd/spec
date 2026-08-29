@@ -67,8 +67,8 @@ describe("public playground", () => {
   it("labels the browser as a static advisory replay", () => {
     const page = read("site/playground/index.html");
 
-    expect(page).toContain("Static replay generated at build time");
-    expect(page).toContain("The browser selects pre-generated snapshots");
+    expect(page).toContain("Generated at build time from the public fixture");
+    expect(page).toContain("The browser replays saved results");
     expect(page).toContain("advisory");
     expect(page).not.toMatch(
       /innerHTML|insertAdjacentHTML|eval\(|new Function/u,

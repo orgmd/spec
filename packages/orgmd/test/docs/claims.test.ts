@@ -21,37 +21,24 @@ it("does not advertise v0.6 commands", () => {
 
 it("keeps revision statuses separate from lifecycle state", () => {
   const readme = read("README.md");
-  const site = read("site/index.html");
 
   expect(readme).toMatch(
     /Revision status is exactly `draft`,\s+`approved`,\s+or `rejected`\./,
   );
-  expect(site).toContain('class="chip s-rejected">rejected');
-  expect(site).toContain(
-    "Contestation and retirement are lifecycle states recorded only in",
-  );
-  expect(site).not.toContain('class="chip s-contested">contested');
-  expect(site).not.toContain('class="chip s-superseded">superseded');
 });
 
-it("labels signing and non-advisory projections as future v0.5 work", () => {
+it("keeps the concise public boundary inside current v0.5 capability", () => {
   const site = read("site/index.html");
 
   expect(site).toContain(
-    "Signing and <code>org.lock</code> are future hardening",
+    "The v0.5.0 proof reads one local company-to-team path and produces advisory text for review.",
   );
-  expect(site).toContain("Gate and handbook projections are future work.");
-  expect(site).not.toContain("The bundle's release seal is re-signed");
-  expect(site).not.toContain("the gate, the handbook. Nobody chases surfaces");
-});
-
-it("keeps remaining signing and projection examples outside v0.5", () => {
-  const site = read("site/index.html");
-
-  expect(site).not.toContain("# release seal · tamper-evident");
-  expect(site).not.toContain("merged · sealed into org.lock");
-  expect(site).toContain('data-v0-5="future-projections"');
-  expect(site).toContain("Future projection examples — not shipped in v0.5.");
+  expect(site).toContain(
+    "It does not approve changes, control access, publish the result or enforce actions.",
+  );
+  expect(site).not.toMatch(
+    /signing|release seal|gate projection|handbook projection/i,
+  );
 });
 
 it("publishes the current release boundary without stale Pages claims", () => {
@@ -65,7 +52,8 @@ it("publishes the current release boundary without stale Pages claims", () => {
     expect(document).not.toContain("Pages publication still pending");
     expect(document).not.toContain("Pages deployment have not been published");
   }
-  expect(site).toContain("The current CLI emits advisory text only.");
+  expect(site).toContain("reference CLI 0.5.0");
+  expect(site).toContain("Draft open standard · advisory output");
   expect(site).toContain('href="playground/"');
   expect(site).toContain('href="desk.html"');
 });
@@ -73,7 +61,7 @@ it("publishes the current release boundary without stale Pages claims", () => {
 it("keeps the Desk page visibly bounded as a local concept", () => {
   const desk = read("site/desk.html");
 
-  expect(desk).toContain("Concept prototype · fictional data · no backend");
+  expect(desk).toContain("Design concept · fictional data");
   expect(desk).toContain("local browser state only");
   expect(desk).toContain(
     "Nothing is saved, approved, synced, published, or enforced.",
@@ -95,14 +83,11 @@ it("explains composition and large-organisation scale without overstating v0.5",
 
   expect(site).toContain('data-v0-5="large-org-boundary"');
   expect(site).toContain(
-    "It is not the name of one enormous company document.",
+    "ORG.md is the standard, not one enormous company document.",
   );
-  expect(site).toContain(
-    "Entries make up bundles. Bundles on the chosen path make up effective context.",
-  );
-  expect(site).toContain("Sibling branches are not merged into that view.");
-  expect(site).toContain("A bounded POC, not proven enterprise scale");
-  expect(site).toContain("projection filtering is not access control");
+  expect(site).toContain("Large organisations use many small, owned bundles.");
+  expect(site).toContain("Finance and other regions stay out of this view.");
+  expect(site).toMatch(/projection filtering is not access control/i);
   expect(readme).toContain(
     "ORG.md is the name of the standard, not one enormous document.",
   );
@@ -111,23 +96,38 @@ it("explains composition and large-organisation scale without overstating v0.5",
   }
 });
 
-it("puts the playground decision before its technical evidence", () => {
+it("makes the playground result primary and technical evidence optional", () => {
   const playground = read("site/playground/index.html");
 
-  expect(playground).toContain("The decision before the technical detail");
-  expect(playground).toContain("Meaning currently in force");
+  expect(playground).toContain("A draft does not replace an approved rule.");
+  expect(playground).toContain("Guidance in use now");
   expect(playground).toContain(
-    "A newer draft does not replace approved meaning.",
+    "The draft waits. The approved rule stays in use.",
   );
-  expect(playground).toContain("Evidence: recorded bundle source");
+  expect(playground).toContain("Show technical evidence");
+  expect(playground).toContain('<details class="technical">');
 });
 
-it("shows the Desk POC workflow without presenting it as implemented", () => {
+it("shows a concise Desk workflow without presenting it as implemented", () => {
   const desk = read("site/desk.html");
 
-  expect(desk).toContain(
-    "Possible POC workflow — not implemented by this page",
-  );
-  expect(desk).toContain("The interface is the approachable layer");
-  expect(desk).toContain("one path, not one undifferentiated company register");
+  expect(desk).toContain("Three everyday steps.");
+  expect(desk).toContain("Owner proposes");
+  expect(desk).toContain("Person reviews");
+  expect(desk).toContain("Guidance is available");
+  expect(desk).toContain("Concept only.");
+  expect(desk).not.toContain('role="tab"');
+});
+
+it("keeps each public route focused and concise", () => {
+  const site = read("site/index.html");
+  const playground = read("site/playground/index.html");
+  const desk = read("site/desk.html");
+
+  expect((site.match(/<section\b/g) ?? []).length).toBeLessThanOrEqual(2);
+  expect((playground.match(/<section\b/g) ?? []).length).toBeLessThanOrEqual(3);
+  expect((desk.match(/<section\b/g) ?? []).length).toBeLessThanOrEqual(4);
+  expect(site).toContain('src="assets/orgmd-path.webp"');
+  expect(site).not.toContain("Your industry, your tools");
+  expect(site).not.toContain("What works today</h2>");
 });
