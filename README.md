@@ -3,31 +3,34 @@
 **An open standard for the organisational meaning layer.**
 
 Write down what your organisation means — its words, rules, decisions and
-owners — once. ORG.md defines the portable contract; conformant tooling
-keeps that meaning current, resolves it by scope, and projects the
-applicable context to every AI tool and every person.
+owners — once. ORG.md defines the portable contract. The 0.5.0 reference CLI
+validates that bundle, resolves approved revisions by scope, and compiles
+advisory context for AGENTS.md and prompt consumers. Source syncing, automated
+delivery, hosted services, and runtime enforcement are deployment integrations
+or future work, not capabilities of this release.
 
 > Repo-level context is standardised (AGENTS.md). Agent protocols are
 > standardised (MCP, A2A). The layer above them — what your organisation
-> actually *means*, organisation-wide — has no widely adopted portable
+> actually _means_, organisation-wide — has no widely adopted portable
 > standard. This is that layer.
 
-**Status: 0.3-draft specification; 0.5.0 reference implementation
-release-ready in this repository.** The CLI package, tag, GitHub release, and
-Pages deployment have not been published by this work. The two implemented
-compiler projections are advisory; they do not provide runtime enforcement.
+**Status: 0.3.1-draft specification; 0.5.0 reference implementation
+source-available and runnable from this repository.** GitHub Pages is live. The
+CLI package, Git tag, and GitHub release have not been published. The two
+implemented compiler projections are advisory; they do not provide runtime
+enforcement.
 
 ## The problem in one table
 
 One fact, as five surfaces at one company currently hold it:
 
-| Surface | What it says | Result |
-|---|---|---|
-| eng repo · CLAUDE.md | "consignment: another word for shipment" | wrong data model ships |
-| customer bot · prompt | "estimate delivery times when asked" | promises ops can't keep |
-| warehouse agent · config | *(no definitions)* | agent improvises at 2am |
-| wiki · edited 2024 | "we prioritise rail" | superseded decision, still read |
-| the product owner's head | correct, current | unavailable at scale |
+| Surface                  | What it says                             | Result                          |
+| ------------------------ | ---------------------------------------- | ------------------------------- |
+| eng repo · CLAUDE.md     | "consignment: another word for shipment" | wrong data model ships          |
+| customer bot · prompt    | "estimate delivery times when asked"     | promises ops can't keep         |
+| warehouse agent · config | _(no definitions)_                       | agent improvises at 2am         |
+| wiki · edited 2024       | "we prioritise rail"                     | superseded decision, still read |
+| the product owner's head | correct, current                         | unavailable at scale            |
 
 Between people this cost confusion. Agents build on stale meaning at
 machine speed — misalignment now ships before lunch, on every surface at
@@ -35,7 +38,8 @@ once.
 
 ## What ORG.md does
 
-One small, git-versioned bundle:
+One small, git-versioned bundle for a small organisation or organisational
+layer:
 
 ```
 org/
@@ -48,45 +52,55 @@ org/
 └── org.lock        # signed manifest
 ```
 
-…compiled into scope-filtered projections for every audience:
+The 0.5.0 CLI compiles two scope-filtered advisory projections:
 
-- **AGENTS.md / CLAUDE.md fragments** → coding agents *(advisory)*
-- **System prompt blocks** → direct model users *(advisory)*
-- **MCP gate** → autonomous agents: `org.policy(action) → allow | escalate | deny` *(deterministic; **enforced** only where interposed — SPEC §6.4)*
-- **Handbook** → humans
+- **AGENTS.md / CLAUDE.md fragments** → coding agents _(advisory)_
+- **System prompt blocks** → direct model users _(advisory)_
+
+Future integrations may add handbook profiles and interposed policy gates. They
+are not included in 0.5.0; an output can be called enforced only where an
+unbypassable component applies the verdict (SPEC §6.4).
 
 Three design commitments carry the whole thing:
 
-1. **Canonical by exception** — entries sync *from* your existing systems
-   of record; the bundle is an interchange format, not another wiki.
+1. **Canonical by exception** — the specification records source provenance so
+   future adapters can propose drafts from existing systems of record. No source
+   adapters ship in 0.5.0.
 2. **Small on purpose** — an entry earns its place only if an agent
    getting it wrong is expensive (see the write-doctrine, SPEC §9).
-3. **Borrow, never build** — scopes resolve to your IdP, keys sit in your
-   KMS, audit flows to your SIEM. ORG.md owns a format, a compiler, and a
-   bench. Nothing else.
+3. **Borrow, never build** — deployments are intended to map scopes to an IdP,
+   keep keys in an existing KMS, and send audit events to an existing SIEM.
+   Those integrations do not ship in 0.5.0. ORG.md owns a format, a compiler,
+   and a bench. Nothing else.
 
 ## Layers and scale
 
-A two-person company runs one bundle. A larger organisation — board,
-exec, business units, teams — gives each layer its own, and every
-consumer resolves down one designated path of the tree (SPEC §5). Three
-kinds of meaning travel by three different rules:
+ORG.md is the name of the standard, not one enormous document. A two-person
+company can run one bundle. A larger organisation gives accountable layers —
+company, division, team, repository — their own small bundles, and every
+consumer resolves one designated root-to-consumer path (SPEC §5). Sibling
+branches are not merged into that view. Three kinds of meaning travel by three
+different rules:
 
-| Kind | Across layers | So that |
-|---|---|---|
-| Vocabulary, definitions of done | closest to the consumer wins | teams may speak their own language, locally |
-| Policies | all apply; a closer layer may only narrow (SPEC §5, §4.6) | no subtree can weaken a rule from above |
-| Decisions, ownership | the anchoring bundle — closest to the root — wins (SPEC §5.2) | a team cannot rewrite a board decision; delegation is explicit, and never for decisions |
+| Kind                            | Across layers                                                 | So that                                                                                 |
+| ------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Vocabulary, definitions of done | closest to the consumer wins                                  | teams may speak their own language, locally                                             |
+| Policies                        | all apply; a closer layer may only narrow (SPEC §5, §4.6)     | no subtree can weaken a rule from above                                                 |
+| Decisions, ownership            | the anchoring bundle — closest to the root — wins (SPEC §5.2) | a team cannot rewrite a board decision; delegation is explicit, and never for decisions |
 
-This is also why the registers stay small at scale: mass is distributed —
-each layer holds only the meaning it owns — and the write-doctrine admits
-an entry only where a consumer acting on the wrong version is expensive
-(SPEC §9). Revision status is exactly `draft`, `approved`, or `rejected`.
-Contestation and retirement are recorded only in `org.identity.lifecycle`.
-Full rationale stays in your systems of record via `ref:` or `synced:`
-sources. Start as one bundle; split a layer out only when it needs to own its
-own meaning — the narrowing and anchoring rules make each split safe by
-construction.
+The design intent is to distribute ownership and keep each layer bounded: the
+write-doctrine admits an entry only where a consumer acting on the wrong
+version is expensive (SPEC §9). Revision status is exactly `draft`, `approved`,
+or `rejected`. Contestation and retirement are recorded only in
+`org.identity.lifecycle`. Full rationale stays in your systems of record via
+`ref:` or `synced:` sources.
+
+The v0.5 CLI proves this model for local filesystem ancestors. It does not yet
+provide an organisation registry, arbitrary sibling or multi-repository
+composition, authenticated clearance, task-specific retrieval, or an
+enterprise-volume benchmark. Start as one bundle; split by accountable layer or
+raw-storage boundary when that part of the organisation needs to own distinct
+meaning. Scope-filtered projections are not a raw-file access-control boundary.
 
 ## Quickstart
 
@@ -111,20 +125,20 @@ about and one policy your agents must not break.
 
 ## Repository map
 
-| Doc | What it is |
-|---|---|
-| [SPEC.md](./SPEC.md) | The normative specification (0.3-draft) |
-| [ROADMAP.md](./ROADMAP.md) | Path to v1.0 and beyond, with kill-gates |
-| [GOVERNANCE.md](./GOVERNANCE.md) | How decisions get made (spoiler: with ORG.md) |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute, per repo |
-| [SECURITY.md](./SECURITY.md) | Threat model and disclosure |
-| [docs/cli.md](./docs/cli.md) | v0.5.0 CLI contract and safe usage |
+| Doc                                                                  | What it is                                                |
+| -------------------------------------------------------------------- | --------------------------------------------------------- |
+| [SPEC.md](./SPEC.md)                                                 | The normative specification (0.3.1-draft)                 |
+| [ROADMAP.md](./ROADMAP.md)                                           | Path to v1.0 and beyond, with kill-gates                  |
+| [GOVERNANCE.md](./GOVERNANCE.md)                                     | How decisions get made (spoiler: with ORG.md)             |
+| [CONTRIBUTING.md](./CONTRIBUTING.md)                                 | How to contribute, per repo                               |
+| [SECURITY.md](./SECURITY.md)                                         | Threat model and disclosure                               |
+| [docs/cli.md](./docs/cli.md)                                         | v0.5.0 CLI contract and safe usage                        |
 | [docs/release/0.5.0-checklist.md](./docs/release/0.5.0-checklist.md) | Manual publication and deployment steps still to complete |
-| [NON-GOALS.md](./NON-GOALS.md) | What this will never be |
-| [AGENT-BRIEF.md](./AGENT-BRIEF.md) | The build sequence for the reference implementation |
-| [org/](./org/) | This project's own bundle — governance, dogfooded |
-| [site/](./site/) | The launch one-pager and logo assets |
-| [rfcs/](./rfcs/) | Spec change proposals (template inside) |
+| [NON-GOALS.md](./NON-GOALS.md)                                       | What this will never be                                   |
+| [AGENT-BRIEF.md](./AGENT-BRIEF.md)                                   | The build sequence for the reference implementation       |
+| [org/](./org/)                                                       | This project's own bundle — governance, dogfooded         |
+| [site/](./site/)                                                     | The launch one-pager and logo assets                      |
+| [rfcs/](./rfcs/)                                                     | Spec change proposals (template inside)                   |
 
 ## Prior art
 

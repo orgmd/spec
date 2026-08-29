@@ -1,0 +1,392 @@
+{
+  "schemaVersion": 1,
+  "demo": {
+    "id": "kowhai-freight-escalation",
+    "title": "See a draft wait until it is ratified",
+    "today": "2026-08-21",
+    "clearance": [
+      "public"
+    ],
+    "stateOrder": [
+      "current",
+      "draft",
+      "ratified"
+    ]
+  },
+  "provenance": {
+    "orgmdVersion": "0.5.0",
+    "specVersion": "0.3.1-draft",
+    "implementationCommit": "6e1978f180b6d0e3371023ee30a2621c35992561",
+    "implementationDigest": "sha256:3fe6ef3a137ded01a0e04378efba9c7c525afa605e51fedaa0de6856a4d32b92",
+    "fixtureDigest": "sha256:6156f7e8aecaf83b4cb5cb1d4f33c800ec6c91fd7f4ff370ff9254f4910f9bb0"
+  },
+  "states": {
+    "current": {
+      "label": "Current approved meaning",
+      "summary": "Revision 1 is approved and effective.",
+      "input": [
+        {
+          "path": "org.md",
+          "sha256": "sha256:e8753ac455b13efd47e96cd665c9c59ff22fcaf95ad922cbe06c256bee36129b",
+          "content": "---\nid: org.identity\nbundle: org.kowhai-freight-demo\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n"
+        },
+        {
+          "path": "ownership.md",
+          "sha256": "sha256:fb7006c83972f6c0e015be4a6b84d41b447e82dbe3cb9e33ca1e788c7d1aefe0",
+          "content": "---\nid: own.last-resort\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nFallback accountability belongs to the Governance Lead.\n\n---\nid: own.ops-duty-manager\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Operations Duty Manager.\n\n---\nid: own.duty-operations-lead\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Duty Operations Lead.\n"
+        },
+        {
+          "path": "policies.md",
+          "sha256": "sha256:ef321f665fb5283b90f2a00e947176189710b68cd19a299f159f729bc36feb13",
+          "content": "---\nid: policy.delivery-window\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\naction: customer.delivery_time.quote\neffect: escalate\nroute: own.ops-duty-manager\n---\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n"
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "diagnostics": []
+      },
+      "doctor": {
+        "exitCode": 0,
+        "pendingRevisions": 0,
+        "findings": [],
+        "ratios": [
+          {
+            "domain": "identity",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "ownership",
+            "native": 3,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "policy",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          }
+        ]
+      },
+      "resolution": {
+        "contextId": "sha256:5631f02c375728d9305d6d188f3d119d22afb8bfca14a6168a0d51fece82027a",
+        "bundles": [
+          {
+            "bundleId": "org.kowhai-freight-demo",
+            "contentId": "sha256:ba8b1b073436e976f56dd332c8da584b15808647959145bcdf5fe5c596a6449d",
+            "path": "kowhai-freight"
+          }
+        ],
+        "effectiveEntries": [
+          {
+            "id": "org.identity",
+            "domain": "identity",
+            "rev": 1,
+            "body": "# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.duty-operations-lead",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Duty Operations Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.last-resort",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Fallback accountability belongs to the Governance Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.ops-duty-manager",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Operations Duty Manager.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "policy.delivery-window",
+            "domain": "policy",
+            "rev": 1,
+            "body": "Do not quote a delivery window directly. Refer the question to the Operations Duty Manager.",
+            "action": "customer.delivery_time.quote",
+            "effect": "escalate",
+            "route": "own.ops-duty-manager",
+            "contested": false,
+            "staleReasons": []
+          }
+        ],
+        "withheldCount": 0,
+        "diagnostics": [],
+        "resolutionErrors": []
+      },
+      "projections": {
+        "agents-md": {
+          "profile": "orgmd-agents-md-v1",
+          "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:5631f02c375728d9305d6d188f3d119d22afb8bfca14a6168a0d51fece82027a -->\n<!-- bundles: org.kowhai-freight-demo=sha256:ba8b1b073436e976f56dd332c8da584b15808647959145bcdf5fe5c596a6449d -->\n## Organisational context (advisory)\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.ops-duty-manager`\n\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n<!-- orgmd:end -->\n"
+        },
+        "prompt": {
+          "profile": "orgmd-prompt-v1",
+          "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:5631f02c375728d9305d6d188f3d119d22afb8bfca14a6168a0d51fece82027a\nbundles: org.kowhai-freight-demo=sha256:ba8b1b073436e976f56dd332c8da584b15808647959145bcdf5fe5c596a6449d\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.ops-duty-manager`\n\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n[end ORG.md advisory context]\n"
+        }
+      }
+    },
+    "draft": {
+      "label": "Draft proposed",
+      "summary": "Revision 2 validates but remains unratified. Revision 1 is still effective.",
+      "input": [
+        {
+          "path": "org.md",
+          "sha256": "sha256:e8753ac455b13efd47e96cd665c9c59ff22fcaf95ad922cbe06c256bee36129b",
+          "content": "---\nid: org.identity\nbundle: org.kowhai-freight-demo\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n"
+        },
+        {
+          "path": "ownership.md",
+          "sha256": "sha256:fb7006c83972f6c0e015be4a6b84d41b447e82dbe3cb9e33ca1e788c7d1aefe0",
+          "content": "---\nid: own.last-resort\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nFallback accountability belongs to the Governance Lead.\n\n---\nid: own.ops-duty-manager\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Operations Duty Manager.\n\n---\nid: own.duty-operations-lead\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Duty Operations Lead.\n"
+        },
+        {
+          "path": "policies.md",
+          "sha256": "sha256:8f626fb45cdd8dbf04d2933e7dd3a447df3a904987b8fdda4b63f4169552af88",
+          "content": "---\nid: policy.delivery-window\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\naction: customer.delivery_time.quote\neffect: escalate\nroute: own.ops-duty-manager\n---\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n---\nid: policy.delivery-window\nowner: role.operations\nscope: public\nstatus: draft\nsource: native\nrev: 2\nrevisit: 2027-08-21\naction: customer.delivery_time.quote\neffect: escalate\nroute: own.duty-operations-lead\n---\nDo not quote a delivery window directly. Refer the question to the Duty Operations Lead.\n"
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "diagnostics": []
+      },
+      "doctor": {
+        "exitCode": 0,
+        "pendingRevisions": 1,
+        "findings": [
+          {
+            "code": "doctor.pending-revision",
+            "severity": "warning",
+            "blocking": false,
+            "message": "This entry has unratified draft revisions above its approved revision.",
+            "path": "policies.md",
+            "line": 1,
+            "entryId": "policy.delivery-window",
+            "details": {
+              "pending": 1
+            }
+          }
+        ],
+        "ratios": [
+          {
+            "domain": "identity",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "ownership",
+            "native": 3,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "policy",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          }
+        ]
+      },
+      "resolution": {
+        "contextId": "sha256:c749ddb4e77f3bdcb1386efc41c670de68f3f6f4e7fdcfe72a80277a77d9a8ae",
+        "bundles": [
+          {
+            "bundleId": "org.kowhai-freight-demo",
+            "contentId": "sha256:197d9653605713a7903eb84ec55bcedfd8425e905c82b591d1312cc12a919966",
+            "path": "kowhai-freight"
+          }
+        ],
+        "effectiveEntries": [
+          {
+            "id": "org.identity",
+            "domain": "identity",
+            "rev": 1,
+            "body": "# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.duty-operations-lead",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Duty Operations Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.last-resort",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Fallback accountability belongs to the Governance Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.ops-duty-manager",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Operations Duty Manager.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "policy.delivery-window",
+            "domain": "policy",
+            "rev": 1,
+            "body": "Do not quote a delivery window directly. Refer the question to the Operations Duty Manager.",
+            "action": "customer.delivery_time.quote",
+            "effect": "escalate",
+            "route": "own.ops-duty-manager",
+            "contested": false,
+            "staleReasons": []
+          }
+        ],
+        "withheldCount": 0,
+        "diagnostics": [],
+        "resolutionErrors": []
+      },
+      "projections": {
+        "agents-md": {
+          "profile": "orgmd-agents-md-v1",
+          "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:c749ddb4e77f3bdcb1386efc41c670de68f3f6f4e7fdcfe72a80277a77d9a8ae -->\n<!-- bundles: org.kowhai-freight-demo=sha256:197d9653605713a7903eb84ec55bcedfd8425e905c82b591d1312cc12a919966 -->\n## Organisational context (advisory)\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.ops-duty-manager`\n\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n<!-- orgmd:end -->\n"
+        },
+        "prompt": {
+          "profile": "orgmd-prompt-v1",
+          "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:c749ddb4e77f3bdcb1386efc41c670de68f3f6f4e7fdcfe72a80277a77d9a8ae\nbundles: org.kowhai-freight-demo=sha256:197d9653605713a7903eb84ec55bcedfd8425e905c82b591d1312cc12a919966\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.ops-duty-manager`\n\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n[end ORG.md advisory context]\n"
+        }
+      }
+    },
+    "ratified": {
+      "label": "Recorded after ratification",
+      "summary": "Recorded post-ratification snapshot. Revision 2 is now effective.",
+      "input": [
+        {
+          "path": "org.md",
+          "sha256": "sha256:e8753ac455b13efd47e96cd665c9c59ff22fcaf95ad922cbe06c256bee36129b",
+          "content": "---\nid: org.identity\nbundle: org.kowhai-freight-demo\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n"
+        },
+        {
+          "path": "ownership.md",
+          "sha256": "sha256:fb7006c83972f6c0e015be4a6b84d41b447e82dbe3cb9e33ca1e788c7d1aefe0",
+          "content": "---\nid: own.last-resort\nowner: role.governance\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nFallback accountability belongs to the Governance Lead.\n\n---\nid: own.ops-duty-manager\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Operations Duty Manager.\n\n---\nid: own.duty-operations-lead\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\n---\nDelivery-time questions route to the Duty Operations Lead.\n"
+        },
+        {
+          "path": "policies.md",
+          "sha256": "sha256:5e6f55f0f16852b08dc3cb731c9c54418905fc85aa55179dffe4d2712020b2fa",
+          "content": "---\nid: policy.delivery-window\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 1\nrevisit: 2027-08-21\naction: customer.delivery_time.quote\neffect: escalate\nroute: own.ops-duty-manager\n---\nDo not quote a delivery window directly. Refer the question to the Operations Duty Manager.\n\n---\nid: policy.delivery-window\nowner: role.operations\nscope: public\nstatus: approved\nsource: native\nrev: 2\nrevisit: 2027-08-21\naction: customer.delivery_time.quote\neffect: escalate\nroute: own.duty-operations-lead\n---\nDo not quote a delivery window directly. Refer the question to the Duty Operations Lead.\n"
+        }
+      ],
+      "validation": {
+        "ok": true,
+        "diagnostics": []
+      },
+      "doctor": {
+        "exitCode": 0,
+        "pendingRevisions": 0,
+        "findings": [],
+        "ratios": [
+          {
+            "domain": "identity",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "ownership",
+            "native": 3,
+            "synced": 0,
+            "syncedPercent": 0
+          },
+          {
+            "domain": "policy",
+            "native": 1,
+            "synced": 0,
+            "syncedPercent": 0
+          }
+        ]
+      },
+      "resolution": {
+        "contextId": "sha256:db4cabb2cbdd08809b526f4286312d3a806e1ea90d41a66f4fba3c1102779dbf",
+        "bundles": [
+          {
+            "bundleId": "org.kowhai-freight-demo",
+            "contentId": "sha256:e4b7a22f235a4a6f96f99fdbf51a8db249fe8a07cd10764db43a54587bb9d7ad",
+            "path": "kowhai-freight"
+          }
+        ],
+        "effectiveEntries": [
+          {
+            "id": "org.identity",
+            "domain": "identity",
+            "rev": 1,
+            "body": "# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.duty-operations-lead",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Duty Operations Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.last-resort",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Fallback accountability belongs to the Governance Lead.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "own.ops-duty-manager",
+            "domain": "ownership",
+            "rev": 1,
+            "body": "Delivery-time questions route to the Operations Duty Manager.",
+            "contested": false,
+            "staleReasons": []
+          },
+          {
+            "id": "policy.delivery-window",
+            "domain": "policy",
+            "rev": 2,
+            "body": "Do not quote a delivery window directly. Refer the question to the Duty Operations Lead.",
+            "action": "customer.delivery_time.quote",
+            "effect": "escalate",
+            "route": "own.duty-operations-lead",
+            "contested": false,
+            "staleReasons": []
+          }
+        ],
+        "withheldCount": 0,
+        "diagnostics": [],
+        "resolutionErrors": []
+      },
+      "projections": {
+        "agents-md": {
+          "profile": "orgmd-agents-md-v1",
+          "content": "<!-- orgmd:begin profile=orgmd-agents-md-v1 advisory=true context=sha256:db4cabb2cbdd08809b526f4286312d3a806e1ea90d41a66f4fba3c1102779dbf -->\n<!-- bundles: org.kowhai-freight-demo=sha256:e4b7a22f235a4a6f96f99fdbf51a8db249fe8a07cd10764db43a54587bb9d7ad -->\n## Organisational context (advisory)\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `2`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.duty-operations-lead`\n\nDo not quote a delivery window directly. Refer the question to the Duty Operations Lead.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n<!-- orgmd:end -->\n"
+        },
+        "prompt": {
+          "profile": "orgmd-prompt-v1",
+          "content": "[ORG.md advisory context]\nprofile: orgmd-prompt-v1\ncontext: sha256:db4cabb2cbdd08809b526f4286312d3a806e1ea90d41a66f4fba3c1102779dbf\nbundles: org.kowhai-freight-demo=sha256:e4b7a22f235a4a6f96f99fdbf51a8db249fe8a07cd10764db43a54587bb9d7ad\n\n### Identity\n\n#### `org.identity`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\n# Kōwhai Freight Ltd\n\nPlain, direct operational meaning for a fictional freight company.\n\n### Policy\n\n#### `policy.delivery-window`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `2`\naction: `customer.delivery_time.quote`\neffect: `escalate`\nroute: `own.duty-operations-lead`\n\nDo not quote a delivery window directly. Refer the question to the Duty Operations Lead.\n\n### Ownership\n\n#### `own.duty-operations-lead`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Duty Operations Lead.\n\n#### `own.last-resort`\nowner: `role.governance`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nFallback accountability belongs to the Governance Lead.\n\n#### `own.ops-duty-manager`\nowner: `role.operations`\nscope: `public`\nsource: `native`\nrevision: `1`\n\nDelivery-time questions route to the Operations Duty Manager.\n[end ORG.md advisory context]\n"
+        }
+      }
+    }
+  }
+}
