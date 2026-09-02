@@ -17,9 +17,9 @@ const fixturesDirectory = resolve(repository, "site/playground/fixtures");
 const outputPath = resolve(repository, "site/playground/results.json");
 const today = "2026-08-21";
 const clearance = Object.freeze(["public"]);
-const implementationCommit = "6e1978f180b6d0e3371023ee30a2621c35992561";
+const implementationCommit = "7005ffe359e5454ce44c18da9007d278221e295d";
 const expectedImplementationDigest =
-  "sha256:3fe6ef3a137ded01a0e04378efba9c7c525afa605e51fedaa0de6856a4d32b92";
+  "sha256:daa0102422964c5d358bc4f55333e1ec79ed313019aca1ba6af8b1ba2a1003f9";
 const implementationRoots = Object.freeze([
   "package-lock.json",
   "packages/orgmd/package.json",

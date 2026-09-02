@@ -1,6 +1,6 @@
 # ORG.md Scale Proof Plan
 
-**Status:** Phase 0 conditional Go; later phases remain gated  
+**Status:** Phase 0 Go and complete; later phases remain gated
 **Date:** 2026-09-01  
 **Target:** A credible internal proof that preserves founder simplicity while establishing a defensible path to enterprise scale
 
@@ -428,7 +428,8 @@ Linear safety rules:
 
 Publish M0 as completed evidence, not as a new backlog of work. Assign every
 issue to Matt Wood, attach it to the M0 milestone and set it to the team's
-completed state. The parent is complete only when all four child records exist.
+completed state. The parent is complete only when all four child records are
+complete.
 
 1. **ORG.md: Complete M0 truth and contradictions** (`SPEC`, parent)
    - Depends on: all four child records.
@@ -514,14 +515,16 @@ Begin Phase 0 only:
   the current proof's limits.
 - **Complete:** 353 tests, type checking, build, dogfood validation, doctor,
   package smoke test, diff checks and desktop/mobile visual review pass.
-- **Pending explicit authority:** publish the repository-derived project and M0
-  issue content to Linear. Local implementation does not imply permission to
-  transmit it to an external workspace.
-- **Pending a real Phase 0 commit:** repin the public demo to that commit and its
-  implementation digest, regenerate `site/playground/results.json`, then rerun
-  `npm run site:playground:check`. The existing result remains unchanged and
-  truthfully pinned to `6e1978f`; do not associate the new digest with that old
-  commit.
+- **Complete:** Phase 0 is committed at
+  `7005ffe359e5454ce44c18da9007d278221e295d`. The public demo is pinned to that
+  commit and implementation digest
+  `sha256:daa0102422964c5d358bc4f55333e1ec79ed313019aca1ba6af8b1ba2a1003f9`;
+  regeneration and the complete `npm run check` gate pass.
+- **Complete:** the dedicated
+  [Linear project](https://linear.app/boundforco/project/orgmd-matrix-composition-and-ratification-proof-3f965a1a44fc),
+  [published plan](https://linear.app/boundforco/document/orgmd-scale-proof-plan-c486ac0126f2)
+  and completed M0 evidence records BOU-98 through BOU-102 are published. The M0
+  milestone reports 100% completion.
 
-**Gate decision:** Conditional Go. Do not open the Phase 1 RFC pack until both
-pending items above are resolved and the final review records Go.
+**Gate decision:** Go. Phase 0 is closed. Phase 1 remains unopened until its
+protocol contracts receive explicit authorization and review.

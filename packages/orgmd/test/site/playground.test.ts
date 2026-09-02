@@ -51,9 +51,9 @@ describe("public playground", () => {
     expect(results.provenance).toMatchObject({
       orgmdVersion: "0.5.0",
       specVersion: "0.3.1-draft",
-      implementationCommit: "6e1978f180b6d0e3371023ee30a2621c35992561",
+      implementationCommit: "7005ffe359e5454ce44c18da9007d278221e295d",
       implementationDigest:
-        "sha256:3fe6ef3a137ded01a0e04378efba9c7c525afa605e51fedaa0de6856a4d32b92",
+        "sha256:daa0102422964c5d358bc4f55333e1ec79ed313019aca1ba6af8b1ba2a1003f9",
     });
     expect(results.demo).toMatchObject({
       today: "2026-08-21",
