@@ -624,5 +624,273 @@
         }
       ]
     }
+  },
+  {
+    "name": "validator accepts same-id records with distinct revisions",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Division.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Current.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Pending.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": true,
+      "diagnostics": []
+    }
+  },
+  {
+    "name": "validator rejects a duplicate id and revision pair",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Division.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "First pending revision.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 11
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "rejected",
+              "source": "native",
+              "rev": 2
+            },
+            "body": "Conflicting revision identity.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 21
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "validation.duplicate-rev",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 21,
+          "entry_id": "term.freight"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects a zero revision",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Division.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 0
+            },
+            "body": "Invalid zero revision.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 31
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "invalid_entry",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 31,
+          "entry_id": "term.freight"
+        }
+      ]
+    }
+  },
+  {
+    "name": "validator rejects a revision above the safe-integer maximum",
+    "operation": "validate",
+    "input": {
+      "bundle": {
+        "reference": "division",
+        "path": "/fixtures/division",
+        "node_path": "root/division",
+        "is_root": false,
+        "identity_metadata": {
+          "id": "org.identity",
+          "owner": "role.editor",
+          "scope": "public",
+          "status": "approved",
+          "source": "native",
+          "rev": 1
+        },
+        "entries": [
+          {
+            "front_matter": {
+              "id": "org.identity",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "approved",
+              "source": "native",
+              "rev": 1
+            },
+            "body": "Division.",
+            "domain": "identity",
+            "source_path": "org.md",
+            "line": 1
+          },
+          {
+            "front_matter": {
+              "id": "term.freight",
+              "owner": "role.editor",
+              "scope": "public",
+              "status": "draft",
+              "source": "native",
+              "rev": 9007199254740992
+            },
+            "body": "Unsafe revision.",
+            "domain": "glossary",
+            "source_path": "glossary.md",
+            "line": 31
+          }
+        ]
+      }
+    },
+    "expected": {
+      "valid": false,
+      "diagnostics": [
+        {
+          "code": "invalid_entry",
+          "severity": "error",
+          "path": "glossary.md",
+          "line": 31,
+          "entry_id": "term.freight"
+        }
+      ]
+    }
   }
 ]

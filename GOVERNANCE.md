@@ -38,10 +38,12 @@ are frozen; RFCs may only add optional capabilities.
 
 ## Disputes
 
-An entry in this project's own bundle can be marked `status: contested`
-like any other. While contested, tooling treats it conservatively and the
-entry's owner must resolve or route it. Meaning disagreements here get the
-same treatment we prescribe for everyone else.
+An entry in this project's own bundle can be contested by recording an
+attributed `state: contested` lifecycle act for its ID under
+`org.identity.lifecycle` in `org/org.md`. The approved revision remains
+unchanged and effective. While contested, tooling treats reliance on it
+conservatively and the entry's owner must resolve or route the dispute. Meaning
+disagreements here get the same treatment we prescribe for everyone else.
 
 ## Path to neutral governance
 
@@ -121,15 +123,19 @@ the revisit date, whichever comes first.
 id: dec.0003
 owner: role.editor
 scope: public
-status: superseded
+status: approved
 source: native
+rev: 2
 decided: 2026-08-15
+revisit: 2027-08-01
 ---
 **DEC-0003 — The suite is the spec.** Conformance is defined by passing
 the published bench suite for the claimed level. Where prose and suite
 conflict, file an issue; an RFC resolves it. Superseded by DEC-0022
 (conformance attaches to deterministic implementations; agent behaviour
-is a benchmark score; where the suite is silent the prose governs).
+is a benchmark score; where the suite is silent the prose governs). This
+revision remains `status: approved`; retirement is recorded separately under
+`org.identity.lifecycle`.
 ```
 
 ```markdown

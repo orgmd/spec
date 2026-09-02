@@ -38,6 +38,18 @@ describe("entry schema", () => {
     );
   });
 
+  it("accepts only positive IEEE-754 safe-integer revisions", () => {
+    expect(validateEntrySchema(baseEntry({ rev: 1 }))).toEqual([]);
+    expect(
+      validateEntrySchema(baseEntry({ rev: Number.MAX_SAFE_INTEGER })),
+    ).toEqual([]);
+    for (const rev of [0, -1, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(validateEntrySchema(baseEntry({ rev }))).toContainEqual(
+        expect.objectContaining({ code: "invalid_entry" }),
+      );
+    }
+  });
+
   it.each([
     "term.consignment",
     "policy.P-03",

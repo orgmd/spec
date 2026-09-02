@@ -34,7 +34,7 @@ type Operation =
 
 interface ConformanceManifest {
   readonly suite: "orgmd-core";
-  readonly version: "0.1.0";
+  readonly version: "0.1.1";
   readonly spec_version: "0.3.1";
   readonly operations: readonly Operation[];
 }
@@ -58,7 +58,7 @@ export function loadManifest(): ConformanceManifest {
   const manifest = record(value, "manifest");
   if (
     manifest.suite !== "orgmd-core" ||
-    manifest.version !== "0.1.0" ||
+    manifest.version !== "0.1.1" ||
     manifest.spec_version !== "0.3.1" ||
     !Array.isArray(manifest.operations) ||
     !manifest.operations.every(

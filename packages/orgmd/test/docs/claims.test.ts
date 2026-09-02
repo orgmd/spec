@@ -21,9 +21,16 @@ it("does not advertise v0.6 commands", () => {
 
 it("keeps revision statuses separate from lifecycle state", () => {
   const readme = read("README.md");
+  const governance = read("GOVERNANCE.md");
 
   expect(readme).toMatch(
     /Revision status is exactly `draft`,\s+`approved`,\s+or `rejected`\./,
+  );
+  expect(governance).not.toMatch(/status:\s*(?:contested|superseded)\b/);
+  expect(governance).toContain("`state: contested`");
+  expect(governance).toMatch(/under\s+`org\.identity\.lifecycle`/);
+  expect(governance).toMatch(
+    /id: dec\.0003[\s\S]*?status: approved[\s\S]*?rev: 2[\s\S]*?revisit: 2027-08-01[\s\S]*?retirement is recorded separately under\s+`org\.identity\.lifecycle`\./,
   );
 });
 
@@ -34,7 +41,7 @@ it("keeps the concise public boundary inside current v0.5 capability", () => {
     "The v0.5.0 proof reads one local company-to-team path and produces advisory text for review.",
   );
   expect(site).toContain(
-    "It does not approve changes, control access, publish the result or enforce actions.",
+    "It does not verify who approved a change, combine sources from different repositories, control access, publish approved guidance, enforce actions or prove performance at enterprise scale.",
   );
   expect(site).not.toMatch(
     /signing|release seal|gate projection|handbook projection/i,
@@ -85,9 +92,25 @@ it("explains composition and large-organisation scale without overstating v0.5",
   expect(site).toContain(
     "ORG.md is the standard, not one enormous company document.",
   );
-  expect(site).toContain("Large organisations use many small, owned bundles.");
-  expect(site).toContain("Finance and other regions stay out of this view.");
-  expect(site).toMatch(/projection filtering is not access control/i);
+  expect(site).toContain(
+    "The proof combines the recorded guidance on this one selected path. It does not choose different guidance for each task.",
+  );
+  expect(site).toContain(
+    "Finance and other regions are not included in this example view. That does not control who can open the source files.",
+  );
+  expect(site).toContain(
+    "The design intent is for large organisations to use many small, owned bundles.",
+  );
+  expect(readme).toMatch(
+    /scope-filtered projections are not a raw-file access-control boundary/i,
+  );
+  for (const staleClaim of [
+    "Each layer adds only what this assistant needs from its place in the organisation.",
+    "Finance and other regions stay out of this view.",
+    "Large organisations use many small, owned bundles.",
+  ]) {
+    expect(site).not.toContain(staleClaim);
+  }
   expect(readme).toContain(
     "ORG.md is the name of the standard, not one enormous document.",
   );

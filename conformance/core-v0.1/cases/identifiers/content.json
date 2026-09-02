@@ -66,7 +66,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -78,7 +78,7 @@
     },
     "expected": {
       "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "content_id": "sha256:04d21e574920d89894223a3bd0abbe92f48d208ce3068393abb776d63e1f8249",
       "diagnostics": []
     }
   },
@@ -149,7 +149,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -161,7 +161,7 @@
     },
     "expected": {
       "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "content_id": "sha256:c0e58bbeac69b19680f71acb17439dfb72dec45ddad6277184f9463e8ff5d491",
+      "content_id": "sha256:f07ead926c4f331f47cfc5fa0eed18e9b8bca4fd265472e817af07cebd822d10",
       "diagnostics": []
     }
   },
@@ -246,7 +246,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -258,7 +258,7 @@
     },
     "expected": {
       "metadata_digest": "789e27e78b5d58ee21c00145987e3d45f955a7408dc610ebd437e0c978140895",
-      "content_id": "sha256:9617ab8cff51f4e554279e21f9649d27f504e497447edc83d00d01558f279d4b",
+      "content_id": "sha256:90df12bf189905e884d0d9fd784eb4c6548be871aabbf290a549d47436a2934e",
       "diagnostics": []
     }
   },
@@ -332,7 +332,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -344,7 +344,7 @@
     },
     "expected": {
       "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "content_id": "sha256:04d21e574920d89894223a3bd0abbe92f48d208ce3068393abb776d63e1f8249",
       "diagnostics": []
     }
   },
@@ -415,7 +415,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -427,7 +427,7 @@
     },
     "expected": {
       "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "content_id": "sha256:04d21e574920d89894223a3bd0abbe92f48d208ce3068393abb776d63e1f8249",
       "diagnostics": []
     }
   },
@@ -456,7 +456,7 @@
               "scope": "public",
               "status": "rejected",
               "source": "native",
-              "rev": 3
+              "rev": 10
             },
             "body": "Rejected.",
             "domain": "glossary",
@@ -510,7 +510,7 @@
     },
     "expected": {
       "metadata_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
-      "content_id": "sha256:239fe8b30e967cf6f525b5ccc1b6969a2df9a023131be486dbdb1e5d638337f4",
+      "content_id": "sha256:04d21e574920d89894223a3bd0abbe92f48d208ce3068393abb776d63e1f8249",
       "diagnostics": []
     }
   }

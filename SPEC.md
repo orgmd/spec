@@ -4,8 +4,11 @@
 **Status:** Draft — open for comment via RFC (see GOVERNANCE.md)
 **Editor:** Matt (BoundFor Ltd)
 **License:** CC BY 4.0 (this document); reference implementations Apache-2.0
-**Last updated:** August 2026
-**Changed in 0.3.1:** ratification split from lifecycle state — a revision's
+**Last updated:** September 2026
+**Changed in 0.3.1:** revision identity clarified — `id` names one logical
+entry within a bundle, (`id`, `rev`) names a revision record, every revision
+is hashed in numeric order, and `rev` is a positive safe integer (RFC 0016);
+ratification split from lifecycle state — a revision's
 `status` is now ratification only (`draft` | `approved` | `rejected`), while
 contestation and retirement are entry-level acts (§4.1, §4.7), removing the
 resurrection hazard by which contesting or retiring a revision silently
@@ -221,12 +224,12 @@ Every entry MUST carry:
 
 | Field      | Requirement | Meaning |
 |------------|-------------|---------|
-| `id`       | MUST        | Stable identifier, unique within its bundle (e.g. `term.consignment`, `policy.P-03`, `dec.014`). The same `id` in another bundle on the path denotes the same entry, overridden or narrowed per §5. |
+| `id`       | MUST        | Stable identifier of the logical entry within its bundle (e.g. `term.consignment`, `policy.P-03`, `dec.014`). Revision records of one entry share it; the same `id` in another bundle on the path denotes the entry being overridden or narrowed per §5. |
 | `owner`    | MUST        | Exactly one accountable owner (role or identity). Disputes route here. |
 | `scope`    | MUST        | Access label. Defaults: `public`, `internal`, `restricted`. Organisations MAY define more (§4.2). |
 | `status`   | MUST        | Ratification state of this revision: `draft` \| `approved` \| `rejected` (§4.1). Contestation and retirement are entry-level state and MUST NOT appear here. |
 | `source`   | MUST        | `native` or `synced:<system>` (§4.3) |
-| `rev`      | MUST        | Revision identifier: an integer, unique within the entry, monotonically increasing (§4.7) |
+| `rev`      | MUST        | Revision identifier: a positive IEEE-754 safe integer from 1 through 9007199254740991, unique within the entry and monotonically increasing (§4.7) |
 | `revisit`  | MUST for constraints and `decisions`; SHOULD otherwise (§4.8) | Date after which the entry is treated as stale unless re-confirmed |
 | `upstream` | MUST for `source: synced:<system>` | Provenance of this revision: `system`, `ref`, `fetched` (date), `digest` (upstream content digest) |
 | `delegates`| MAY         | Authority definitions only: node paths permitted to redefine this `id` for their own subtree (§5.2) |
@@ -482,17 +485,19 @@ owner.
   case-fold, trim, or otherwise canonicalise ids.
 - The leading segment SHOULD name the domain (`term`, `policy`, `dec`,
   `own`, `done`, `org`).
-- An `id` MUST be unique within its bundle. Two entries carrying the same
-  `id` in one bundle are a validation error, whether or not they are in
-  the same file. (Two *revisions* of one entry share an `id` by
-  definition and are distinguished by `rev`; see §4.7.)
+- Within a bundle, `id` identifies one logical entry. Revision records of
+  that entry share its `id` and are distinguished by `rev` (§4.7). The
+  pair (`id`, `rev`) MUST be unique within the bundle; two revision records
+  carrying the same pair are a validation error whether or not they are in
+  the same file. All revision records sharing an `id` MUST map to the same
+  semantic domain and kind (§2).
 - A bundle MUST be identifiable. The identity entry in `org.md` SHOULD
   carry a `bundle` key holding a stable, org-unique bundle identifier; it
   MUST carry one at Extended conformance. Where no `bundle` key is
   present, the resolver MUST use the bundle reference it was given as the
   bundle's identifier for the duration of the resolution.
-- The pair (`bundle`, `id`) MUST be unique across a tree. There is no
-  tree-wide uniqueness requirement on `id` alone.
+- The pair (`bundle`, `id`) identifies one logical entry in a tree. There
+  is no tree-wide uniqueness requirement on `id` alone.
 - Entries sharing an `id` across bundles on a path denote **the same
   entry**. They MUST be of the same kind (§2): where a definition and a
   constraint share an `id` on one path, the resolver MUST refuse to
@@ -595,8 +600,8 @@ functions of (context identifier, identity, action). Two conforming
 resolvers given the same inputs MUST produce the same verdict, the same
 relied-upon set and the same routes. Ties are impossible by construction:
 within a bundle, retained entries of equal specificity are collapsed by
-effect strength, and two entries with the same `id` in one bundle are
-already a validation error.
+effect strength, and step 1's effective-revision selection leaves at most
+one revision for each (`bundle`, `id`) before policy evaluation.
 
 **`org.define(term)` lookup.** The argument is a lookup key. Resolvers
 MUST apply, in order: (1) **id lookup** — if the key matches an entry `id`
@@ -790,9 +795,10 @@ Given the resolution path, the resolver MUST:
 3. For **ordinary definitions** sharing an `id`: the entry from the
    bundle closest to the consumer wins; the entries it displaces
    contribute nothing to effective context. Because positions in a
-   resolution path are distinct and an `id` is unique within a bundle,
-   exactly one entry wins; there is no tie to break. A resolver offered a
-   path containing the same bundle twice MUST refuse to resolve it. For
+   resolution path are distinct and step 1 selects at most one effective
+   revision for each (`bundle`, `id`), exactly one entry wins; there is no
+   tie to break. A resolver offered a path containing the same bundle twice
+   MUST refuse to resolve it. For
    **authority definitions** sharing an `id`, §5.2 applies.
 4. For **constraints**: all applicable entries apply **conjunctively** —
    they stack — and the effective verdict is the strongest local verdict
@@ -951,7 +957,7 @@ least the following as resolution errors:
 | Code | Condition | Blast radius |
 |---|---|---|
 | `widening` | A closer constraint fails the narrowing test (§5 step 4) | entry `id` |
-| `duplicate_id` | Two entries share an `id` within one bundle | entry `id` |
+| `duplicate_id` | Two revision records share an (`id`, `rev`) pair within one bundle; the historical code name is retained for compatibility | entry `id` |
 | `invalid_entry` | Missing required §4 field, a `status` outside the §4.1 ratification vocabulary, invalid `effect`, `escalate` without `route` | entry `id` |
 | `invalid_action` | `action` value does not match the §4.6 grammar | entry `id` |
 | `unresolvable_route` | `route` names no identifier in the ownership domain | entry `id` |
@@ -1266,12 +1272,14 @@ Extended claim was tested against.
 
 ### 7.1 Bundle content identifier (Core)
 
-Every bundle MUST have a **content identifier**: a hash over its entries
-computed identically by every implementation, with no signing
-infrastructure.
+Every bundle MUST have a **content identifier**: a hash over its bundle
+metadata and every revision record, including `draft`, `approved` and
+`rejected` revisions, computed identically by every implementation with no
+signing infrastructure.
 
-**Entry canonical form.** For each entry in the bundle, construct a JSON
-object with exactly these members, and no others:
+**Entry canonical form.** For each revision record in the bundle, construct a
+JSON object with exactly these members, and no others. The historical name
+"entry canonical form" is retained for compatibility with existing profiles:
 
 - `id`, `owner`, `scope`, `status`, `source` — the §4 required fields, as
   strings.
@@ -1351,15 +1359,18 @@ metadata object)`, rendered as lowercase hexadecimal. The object is always
 constructed and always digested; where no member is present it is the
 empty object, whose JCS serialisation is the two bytes `{}`.
 
-**Bundle content identifier.** Sort all entries by `id`, ascending, by
-byte order of the UTF-8 encoding of the `id`. Duplicate `id` values within
-a single bundle MUST be a load failure, not a hash input. Build the digest
-input by concatenating, in this order:
+**Bundle content identifier.** Sort all revision records first by `id`,
+ascending by byte order of the UTF-8 encoding of the `id`, and then by `rev`,
+ascending numerically. Duplicate (`id`, `rev`) pairs within a single bundle
+MUST be a load failure, not hash input. Build the digest input by
+concatenating, in this order:
 
 1. the UTF-8 bytes of the literal string `!bundle-metadata`, then `0x0A`,
    then the lowercase hex `metadata_digest`, then `0x0A`;
-2. then, for each entry in the sort order above, the UTF-8 bytes of `id`,
-   then `0x0A`, then the lowercase hex `entry_digest`, then `0x0A`.
+2. then, for each revision record in the sort order above, the UTF-8 bytes
+   of `id`, then `0x0A`, then the lowercase hex `entry_digest`, then
+   `0x0A`. The revision identifier is already inside the canonical form
+   covered by `entry_digest` and MUST NOT be repeated in this framing.
 
 The metadata line always comes first and is always present. It cannot
 collide with an entry line: `!` is outside the `id` grammar of §4.5, so no
@@ -1371,6 +1382,11 @@ The conformance suite (§11) MUST include a vector in which only bundle
 metadata changes — for example one edge added to the `scopes:` lattice,
 with every entry byte-identical — and MUST assert that the content
 identifier changes.
+
+The suite MUST also include revision records with one `id` and `rev` values
+whose lexical and numeric orders differ, in more than one input enumeration
+order, and MUST assert one byte-identical content identifier. It MUST reject
+a duplicate (`id`, `rev`) pair.
 
 Implementations MUST emit the content identifier wherever §5 and §6.1
 require a bundle version, and MUST render it in full, not abbreviated.

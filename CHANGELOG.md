@@ -10,6 +10,10 @@ release, and a Pages deployment remain maintainer actions.
   verification and a tarball consumer smoke test.
 - Published the entry front-matter JSON Schema and the data-first Core v0.1
   conformance corpus, including resolver and compiler profiles.
+- Corrected the schema and Core corpus to treat `id` as logical-entry identity,
+  (`id`, `rev`) as revision identity, and `rev` as a positive safe integer;
+  Core conformance corpus 0.1.1 locks numeric ordering and duplicate-pair
+  failure without changing valid content identifiers.
 - Added the deterministic resolver, scope-aware advisory compiler, stable
   diagnostics, and the five CLI commands: validate, compile, doctor, init,
   and adopt.
@@ -28,6 +32,10 @@ Correctness and clarity release. Implements the accepted items of
 review): BLOCKER 1–3, HIGH 4, 6 and 7, plus the drift item on the Core
 "afternoon" claim. No new concepts.
 
+- Revision identity made internally consistent: `id` names one logical entry
+  per bundle, revision records are unique by (`id`, `rev`), every revision is
+  hashed in UTF-8 `id` then numeric `rev` order, and revision numbers are
+  positive safe integers (SPEC §4, §5, §7.1; RFC 0016)
 - Ratification split from lifecycle state: a revision's `status` is
   ratification only (`draft` / `approved` / `rejected`), while
   contestation and retirement are entry-level acts, removing the

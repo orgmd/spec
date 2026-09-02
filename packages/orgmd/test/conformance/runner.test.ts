@@ -20,7 +20,7 @@ it("loads the declared Core suite and exercises every declared operation", () =>
   const manifest = loadManifest();
   expect(manifest).toEqual({
     suite: "orgmd-core",
-    version: "0.1.0",
+    version: "0.1.1",
     spec_version: "0.3.1",
     operations: [
       "parse",
